@@ -2,7 +2,7 @@
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Contains the Animal X wildlife explorer app.
+pnpm workspace monorepo using TypeScript. Contains the Animal X wildlife explorer app — 1,350 animals, 200+ zoos on a real Leaflet map, video Reels, Travel booking, wildlife chatbot, auth, and premium system.
 
 ## Stack
 

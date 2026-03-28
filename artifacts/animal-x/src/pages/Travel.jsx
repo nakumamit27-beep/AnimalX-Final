@@ -1,3 +1,5 @@
+import TripBanner from "../components/TripBanner";
+
 export default function Travel() {
   const rideServices = [
     { name: "Uber", icon: "🚗", url: "https://www.uber.com", desc: "Rides available in 70+ countries", color: "#000000", tag: "Global" },
@@ -18,9 +20,9 @@ export default function Travel() {
   ];
 
   const animalTours = [
-    { name: "Safari Bookings", icon: "🦁", url: "https://www.safaribookings.com", desc: "Book wildlife safaris in Africa's best reserves", tag: "Africa" },
-    { name: "G Adventures", icon: "🐘", url: "https://www.gadventures.com", desc: "Small-group wildlife and nature tours worldwide", tag: "Worldwide" },
-    { name: "Intrepid Travel", icon: "🐆", url: "https://www.intrepidtravel.com", desc: "Responsible wildlife experiences across 100+ countries", tag: "Eco-travel" },
+    { name: "Safari Bookings", icon: "🦁", url: "https://www.safaribookings.com", desc: "Book wildlife safaris in Africa's best reserves", tag: "Africa", color: "#d97706" },
+    { name: "G Adventures", icon: "🐘", url: "https://www.gadventures.com", desc: "Small-group wildlife and nature tours worldwide", tag: "Worldwide", color: "#7c3aed" },
+    { name: "Intrepid Travel", icon: "🐆", url: "https://www.intrepidtravel.com", desc: "Responsible wildlife experiences across 100+ countries", tag: "Eco-travel", color: "#0891b2" },
   ];
 
   const ServiceCard = ({ service }) => (
@@ -49,6 +51,8 @@ export default function Travel() {
         <h1 className="page-title">Travel to Wildlife</h1>
         <p className="page-subtitle">Everything you need to reach the world's most incredible animals and habitats</p>
       </div>
+
+      <TripBanner />
 
       <div className="travel-section">
         <h2 className="section-title">🚗 Ride-Hailing</h2>

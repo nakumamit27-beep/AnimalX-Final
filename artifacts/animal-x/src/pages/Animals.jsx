@@ -1,15 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSearch } from "wouter";
+import { useSearch, Link } from "wouter";
 import animals, { categories } from "../data/animals";
 import AnimalCard from "../components/AnimalCard";
 import CategoryFilter from "../components/CategoryFilter";
+import { useAuth } from "../context/AuthContext";
 
 const PAGE_SIZE = 20;
+const FREE_LIMIT = 20;
 
 export default function Animals() {
   const search = useSearch();
   const params = new URLSearchParams(search);
   const urlCategory = params.get("category");
+  const { isPremium } = useAuth();
 
   const [activeCategory, setActiveCategory] = useState(urlCategory || "All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,7 +27,8 @@ export default function Animals() {
 
   const filtered = animals.filter(a => {
     const matchCat = activeCategory === "All" || a.category === activeCategory;
-    const matchSearch = a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchSearch =
+      a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       a.category.toLowerCase().includes(searchQuery.toLowerCase());
     return matchCat && matchSearch;
   });
@@ -60,6 +64,12 @@ export default function Animals() {
       <div className="animals-header">
         <h1 className="page-title">Wildlife Explorer</h1>
         <p className="page-subtitle">Discover {animals.length.toLocaleString()} incredible creatures and natural wonders</p>
+        {!isPremium && (
+          <div className="free-notice">
+            🔒 Free plan: viewing first {FREE_LIMIT} results.{" "}
+            <Link href="/premium" className="premium-cta-link">Unlock all with Premium 👑</Link>
+          </div>
+        )}
         <div className="search-bar">
           <input
             type="search"
@@ -78,23 +88,36 @@ export default function Animals() {
       />
 
       <div className="animals-stats">
-        <span>Showing {visible.length} of {filtered.length} results</span>
+        <span>Showing {Math.min(visible.length, isPremium ? visible.length : FREE_LIMIT)} of {filtered.length} results</span>
       </div>
 
       <div className="animals-grid">
-        {visible.map(animal => (
-          <AnimalCard key={animal.id} animal={animal} />
-        ))}
+        {visible.map((animal, index) => {
+          if (!isPremium && index >= FREE_LIMIT) {
+            if (index === FREE_LIMIT) {
+              return (
+                <Link key="premium-lock" href="/premium" className="premium-lock-card">
+                  <div className="lock-icon">🔒</div>
+                  <div className="lock-title">Premium Required</div>
+                  <div className="lock-desc">Unlock all {filtered.length} animals</div>
+                  <div className="lock-btn">Get Premium 👑</div>
+                </Link>
+              );
+            }
+            return null;
+          }
+          return <AnimalCard key={animal.id} animal={animal} />;
+        })}
       </div>
 
-      {loading && (
+      {loading && isPremium && (
         <div className="loading-spinner">
           <div className="spinner"></div>
           <span>Loading more...</span>
         </div>
       )}
 
-      {!hasMore && filtered.length > 0 && (
+      {!hasMore && filtered.length > 0 && isPremium && (
         <div className="end-message">You've seen all {filtered.length} results ✓</div>
       )}
 

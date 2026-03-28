@@ -1,5 +1,6 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Animals from "./pages/Animals";
@@ -9,6 +10,8 @@ import Reels from "./pages/Reels";
 import Travel from "./pages/Travel";
 import Chatbot from "./pages/Chatbot";
 import HelpDesk from "./pages/HelpDesk";
+import Auth from "./pages/Auth";
+import Premium from "./pages/Premium";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +39,8 @@ function Router() {
           <Route path="/travel" component={Travel} />
           <Route path="/chat" component={Chatbot} />
           <Route path="/help" component={HelpDesk} />
+          <Route path="/auth" component={Auth} />
+          <Route path="/premium" component={Premium} />
           <Route component={NotFound} />
         </Switch>
       </main>
@@ -46,9 +51,11 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-        <Router />
-      </WouterRouter>
+      <AuthProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <Router />
+        </WouterRouter>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

@@ -1,93 +1,118 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import zoos from "../data/zoos";
 
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+const greenIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+});
+
 export default function Map() {
-  const [selectedZoo, setSelectedZoo] = useState(null);
   const [filterCountry, setFilterCountry] = useState("All");
+  const [searchZoo, setSearchZoo] = useState("");
+  const [mapReady, setMapReady] = useState(false);
+
+  useEffect(() => { setMapReady(true); }, []);
 
   const countries = ["All", ...new Set(zoos.map(z => z.country))].sort();
-  const filteredZoos = filterCountry === "All" ? zoos : zoos.filter(z => z.country === filterCountry);
-
-  const minLat = -50, maxLat = 75, minLng = -140, maxLng = 155;
-  const toX = lng => ((lng - minLng) / (maxLng - minLng)) * 100;
-  const toY = lat => ((maxLat - lat) / (maxLat - minLat)) * 100;
+  const filteredZoos = zoos.filter(z => {
+    const matchCountry = filterCountry === "All" || z.country === filterCountry;
+    const matchSearch = z.name.toLowerCase().includes(searchZoo.toLowerCase()) ||
+      z.country.toLowerCase().includes(searchZoo.toLowerCase());
+    return matchCountry && matchSearch;
+  });
 
   return (
     <div className="map-page">
       <div className="map-header">
         <h1 className="page-title">Zoo World Map</h1>
-        <p className="page-subtitle">Explore {zoos.length} zoos across {new Set(zoos.map(z => z.country)).size} countries</p>
+        <p className="page-subtitle">Explore {zoos.length}+ zoos across {new Set(zoos.map(z => z.country)).size} countries</p>
       </div>
 
       <div className="map-controls">
-        <label className="filter-label">Filter by Country</label>
-        <select
-          className="country-select"
-          value={filterCountry}
-          onChange={e => setFilterCountry(e.target.value)}
-        >
+        <input
+          type="search"
+          className="search-input"
+          placeholder="Search zoos..."
+          value={searchZoo}
+          onChange={e => setSearchZoo(e.target.value)}
+          style={{ maxWidth: "220px" }}
+        />
+        <select className="country-select" value={filterCountry} onChange={e => setFilterCountry(e.target.value)}>
           {countries.map(c => (
-            <option key={c} value={c}>{c} {c !== "All" ? `(${zoos.filter(z => z.country === c).length})` : ""}</option>
+            <option key={c} value={c}>{c}{c !== "All" ? ` (${zoos.filter(z => z.country === c).length})` : ""}</option>
           ))}
         </select>
-        <span className="zoo-count">{filteredZoos.length} zoos shown</span>
+        <span className="zoo-count">🗺️ {filteredZoos.length} zoos</span>
       </div>
 
-      <div className="map-container">
-        <div className="world-map">
-          <svg viewBox="0 0 100 60" className="map-svg" preserveAspectRatio="xMidYMid meet">
-            <rect width="100" height="60" fill="#0a1628" />
-            <text x="2" y="5" fontSize="2" fill="#1e3a5f">🌍 World Map</text>
+      {mapReady && (
+        <div className="leaflet-map-wrap">
+          <MapContainer
+            center={[20, 0]}
+            zoom={2}
+            style={{ height: "500px", width: "100%", borderRadius: "12px" }}
+            scrollWheelZoom={false}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
             {filteredZoos.map(zoo => (
-              <g key={zoo.id} onClick={() => setSelectedZoo(selectedZoo?.id === zoo.id ? null : zoo)}>
-                <circle
-                  cx={toX(zoo.lng)}
-                  cy={toY(zoo.lat)}
-                  r={selectedZoo?.id === zoo.id ? 1.2 : 0.7}
-                  fill={selectedZoo?.id === zoo.id ? "#22c55e" : "#f59e0b"}
-                  opacity={0.85}
-                  className="zoo-marker"
-                  style={{ cursor: "pointer" }}
-                />
-              </g>
+              <Marker key={zoo.id} position={[zoo.lat, zoo.lng]} icon={greenIcon}>
+                <Popup>
+                  <div className="map-popup-leaflet">
+                    {zoo.image && (
+                      <img src={zoo.image} alt={zoo.name} style={{ width: "100%", height: "100px", objectFit: "cover", borderRadius: "6px", marginBottom: "8px" }} onError={e => { e.target.style.display = "none"; }} />
+                    )}
+                    <div style={{ fontWeight: 700, fontSize: "0.95rem", marginBottom: "4px" }}>🦁 {zoo.name}</div>
+                    <div style={{ color: "#555", fontSize: "0.82rem" }}>📍 {zoo.country}</div>
+                    <div style={{ color: "#555", fontSize: "0.82rem" }}>🐾 {zoo.animals} animals</div>
+                    <div style={{ color: "#555", fontSize: "0.82rem" }}>⭐ {zoo.rating}/5.0</div>
+                    <div style={{ color: "#888", fontSize: "0.75rem", marginTop: "4px" }}>{zoo.lat.toFixed(3)}°, {zoo.lng.toFixed(3)}°</div>
+                  </div>
+                </Popup>
+              </Marker>
             ))}
-          </svg>
-
-          {selectedZoo && (
-            <div className="map-popup">
-              <button className="popup-close" onClick={() => setSelectedZoo(null)}>✕</button>
-              <div className="popup-name">🦁 {selectedZoo.name}</div>
-              <div className="popup-country">📍 {selectedZoo.country}</div>
-              <div className="popup-animals">🐾 {selectedZoo.animals} animals</div>
-              <div className="popup-rating">⭐ {selectedZoo.rating}/5.0</div>
-              <div className="popup-coords">
-                {selectedZoo.lat.toFixed(2)}°, {selectedZoo.lng.toFixed(2)}°
-              </div>
-            </div>
-          )}
+          </MapContainer>
         </div>
-      </div>
+      )}
 
       <div className="zoo-list">
         <h3>Zoo Directory ({filteredZoos.length})</h3>
         <div className="zoo-grid">
           {filteredZoos.slice(0, 50).map(zoo => (
-            <div
-              key={zoo.id}
-              className={`zoo-card ${selectedZoo?.id === zoo.id ? "selected" : ""}`}
-              onClick={() => setSelectedZoo(selectedZoo?.id === zoo.id ? null : zoo)}
-            >
+            <div key={zoo.id} className="zoo-card">
+              {zoo.image && (
+                <img
+                  src={zoo.image}
+                  alt={zoo.name}
+                  className="zoo-card-img"
+                  loading="lazy"
+                  onError={e => { e.target.style.display = "none"; }}
+                />
+              )}
               <div className="zoo-card-name">🦁 {zoo.name}</div>
               <div className="zoo-card-country">📍 {zoo.country}</div>
               <div className="zoo-card-meta">
-                <span>🐾 {zoo.animals} animals</span>
+                <span>🐾 {zoo.animals}</span>
                 <span>⭐ {zoo.rating}</span>
               </div>
             </div>
           ))}
         </div>
         {filteredZoos.length > 50 && (
-          <p className="more-zoos">+{filteredZoos.length - 50} more zoos available — filter by country to narrow down</p>
+          <p className="more-zoos">+{filteredZoos.length - 50} more zoos — filter or search to narrow down</p>
         )}
       </div>
     </div>
