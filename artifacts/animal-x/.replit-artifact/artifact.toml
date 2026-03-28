@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Animal X"
+version = "1.0.0"
+id = "artifacts/animal-x"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23592
+
+[services.development]
+run = "pnpm --filter @workspace/animal-x run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/animal-x", "run", "build" ]
+publicDir = "artifacts/animal-x/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23592"
+BASE_PATH = "/"
