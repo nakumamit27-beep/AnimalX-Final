@@ -1759,6 +1759,132 @@ a { text-decoration: none; color: inherit; }
 
 .auth-nav-link { border-left: 1px solid var(--border); margin-left: 4px; padding-left: 12px; }
 
+/* ===== LOCKED CARD (CATEGORY LOCK) ===== */
+.locked-card {
+  background: var(--card-bg);
+  border: 2px dashed rgba(239, 68, 68, 0.35);
+  border-radius: var(--radius);
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.locked-card:hover {
+  border-color: rgba(239, 68, 68, 0.7);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.locked-icon { font-size: 1.8rem; }
+
+.locked-name {
+  font-size: 0.82rem;
+  color: var(--text2);
+  font-weight: 600;
+  text-align: center;
+  padding: 0 8px;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.locked-label {
+  font-size: 0.72rem;
+  color: #ef4444;
+  font-weight: 700;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+/* ===== GIR NATIONAL PARK BANNER ===== */
+.gir-section { padding: 0 0 32px; }
+
+.gir-banner {
+  position: relative;
+  background: linear-gradient(135deg, #134e5e, #71b280);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  color: white;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.gir-banner-bg {
+  position: absolute;
+  inset: 0;
+  background: url("https://loremflickr.com/1200/300/lion,jungle?lock=8888") center/cover;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.gir-banner-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.gir-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.gir-icon { font-size: 3rem; flex-shrink: 0; }
+.gir-title { font-size: 1.4rem; font-weight: 800; margin: 0 0 6px; }
+.gir-desc { font-size: 0.88rem; color: rgba(255,255,255,0.85); margin: 0; }
+
+.gir-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gir-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.2s;
+  white-space: nowrap;
+}
+
+.gir-btn:hover { transform: translateY(-2px); opacity: 0.9; }
+.gir-btn.location { background: white; color: #134e5e; }
+.gir-btn.ride { background: #000; color: white; }
+.gir-btn.flight { background: #0770e3; color: white; }
+
+/* ===== ZOO CARD CLICK ===== */
+.zoo-card-clickable {
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.zoo-card-clickable:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.2);
+  border-color: var(--accent);
+}
+
+.zoo-map-hint {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 /* ===== RARE TAG ===== */
 .rare-tag {
   position: absolute;

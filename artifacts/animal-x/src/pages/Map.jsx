@@ -17,6 +17,11 @@ const greenIcon = new L.Icon({
   iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
 });
 
+function openZooInMap(zoo) {
+  const url = `https://www.google.com/maps?q=${zoo.lat},${zoo.lng}`;
+  window.open(url, "_blank");
+}
+
 export default function Map() {
   const [filterCountry, setFilterCountry] = useState("All");
   const [searchZoo, setSearchZoo] = useState("");
@@ -73,13 +78,26 @@ export default function Map() {
                 <Popup>
                   <div className="map-popup-leaflet">
                     {zoo.image && (
-                      <img src={zoo.image} alt={zoo.name} style={{ width: "100%", height: "100px", objectFit: "cover", borderRadius: "6px", marginBottom: "8px" }} onError={e => { e.target.style.display = "none"; }} />
+                      <img
+                        src={zoo.image}
+                        alt={zoo.name}
+                        style={{ width: "100%", height: "100px", objectFit: "cover", borderRadius: "6px", marginBottom: "8px" }}
+                        onError={e => { e.target.style.display = "none"; }}
+                      />
                     )}
                     <div style={{ fontWeight: 700, fontSize: "0.95rem", marginBottom: "4px" }}>🦁 {zoo.name}</div>
                     <div style={{ color: "#555", fontSize: "0.82rem" }}>📍 {zoo.country}</div>
                     <div style={{ color: "#555", fontSize: "0.82rem" }}>🐾 {zoo.animals} animals</div>
                     <div style={{ color: "#555", fontSize: "0.82rem" }}>⭐ {zoo.rating}/5.0</div>
-                    <div style={{ color: "#888", fontSize: "0.75rem", marginTop: "4px" }}>{zoo.lat.toFixed(3)}°, {zoo.lng.toFixed(3)}°</div>
+                    <div style={{ color: "#888", fontSize: "0.75rem", marginTop: "4px", marginBottom: "8px" }}>
+                      {zoo.lat.toFixed(3)}°, {zoo.lng.toFixed(3)}°
+                    </div>
+                    <button
+                      onClick={() => openZooInMap(zoo)}
+                      style={{ background: "#22c55e", color: "#000", border: "none", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: 700, fontSize: "0.82rem", width: "100%" }}
+                    >
+                      📍 Open in Google Maps
+                    </button>
                   </div>
                 </Popup>
               </Marker>
@@ -89,10 +107,15 @@ export default function Map() {
       )}
 
       <div className="zoo-list">
-        <h3>Zoo Directory ({filteredZoos.length})</h3>
+        <h3>Zoo Directory ({filteredZoos.length}) — <span style={{ fontSize: "0.8rem", color: "var(--text2)", fontWeight: 400 }}>Click a card to open in Google Maps</span></h3>
         <div className="zoo-grid">
           {filteredZoos.slice(0, 50).map(zoo => (
-            <div key={zoo.id} className="zoo-card">
+            <div
+              key={zoo.id}
+              className="zoo-card zoo-card-clickable"
+              onClick={() => openZooInMap(zoo)}
+              title={`Open ${zoo.name} in Google Maps`}
+            >
               {zoo.image && (
                 <img
                   src={zoo.image}
@@ -107,6 +130,7 @@ export default function Map() {
               <div className="zoo-card-meta">
                 <span>🐾 {zoo.animals}</span>
                 <span>⭐ {zoo.rating}</span>
+                <span className="zoo-map-hint">🗺️ Maps</span>
               </div>
             </div>
           ))}

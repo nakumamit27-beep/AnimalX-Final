@@ -5,8 +5,13 @@ import AnimalCard from "../components/AnimalCard";
 import CategoryFilter from "../components/CategoryFilter";
 import { useAuth } from "../context/AuthContext";
 
-const PAGE_SIZE = 20;
-const FREE_LIMIT = 20;
+const PAGE_SIZE = 40;
+const CATEGORY_FREE_LIMIT = 130;
+
+function isLockedAnimal(animal) {
+  const localIndex = (animal.id - 1) % 150;
+  return localIndex >= CATEGORY_FREE_LIMIT;
+}
 
 export default function Animals() {
   const search = useSearch();
@@ -59,6 +64,9 @@ export default function Animals() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loadMore]);
 
+  const freeCount = filtered.filter(a => !isLockedAnimal(a)).length;
+  const lockedCount = filtered.filter(a => isLockedAnimal(a)).length;
+
   return (
     <div className="animals-page">
       <div className="animals-header">
@@ -66,7 +74,7 @@ export default function Animals() {
         <p className="page-subtitle">Discover {animals.length.toLocaleString()} incredible creatures and natural wonders</p>
         {!isPremium && (
           <div className="free-notice">
-            🔒 Free plan: viewing first {FREE_LIMIT} results.{" "}
+            🔒 Free: {freeCount} visible, {lockedCount} locked per category.{" "}
             <Link href="/premium" className="premium-cta-link">Unlock all with Premium 👑</Link>
           </div>
         )}
@@ -88,37 +96,37 @@ export default function Animals() {
       />
 
       <div className="animals-stats">
-        <span>Showing {Math.min(visible.length, isPremium ? visible.length : FREE_LIMIT)} of {filtered.length} results</span>
+        <span>
+          {isPremium
+            ? `Showing ${Math.min(visible.length, filtered.length)} of ${filtered.length} results`
+            : `Showing ${freeCount} free of ${filtered.length} results`}
+        </span>
       </div>
 
       <div className="animals-grid">
-        {visible.map((animal, index) => {
-          if (!isPremium && index >= FREE_LIMIT) {
-            if (index === FREE_LIMIT) {
-              return (
-                <Link key="premium-lock" href="/premium" className="premium-lock-card">
-                  <div className="lock-icon">🔒</div>
-                  <div className="lock-title">Premium Required</div>
-                  <div className="lock-desc">Unlock all {filtered.length} animals</div>
-                  <div className="lock-btn">Get Premium 👑</div>
-                </Link>
-              );
-            }
-            return null;
+        {visible.map(animal => {
+          if (!isPremium && isLockedAnimal(animal)) {
+            return (
+              <Link key={`locked-${animal.id}`} href="/premium" className="locked-card">
+                <div className="locked-icon">🔒</div>
+                <div className="locked-name">{animal.name}</div>
+                <div className="locked-label">Premium Only</div>
+              </Link>
+            );
           }
           return <AnimalCard key={animal.id} animal={animal} />;
         })}
       </div>
 
-      {loading && isPremium && (
+      {loading && (
         <div className="loading-spinner">
           <div className="spinner"></div>
           <span>Loading more...</span>
         </div>
       )}
 
-      {!hasMore && filtered.length > 0 && isPremium && (
-        <div className="end-message">You've seen all {filtered.length} results ✓</div>
+      {!hasMore && filtered.length > 0 && (
+        <div className="end-message">All {filtered.length} results shown ✓</div>
       )}
 
       {filtered.length === 0 && (
