@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
@@ -21,6 +22,23 @@ function NotFound() {
       <div style={{ fontSize: "80px" }}>🔍</div>
       <h2 style={{ fontSize: "24px", marginTop: "16px" }}>Page Not Found</h2>
       <a href="/" style={{ color: "#22c55e", marginTop: "16px", display: "inline-block" }}>← Go Home</a>
+    </div>
+  );
+}
+
+function SplashScreen() {
+  return (
+    <div className="splash">
+      <div className="splash-inner">
+        <div className="splash-icon">🐾</div>
+        <h1 className="splash-title">Animal X</h1>
+        <p className="splash-sub">Wildlife Explorer</p>
+        <div className="splash-loader">
+          <div className="splash-dot" />
+          <div className="splash-dot" />
+          <div className="splash-dot" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -49,6 +67,15 @@ function Router() {
 }
 
 function App() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) return <SplashScreen />;
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

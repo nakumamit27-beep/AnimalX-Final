@@ -12,7 +12,8 @@ export function getEmoji(category) {
     Nature: "🌳",
     Mountains: "⛰️",
     Sea: "🌊",
-    Desert: "🏜️"
+    Desert: "🏜️",
+    Trees: "🌲"
   };
   return map[category] || "🌍";
 }

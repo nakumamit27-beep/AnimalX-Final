@@ -7,7 +7,8 @@ const categories = [
   "Nature",
   "Mountains",
   "Sea",
-  "Desert"
+  "Desert",
+  "Trees"
 ];
 
 const baseNames = {
@@ -93,6 +94,15 @@ const baseNames = {
     "Cactus","Succulent","Desert Shrub","Acacia Tree","Baobab Tree","Desert Grass","Date Palm","Yucca Plant","Agave","Prickly Pear",
     "Fennec Fox","Desert Fox","Camel","Dromedary Camel","Bactrian Camel","Jerboa","Meerkat","Sand Cat","Sidewinder Snake","Horned Viper",
     "Desert Lizard","Gila Monster","Roadrunner","Desert Tortoise","Scorpion","Dung Beetle","Antlion","Locust","Termite","Dust Devil"
+  ],
+  Trees: [
+    "Banyan Tree","Neem Tree","Peepal Tree","Oak Tree","Pine Tree","Cedar Tree","Maple Tree","Birch Tree","Willow Tree","Palm Tree",
+    "Coconut Tree","Date Palm","Baobab Tree","Sequoia Tree","Redwood Tree","Teak Tree","Sandalwood Tree","Eucalyptus Tree","Ash Tree","Elm Tree",
+    "Fir Tree","Spruce Tree","Cherry Blossom","Apple Tree","Mango Tree","Guava Tree","Banana Tree","Papaya Tree","Orange Tree","Lemon Tree",
+    "Fig Tree","Olive Tree","Walnut Tree","Almond Tree","Pecan Tree","Chestnut Tree","Hazel Tree","Rubber Tree","Coffee Tree","Cocoa Tree",
+    "Acacia Tree","Bamboo","Mahogany Tree","Rosewood Tree","Poplar Tree","Aspen Tree","Dogwood Tree","Juniper Tree","Cypress Tree","Palm Fan Tree",
+    "Rain Tree","Flame Tree","Gulmohar Tree","Kadamba Tree","Arjun Tree","Sal Tree","Deodar Tree","Chinar Tree","Khejri Tree","Prosopis Tree",
+    "Tamarind Tree","Jackfruit Tree","Lychee Tree","Avocado Tree","Persimmon Tree","Mulberry Tree","Breadfruit Tree","Starfruit Tree","Durian Tree","Mangrove Tree"
   ]
 };
 
@@ -105,7 +115,8 @@ const habitatMap = {
   Nature: "Various Natural Habitats",
   Mountains: "High-altitude Alpine Zones",
   Sea: "Ocean and Coastal Waters",
-  Desert: "Arid and Semi-arid Regions"
+  Desert: "Arid and Semi-arid Regions",
+  Trees: "Forests, Tropical and Subtropical Regions"
 };
 
 const dietMap = {
@@ -117,7 +128,8 @@ const dietMap = {
   Nature: "Photosynthesis / Water",
   Mountains: "N/A",
   Sea: "Plankton, Algae, Marine Life",
-  Desert: "Varies"
+  Desert: "Varies",
+  Trees: "Photosynthesis"
 };
 
 const lifespanMap = {
@@ -129,7 +141,8 @@ const lifespanMap = {
   Nature: "Centuries to millennia",
   Mountains: "Geological timescale",
   Sea: "Geological timescale",
-  Desert: "Geological timescale"
+  Desert: "Geological timescale",
+  Trees: "50–1000+ years"
 };
 
 const animals = [];
