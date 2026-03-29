@@ -1,14 +1,6 @@
-const categories = [
-  "Mammals",
-  "Reptiles",
-  "Birds",
-  "Aquatic",
-  "Small Creatures",
-  "Nature",
-  "Mountains",
-  "Sea",
-  "Desert",
-  "Trees"
+export const categories = [
+  "Mammals","Reptiles","Birds","Aquatic","Small Creatures",
+  "Nature","Mountains","Sea","Desert","Trees"
 ];
 
 const baseNames = {
@@ -106,65 +98,316 @@ const baseNames = {
   ]
 };
 
-const habitatMap = {
-  Mammals: "Forests, Grasslands, and Jungles",
-  Reptiles: "Tropical and Subtropical Regions",
-  Birds: "Forests, Wetlands, and Open Skies",
-  Aquatic: "Oceans, Rivers, and Lakes",
-  "Small Creatures": "Gardens, Forests, and Underground",
-  Nature: "Various Natural Habitats",
-  Mountains: "High-altitude Alpine Zones",
-  Sea: "Ocean and Coastal Waters",
-  Desert: "Arid and Semi-arid Regions",
-  Trees: "Forests, Tropical and Subtropical Regions"
+const animalInfo = {
+  // MAMMALS
+  "Lion":{ diet:"Carnivore — zebra, wildebeest, buffalo", habitat:"Open savanna grasslands and scrubland", lifespan:"10–14 years wild, up to 20 in captivity", region:"Sub-Saharan Africa, Gir Forest India", dailyFood:"5–7 kg meat" },
+  "Tiger":{ diet:"Carnivore — deer, wild boar, gaur", habitat:"Tropical forests, mangroves, grasslands", lifespan:"10–15 years wild, 20–25 in captivity", region:"India, Russia (Siberia), Southeast Asia", dailyFood:"5–8 kg meat" },
+  "Elephant":{ diet:"Herbivore — grass, bark, roots, fruit", habitat:"Savanna, forest, and scrubland", lifespan:"60–70 years", region:"Sub-Saharan Africa, South Asia", dailyFood:"100–200 kg plant matter" },
+  "Leopard":{ diet:"Carnivore — impala, deer, monkeys", habitat:"Dense forests, savanna, mountains", lifespan:"12–17 years wild", region:"Africa, Middle East, South Asia", dailyFood:"3–4 kg meat" },
+  "Cheetah":{ diet:"Carnivore — gazelle, springbok, hares", habitat:"Open grasslands and semi-arid terrain", lifespan:"10–12 years wild", region:"Sub-Saharan Africa, Iran", dailyFood:"2.5–3 kg meat" },
+  "Jaguar":{ diet:"Carnivore — caiman, capybara, deer", habitat:"Tropical rainforests and wetlands", lifespan:"12–15 years wild", region:"Amazon Basin, Central and South America", dailyFood:"4–6 kg meat" },
+  "Wolf":{ diet:"Carnivore — elk, deer, moose", habitat:"Forests, tundra, and grasslands", lifespan:"6–8 years wild, 12–14 in captivity", region:"North America, Europe, Russia, Asia", dailyFood:"3–5 kg meat" },
+  "Fox":{ diet:"Omnivore — rabbits, rodents, berries, birds", habitat:"Forests, grasslands, urban areas", lifespan:"2–5 years wild, up to 14 in captivity", region:"Europe, North America, Asia, North Africa", dailyFood:"500–700 g mixed diet" },
+  "Bear":{ diet:"Omnivore — fish, berries, honey, insects", habitat:"Forests, mountains, arctic tundra", lifespan:"20–30 years wild", region:"North America, Europe, Russia, Asia", dailyFood:"8–10 kg food (20–40 kg before hibernation)" },
+  "Panda":{ diet:"Herbivore — bamboo shoots and leaves", habitat:"Temperate mountain forests with bamboo", lifespan:"20 years wild, up to 30 in captivity", region:"Sichuan, Shaanxi, Gansu — China", dailyFood:"12–38 kg bamboo" },
+  "Gorilla":{ diet:"Herbivore — leaves, stems, fruit, bark", habitat:"Tropical rainforests and montane forests", lifespan:"35–40 years wild", region:"Central and East Africa (Congo Basin)", dailyFood:"18–20 kg vegetation" },
+  "Chimpanzee":{ diet:"Omnivore — fruit, nuts, insects, small mammals", habitat:"Tropical rainforests and woodland savanna", lifespan:"40–50 years wild", region:"West and Central Africa", dailyFood:"4–6 kg mixed diet" },
+  "Orangutan":{ diet:"Frugivore — fruit, leaves, bark, insects", habitat:"Tropical rainforests of Borneo and Sumatra", lifespan:"35–45 years wild", region:"Borneo and Sumatra, Indonesia/Malaysia", dailyFood:"4–7 kg fruit and vegetation" },
+  "Baboon":{ diet:"Omnivore — fruit, seeds, roots, small animals", habitat:"Savanna, woodland, and semi-arid areas", lifespan:"25–30 years wild", region:"Africa, parts of Arabia", dailyFood:"1.5–2.5 kg mixed diet" },
+  "Hyena":{ diet:"Carnivore — wildebeest, zebra, carrion", habitat:"Savanna, grassland, woodland", lifespan:"10–15 years wild", region:"Sub-Saharan Africa, North Africa, Arabia", dailyFood:"3–7 kg meat" },
+  "Jackal":{ diet:"Omnivore — small mammals, fruit, carrion", habitat:"Open woodlands, savanna, and urban outskirts", lifespan:"8–12 years wild", region:"Africa, Southeast Europe, South Asia", dailyFood:"500–700 g mixed" },
+  "Deer":{ diet:"Herbivore — grass, leaves, bark, shrubs", habitat:"Temperate forests and grasslands", lifespan:"10–20 years wild", region:"North America, Europe, Asia", dailyFood:"2–4 kg vegetation" },
+  "Moose":{ diet:"Herbivore — aquatic plants, shrubs, bark", habitat:"Boreal forests and wetlands", lifespan:"15–25 years wild", region:"Canada, Alaska, Scandinavia, Russia", dailyFood:"25–30 kg vegetation" },
+  "Elk":{ diet:"Herbivore — grass, sedges, forbs, bark", habitat:"Forests and mountain meadows", lifespan:"10–15 years wild", region:"North America, Central Asia", dailyFood:"9–11 kg vegetation" },
+  "Reindeer":{ diet:"Herbivore — lichen, moss, sedges, shrubs", habitat:"Arctic and subarctic tundra", lifespan:"12–15 years wild", region:"Scandinavia, Russia, Greenland, Canada", dailyFood:"4–8 kg vegetation" },
+  "Bison":{ diet:"Herbivore — grasses, sedges, herbs", habitat:"Open prairies and grasslands", lifespan:"15–20 years wild", region:"North America (Great Plains), Europe (Poland)", dailyFood:"15–20 kg grass" },
+  "Buffalo":{ diet:"Herbivore — grass, herbs, shrubs", habitat:"Savanna, wetlands, and dense bush", lifespan:"15–25 years wild", region:"Sub-Saharan Africa", dailyFood:"20–30 kg grass" },
+  "Cow":{ diet:"Herbivore — grass, hay, grains, silage", habitat:"Domesticated farmland and pastures", lifespan:"15–20 years", region:"Worldwide (domesticated)", dailyFood:"10–12 kg dry matter" },
+  "Yak":{ diet:"Herbivore — grass, moss, lichen, herbs", habitat:"High-altitude plateaus and alpine meadows", lifespan:"20–25 years", region:"Tibetan Plateau, Himalayas, Central Asia", dailyFood:"8–12 kg vegetation" },
+  "Horse":{ diet:"Herbivore — grass, hay, oats, grain", habitat:"Grasslands and domesticated pastures", lifespan:"25–30 years", region:"Worldwide (domesticated), Central Asia (wild)", dailyFood:"6–8 kg hay" },
+  "Donkey":{ diet:"Herbivore — grass, straw, hay, shrubs", habitat:"Dry grasslands and semi-arid terrain", lifespan:"25–35 years", region:"Middle East, North Africa, worldwide (domestic)", dailyFood:"5–7 kg forage" },
+  "Zebra":{ diet:"Herbivore — grass, leaves, bark, stems", habitat:"Savanna, grasslands, open woodland", lifespan:"20–25 years wild", region:"East and Southern Africa", dailyFood:"10–15 kg grass" },
+  "Giraffe":{ diet:"Herbivore — acacia leaves, shrubs, fruit", habitat:"Open savanna and woodland", lifespan:"20–25 years wild", region:"Sub-Saharan Africa", dailyFood:"30–35 kg leaves" },
+  "Camel":{ diet:"Herbivore — thorny plants, dried grass, salty plants", habitat:"Deserts and semi-arid regions", lifespan:"40–50 years", region:"Middle East, North Africa, Central Asia", dailyFood:"3–5 kg vegetation" },
+  "Llama":{ diet:"Herbivore — grass, hay, leaves", habitat:"Andean highlands and semi-arid plateaus", lifespan:"15–25 years", region:"South America (Andes: Peru, Bolivia)", dailyFood:"2–3 kg vegetation" },
+  "Alpaca":{ diet:"Herbivore — grass, hay, pellets", habitat:"Andean altiplano and highland meadows", lifespan:"15–20 years", region:"South America (Peru, Bolivia, Ecuador)", dailyFood:"1.5–2.5 kg vegetation" },
+  "Kangaroo":{ diet:"Herbivore — grass, shrubs, leaves", habitat:"Grassland, savanna, woodland, bushland", lifespan:"6–8 years wild, up to 23 in captivity", region:"Australia", dailyFood:"2–5 kg vegetation" },
+  "Wallaby":{ diet:"Herbivore — grass, leaves, shoots", habitat:"Forests, scrubland, rocky terrain", lifespan:"10–15 years wild", region:"Australia and New Guinea", dailyFood:"500 g–2 kg vegetation" },
+  "Koala":{ diet:"Herbivore — eucalyptus leaves only", habitat:"Eucalyptus forests and woodland", lifespan:"13–18 years wild", region:"Eastern and southeastern Australia", dailyFood:"200–500 g eucalyptus leaves" },
+  "Wombat":{ diet:"Herbivore — grass, roots, bark, shrubs", habitat:"Forests, grasslands, heathlands", lifespan:"5–15 years wild", region:"Southeastern Australia and Tasmania", dailyFood:"200–400 g vegetation" },
+  "Platypus":{ diet:"Carnivore — shrimp, worms, insects, crayfish", habitat:"Freshwater streams and rivers with banks", lifespan:"10–15 years wild", region:"Eastern Australia and Tasmania", dailyFood:"~20% of body weight in invertebrates" },
+  "Otter":{ diet:"Carnivore — fish, crayfish, frogs, mollusks", habitat:"Rivers, lakes, coastal marine areas", lifespan:"8–12 years wild", region:"North America, Europe, Asia, Africa", dailyFood:"1–2 kg fish and crustaceans" },
+  "Seal":{ diet:"Carnivore — fish, squid, octopus", habitat:"Cold coastal waters and rocky shores", lifespan:"25–30 years wild", region:"North Atlantic, Arctic, Antarctic, Pacific", dailyFood:"3–5 kg fish" },
+  "Walrus":{ diet:"Carnivore — clams, mollusks, worms", habitat:"Arctic sea ice and cold coastal waters", lifespan:"40 years wild", region:"Arctic Ocean — Russia, Canada, Greenland", dailyFood:"30–40 kg shellfish" },
+  "Dolphin":{ diet:"Carnivore — fish, squid, octopus", habitat:"Open ocean, coastal waters, estuaries", lifespan:"25–30 years wild", region:"Worldwide oceans, especially tropics", dailyFood:"4–6 kg fish" },
+  "Whale":{ diet:"Filter feeder — krill, small fish (baleen); squid (toothed)", habitat:"Open oceans, polar and temperate seas", lifespan:"50–100 years (blue whale)", region:"Worldwide oceans", dailyFood:"Up to 4,000 kg krill (blue whale)" },
+  "Bat":{ diet:"Omnivore — insects, nectar, fruit, blood (vampire)", habitat:"Caves, forests, urban structures", lifespan:"10–30 years wild", region:"Worldwide except poles", dailyFood:"1,000–1,200 insects (insectivore) per night" },
+  "Hedgehog":{ diet:"Omnivore — insects, worms, snails, small reptiles", habitat:"Grasslands, hedgerows, woodland edges", lifespan:"3–5 years wild", region:"Europe, Asia, Africa", dailyFood:"60–70 g insects and invertebrates" },
+  "Mole":{ diet:"Carnivore — earthworms, insects, grubs", habitat:"Underground tunnels in meadows and woodlands", lifespan:"3–6 years wild", region:"Europe, Asia, North America", dailyFood:"~40–50 g earthworms (equal to body weight)" },
+  "Rabbit":{ diet:"Herbivore — grass, leafy plants, roots, bark", habitat:"Meadows, woodland edges, fields", lifespan:"1–2 years wild, 8–12 in captivity", region:"Europe, North America, Asia, Australia", dailyFood:"80–150 g hay and fresh greens" },
+  "Hare":{ diet:"Herbivore — grasses, herbs, bark, twigs", habitat:"Open fields, heathlands, tundra", lifespan:"3–4 years wild", region:"Europe, North America, Asia, Africa", dailyFood:"100–200 g vegetation" },
+  "Squirrel":{ diet:"Omnivore — nuts, seeds, fungi, small insects", habitat:"Deciduous and coniferous forests, parks", lifespan:"5–10 years wild", region:"North America, Europe, Asia", dailyFood:"40–80 g mixed diet" },
+  "Chipmunk":{ diet:"Omnivore — seeds, nuts, berries, insects", habitat:"Deciduous forests, woodlands, gardens", lifespan:"2–5 years wild", region:"North America, Asia", dailyFood:"15–35 g food (stores up to 165 g/day)", },
+  "Raccoon":{ diet:"Omnivore — fish, frogs, fruits, nuts, garbage", habitat:"Forests, wetlands, urban areas", lifespan:"2–5 years wild, up to 20 in captivity", region:"North and Central America, introduced in Europe", dailyFood:"0.9–1.8 kg mixed diet" },
+  "Skunk":{ diet:"Omnivore — insects, larvae, worms, berries", habitat:"Woodlands, grasslands, suburban areas", lifespan:"3–4 years wild", region:"North and South America", dailyFood:"100–300 g mixed diet" },
+  "Badger":{ diet:"Omnivore — earthworms, rodents, fruit, roots", habitat:"Grasslands, woodlands, and hedgerows", lifespan:"5–8 years wild", region:"Europe, Asia, North America", dailyFood:"200 g food per day (earthworms primary)" },
+  "Weasel":{ diet:"Carnivore — mice, voles, rabbits", habitat:"Woodland, grassland, hedgerows", lifespan:"2–3 years wild", region:"Europe, North America, Asia", dailyFood:"30–50 g meat" },
+  "Ferret":{ diet:"Carnivore — small mammals, birds, eggs", habitat:"Grasslands and farmland (domesticated)", lifespan:"5–9 years", region:"Domesticated worldwide; wild in New Zealand", dailyFood:"50–75 g meat-based food" },
+  "Mink":{ diet:"Carnivore — fish, frogs, muskrats, rabbits", habitat:"Rivers, lakes, wetlands, coastal areas", lifespan:"3–5 years wild", region:"North America, Europe (farmed worldwide)", dailyFood:"100–200 g protein-rich food" },
+  "Lynx":{ diet:"Carnivore — snowshoe hares, deer, grouse", habitat:"Boreal forests, subarctic terrain", lifespan:"10–15 years wild", region:"Canada, Northern USA, Europe, Central Asia", dailyFood:"1–2 kg meat" },
+  "Caracal":{ diet:"Carnivore — birds, rodents, hares, small antelopes", habitat:"Dry savanna, scrubland, arid woodland", lifespan:"12–16 years wild", region:"Africa, Middle East, Central Asia, India", dailyFood:"1–1.5 kg meat" },
+  "Serval":{ diet:"Carnivore — rodents, birds, frogs, lizards", habitat:"Wet savannas and grasslands near water", lifespan:"10–12 years wild", region:"Sub-Saharan Africa", dailyFood:"900 g–1.2 kg prey" },
+  "Snow Leopard":{ diet:"Carnivore — blue sheep, ibex, deer", habitat:"Alpine and subalpine zones 3,000–5,500 m", lifespan:"10–12 years wild", region:"Central Asia — Himalayas, Karakoram, Tibetan Plateau", dailyFood:"2–4 kg meat" },
+  "Polar Bear":{ diet:"Carnivore — ringed seals, bearded seals, carrion", habitat:"Arctic sea ice and cold coastlines", lifespan:"20–25 years wild", region:"Arctic Ocean — Russia, Norway, Greenland, Canada, USA", dailyFood:"2–4 kg fat (seal blubber)" },
+  "Grizzly Bear":{ diet:"Omnivore — fish, berries, roots, ground squirrels", habitat:"Forests, alpine meadows, riverside terrain", lifespan:"20–25 years wild", region:"Alaska, western Canada, Pacific Northwest USA", dailyFood:"10–20 kg mixed (up to 40 kg before hibernation)" },
+  "Sloth":{ diet:"Herbivore — leaves, buds, tender shoots", habitat:"Tropical and subtropical rainforests", lifespan:"20–30 years wild", region:"Central and South America", dailyFood:"80–100 g leaves (very slow digestion)" },
+  "Anteater":{ diet:"Insectivore — ants and termites", habitat:"Grasslands, wetlands, and tropical forests", lifespan:"14–16 years wild", region:"Central and South America", dailyFood:"35,000 ants and termites/day" },
+  "Armadillo":{ diet:"Insectivore — ants, beetles, termites, larvae", habitat:"Grasslands, rainforests, semi-arid scrubland", lifespan:"4–7 years wild", region:"South America, Central America, southern USA", dailyFood:"200–400 g insects and invertebrates" },
+  "Tapir":{ diet:"Herbivore — leaves, grass, fruit, aquatic plants", habitat:"Tropical forests and wetlands", lifespan:"25–30 years wild", region:"South America, Central America, Malay Peninsula", dailyFood:"4–9 kg vegetation" },
+  "Okapi":{ diet:"Herbivore — leaves, twigs, seeds, grass", habitat:"Dense tropical rainforests", lifespan:"20–25 years wild", region:"Democratic Republic of Congo (Ituri Rainforest)", dailyFood:"18–23 kg vegetation" },
+  "Manatee":{ diet:"Herbivore — seagrass, aquatic plants, algae", habitat:"Shallow coastal waters, rivers, estuaries", lifespan:"40–60 years wild", region:"Caribbean, Gulf of Mexico, Amazon Basin, West Africa", dailyFood:"10% of body weight (~30–50 kg plants)" },
+  "Dugong":{ diet:"Herbivore — seagrass exclusively", habitat:"Shallow tropical and subtropical coastal waters", lifespan:"70 years wild", region:"Indian Ocean, Pacific coast — East Africa to Australia", dailyFood:"28–40 kg seagrass" },
+  "Porcupine":{ diet:"Herbivore — bark, roots, bulbs, berries", habitat:"Forests, grasslands, deserts", lifespan:"10–12 years wild", region:"Africa, South Asia, North America, South America", dailyFood:"200–400 g bark and vegetation" },
+  "Beaver":{ diet:"Herbivore — bark, cambium, water plants, roots", habitat:"Streams, rivers, and wetlands with trees", lifespan:"10–15 years wild", region:"North America, Europe, Asia", dailyFood:"1–2 kg bark and aquatic plants" },
+  "Capybara":{ diet:"Herbivore — grass, aquatic plants, bark, fruit", habitat:"Savannas and dense forests near water", lifespan:"8–10 years wild", region:"South America east of the Andes", dailyFood:"3–4 kg grass and aquatic vegetation" },
+  "Agouti":{ diet:"Herbivore — nuts, seeds, fruit, roots", habitat:"Tropical forests and grasslands", lifespan:"11–20 years wild", region:"Central and South America", dailyFood:"150–250 g nuts and fruit" },
+  "Tarsier":{ diet:"Carnivore — insects, small lizards, birds", habitat:"Tropical forests and dense shrubs", lifespan:"12–20 years wild", region:"Philippines, Indonesia, Malaysia", dailyFood:"~10% of body weight in insects" },
+  "Lemur":{ diet:"Omnivore — fruit, leaves, bark, insects, flowers", habitat:"Deciduous and rainforests", lifespan:"16–25 years wild", region:"Madagascar", dailyFood:"200–400 g fruit and vegetation" },
+  "Aye-aye":{ diet:"Omnivore — insects, larvae, fruit, nuts", habitat:"Tropical rainforest and dry deciduous forest", lifespan:"20–25 years wild", region:"Madagascar", dailyFood:"~100–200 g food" },
+  "Galago":{ diet:"Omnivore — insects, fruit, gum from trees", habitat:"Tropical and subtropical forests", lifespan:"3–5 years wild, up to 16 in captivity", region:"Sub-Saharan Africa", dailyFood:"10–30 g insects and fruit" },
+  "Fossa":{ diet:"Carnivore — lemurs, birds, reptiles, rodents", habitat:"Tropical dry and wet forests of Madagascar", lifespan:"15–20 years wild", region:"Madagascar", dailyFood:"500 g–1.5 kg meat" },
+  "Bandicoot":{ diet:"Omnivore — insects, worms, roots, fruit", habitat:"Forests, shrublands, grasslands", lifespan:"2–4 years wild", region:"Australia, New Guinea", dailyFood:"60–120 g invertebrates and plants" },
+  "Quokka":{ diet:"Herbivore — grasses, leaves, stems, bark", habitat:"Eucalyptus forests and dense vegetation", lifespan:"10 years wild", region:"Rottnest Island and southwestern Australia", dailyFood:"100–200 g vegetation" },
+  "Tasmanian Devil":{ diet:"Carnivore — wallabies, wombats, birds, carrion", habitat:"Dry sclerophyll forests and coastal heath", lifespan:"5–8 years wild", region:"Tasmania, Australia", dailyFood:"Up to 10–15% body weight (~500 g–1 kg) per day" },
+  "Dingo":{ diet:"Carnivore — rabbits, wallabies, lizards, birds", habitat:"Desert scrubland, forests, grasslands", lifespan:"5–10 years wild", region:"Australia (mainland)", dailyFood:"500 g–1.5 kg meat" },
+  "Red Panda":{ diet:"Herbivore — bamboo, fruit, roots, acorns", habitat:"Temperate forests in mountains", lifespan:"8–10 years wild", region:"Eastern Himalayas, southwestern China, Myanmar", dailyFood:"1–2 kg bamboo leaves and shoots" },
+  "Sun Bear":{ diet:"Omnivore — honey, fruit, insects, small vertebrates", habitat:"Tropical lowland rainforests", lifespan:"25 years captivity", region:"Southeast Asia — Borneo, Sumatra, Thailand", dailyFood:"1–3 kg mixed food" },
+  "Spectacled Bear":{ diet:"Herbivore/Omnivore — bromeliads, cacti, fruit, honey", habitat:"Andean cloud forests and mountain grasslands", lifespan:"20–25 years wild", region:"Northern Andes — Venezuela to Bolivia", dailyFood:"2–4 kg mixed vegetation" },
+  "Clouded Leopard":{ diet:"Carnivore — deer, pigs, monkeys, birds", habitat:"Tropical and subtropical forest", lifespan:"11–17 years wild", region:"Himalayan foothills, Southeast Asia, China", dailyFood:"1–2 kg meat" },
+  "Fishing Cat":{ diet:"Carnivore — fish, frogs, crabs, small mammals", habitat:"Wetlands, mangroves, and riverine forests", lifespan:"10–12 years wild", region:"South and Southeast Asia", dailyFood:"500 g–1 kg fish and amphibians" },
+  "Civet":{ diet:"Omnivore — fruit, insects, small mammals, eggs", habitat:"Dense forests and scrubland", lifespan:"15–20 years captivity", region:"Africa, South and Southeast Asia", dailyFood:"200–400 g mixed diet" },
+  "Genet":{ diet:"Carnivore — rodents, birds, reptiles, insects", habitat:"Dense vegetation near streams", lifespan:"8–13 years wild", region:"Africa, southwestern Europe", dailyFood:"150–300 g prey" },
+  "Pika":{ diet:"Herbivore — grass, sedges, forbs, hay", habitat:"Alpine rocky slopes and talus fields", lifespan:"3–6 years wild", region:"Mountains of Asia and North America", dailyFood:"20–30 g dried vegetation" },
+  "Ibex":{ diet:"Herbivore — grass, herbs, lichens, shrubs", habitat:"Alpine and subalpine rocky terrain", lifespan:"15–20 years wild", region:"Alps, Caucasus, Middle East, Central Asia", dailyFood:"1.5–2.5 kg vegetation" },
+  "Chamois":{ diet:"Herbivore — grass, herbs, lichen, bark", habitat:"Alpine and subalpine mountain forests", lifespan:"14–22 years wild", region:"Europe — Alps, Pyrenees, Carpathians, Balkans", dailyFood:"1.5–2 kg vegetation" },
+
+  // REPTILES
+  "Cobra":{ diet:"Carnivore — rodents, frogs, lizards, birds", habitat:"Forests, grasslands, rice paddies, near water", lifespan:"20–25 years wild", region:"South and Southeast Asia", dailyFood:"1–2 mice per week" },
+  "King Cobra":{ diet:"Carnivore — other snakes primarily", habitat:"Dense highland forests and bamboo thickets", lifespan:"20 years wild", region:"India, Southeast Asia, Philippines", dailyFood:"~1 snake every few weeks" },
+  "Python":{ diet:"Carnivore — pigs, deer, rodents, birds", habitat:"Tropical forests, wetlands, savanna", lifespan:"20–30 years wild", region:"Africa, South/Southeast Asia, Australia", dailyFood:"1 large meal every 2–4 weeks" },
+  "Anaconda":{ diet:"Carnivore — capybara, caiman, deer, fish", habitat:"Tropical swamps, rivers, rainforests", lifespan:"10–12 years wild", region:"South America (Amazon and Orinoco basins)", dailyFood:"1 large prey every 2–8 weeks" },
+  "Boa":{ diet:"Carnivore — birds, lizards, small mammals", habitat:"Tropical forests, woodlands, rocky terrain", lifespan:"20–30 years captivity", region:"Central and South America, Caribbean", dailyFood:"1 prey item every 1–2 weeks" },
+  "Viper":{ diet:"Carnivore — rodents, frogs, lizards", habitat:"Forests, grasslands, rocky hillsides", lifespan:"10–20 years wild", region:"Europe, Asia, Africa", dailyFood:"1 rodent every 1–2 weeks" },
+  "Mamba":{ diet:"Carnivore — small mammals, birds, bats", habitat:"Open woodland, savanna, coastal bush", lifespan:"11 years wild", region:"Sub-Saharan Africa (black mamba), East Africa (green)", dailyFood:"1–2 prey items per week" },
+  "Rattlesnake":{ diet:"Carnivore — mice, voles, small rabbits, lizards", habitat:"Deserts, grasslands, rocky hillsides", lifespan:"10–25 years wild", region:"North and South America", dailyFood:"1–2 rodents per week" },
+  "Krait":{ diet:"Carnivore — other snakes, lizards, small rodents", habitat:"Agricultural land, forests, near water", lifespan:"12–15 years wild", region:"South and Southeast Asia", dailyFood:"1 snake or lizard per week" },
+  "Coral Snake":{ diet:"Carnivore — small snakes, lizards, frogs", habitat:"Sandy soil, pine flatwoods, scrubland", lifespan:"7 years wild", region:"Southern USA, Central and South America", dailyFood:"1 small snake or lizard per week" },
+  "Gecko":{ diet:"Insectivore — crickets, mealworms, flies, moths", habitat:"Tropical forests, rocky walls, urban areas", lifespan:"10–20 years captivity", region:"Tropics and subtropics worldwide", dailyFood:"3–5 insects per day" },
+  "Iguana":{ diet:"Herbivore — leaves, flowers, fruit, young plant growth", habitat:"Tropical forest canopy near rivers", lifespan:"20 years wild", region:"Central and South America, Caribbean", dailyFood:"10–30 g vegetation per kg body weight" },
+  "Chameleon":{ diet:"Insectivore — crickets, grasshoppers, locusts", habitat:"Rainforests, dry forests, scrubland", lifespan:"5–10 years wild", region:"Africa (Madagascar especially), South Asia, Europe", dailyFood:"3–6 insects per day" },
+  "Komodo Dragon":{ diet:"Carnivore — deer, goats, pigs, water buffalo", habitat:"Tropical savanna, forest, and grassland", lifespan:"30 years wild", region:"Komodo, Rinca, Flores islands — Indonesia", dailyFood:"1–2 kg meat (1–2 large meals per month)" },
+  "Monitor Lizard":{ diet:"Carnivore — eggs, insects, frogs, small mammals", habitat:"Tropical forests, rivers, dry savannas", lifespan:"20 years wild", region:"Africa, South Asia, Southeast Asia, Australia", dailyFood:"200–600 g prey" },
+  "Skink":{ diet:"Insectivore/Omnivore — insects, fruit, small reptiles", habitat:"Leaf litter, rocky areas, grasslands", lifespan:"15–20 years captivity", region:"Worldwide tropics and subtropics", dailyFood:"30–80 g insects and food" },
+  "Agama":{ diet:"Insectivore — ants, beetles, grasshoppers", habitat:"Rocky outcrops, savanna, dry woodland", lifespan:"10–15 years wild", region:"Sub-Saharan Africa, Middle East, Central Asia", dailyFood:"5–15 g insects" },
+  "Frilled Lizard":{ diet:"Insectivore — ants, termites, beetles, small rodents", habitat:"Tropical dry forest and savanna", lifespan:"10–15 years wild", region:"Northern Australia and New Guinea", dailyFood:"5–20 g insects" },
+  "Horned Lizard":{ diet:"Insectivore — harvester ants primarily", habitat:"Arid desert and dry grassland", lifespan:"5–7 years wild", region:"USA (southwest), Mexico", dailyFood:"100+ ants per day" },
+  "Basilisk":{ diet:"Omnivore — insects, small mammals, plants, flowers", habitat:"Tropical rainforests near rivers", lifespan:"7–10 years wild", region:"Central America — Panama, Costa Rica, Honduras", dailyFood:"10–30 g mixed diet" },
+  "Crocodile":{ diet:"Carnivore — fish, wildebeest, zebra, deer", habitat:"Rivers, lakes, wetlands, mangroves", lifespan:"70–100 years wild", region:"Africa, Asia, Australia, Americas", dailyFood:"1 large meal every 1–2 weeks" },
+  "Alligator":{ diet:"Carnivore — fish, turtles, birds, mammals", habitat:"Freshwater swamps, marshes, rivers", lifespan:"30–50 years wild", region:"Southeastern USA, Yangtze River China", dailyFood:"1–2 kg prey every few days" },
+  "Gharial":{ diet:"Piscivore — fish exclusively", habitat:"Fast-flowing rivers with deep pools", lifespan:"55–60 years wild", region:"Northern India, Nepal — Ganges and Chambal rivers", dailyFood:"1–3 kg fish" },
+  "Caiman":{ diet:"Carnivore — fish, crustaceans, birds, small mammals", habitat:"Tropical rivers, swamps, flooded grasslands", lifespan:"20–40 years wild", region:"Central and South America", dailyFood:"500 g–2 kg prey" },
+  "Turtle":{ diet:"Omnivore — plants, insects, fish, worms", habitat:"Freshwater ponds, rivers, wetlands", lifespan:"30–100 years wild (species dependent)", region:"Worldwide in freshwater and marine", dailyFood:"100–200 g mixed food" },
+  "Sea Turtle":{ diet:"Herbivore/Omnivore — seagrass, jellyfish, algae, crabs", habitat:"Open ocean and coastal tropical waters", lifespan:"80+ years wild", region:"Tropical and subtropical oceans worldwide", dailyFood:"1–3% body weight in seagrass or jellyfish" },
+  "Tortoise":{ diet:"Herbivore — cactus pads, grasses, leaves, fruits", habitat:"Grasslands, dry scrublands, deserts", lifespan:"80–150+ years wild", region:"Africa, Madagascar, Galápagos, South Asia", dailyFood:"50–200 g vegetation" },
+  "Nile Crocodile":{ diet:"Carnivore — fish, wildebeest, zebra, buffalo", habitat:"Rivers, lakes, marshes, mangrove swamps", lifespan:"45–70 years wild", region:"Sub-Saharan Africa, Nile River basin", dailyFood:"Up to 25 kg per meal (weekly or biweekly)" },
+  "Saltwater Crocodile":{ diet:"Carnivore — sharks, buffalo, wild boar, monkeys", habitat:"Estuaries, rivers, coastal saltwater habitats", lifespan:"70+ years wild", region:"Northern Australia, Southeast Asia, India", dailyFood:"1 large prey per week" },
+  "Komodo Monitor":{ diet:"Carnivore — deer, goats, pigs, carrion", habitat:"Tropical dry forest and savanna", lifespan:"30 years wild", region:"Komodo, Rinca, Flores — Indonesia", dailyFood:"1–2 kg meat (infrequent large meals)" },
+  "Gila Monster":{ diet:"Carnivore — bird eggs, small mammals, lizards", habitat:"Desert and semi-arid scrubland", lifespan:"20–30 years wild", region:"Southwestern USA — Arizona, Nevada, New Mexico", dailyFood:"3–4 large meals/year (stores fat in tail)" },
+
+  // BIRDS
+  "Eagle":{ diet:"Carnivore — fish, small mammals, birds, reptiles", habitat:"Mountains, forests, coasts, open plains", lifespan:"20–30 years wild", region:"Worldwide except Antarctica", dailyFood:"250–500 g prey" },
+  "Golden Eagle":{ diet:"Carnivore — rabbits, ground squirrels, marmots, birds", habitat:"Mountains, hills, and cliffs", lifespan:"25–30 years wild", region:"North America, Europe, Asia, North Africa", dailyFood:"200–400 g prey" },
+  "Bald Eagle":{ diet:"Piscivore — fish primarily; also ducks, rabbits", habitat:"Lakes, rivers, wetlands, coastlines", lifespan:"20–30 years wild", region:"North America (primarily USA and Canada)", dailyFood:"300–700 g fish" },
+  "Hawk":{ diet:"Carnivore — rodents, small birds, lizards, insects", habitat:"Forests, grasslands, deserts, suburbs", lifespan:"10–20 years wild", region:"Americas, Europe, Africa, Asia", dailyFood:"100–300 g prey" },
+  "Falcon":{ diet:"Carnivore — birds, bats, large insects", habitat:"Open country, cliffs, tundra, cities", lifespan:"15–25 years wild", region:"Worldwide (Peregrine is most widespread)", dailyFood:"80–200 g prey" },
+  "Kite":{ diet:"Carnivore — small mammals, birds, carrion, insects", habitat:"Woodland, farmland, open country", lifespan:"10–25 years wild", region:"Europe, Africa, Asia, Americas", dailyFood:"100–250 g food" },
+  "Vulture":{ diet:"Scavenger — exclusively carrion", habitat:"Open country, savanna, mountains", lifespan:"20–40 years wild", region:"Africa, Asia, Europe, Americas", dailyFood:"1–1.5 kg carrion per feeding (1–2 times per week)" },
+  "Owl":{ diet:"Carnivore — rodents, rabbits, birds, insects", habitat:"Forests, deserts, Arctic tundra, farmland", lifespan:"10–25 years wild (species dependent)", region:"Worldwide except Antarctica", dailyFood:"1–2 rodents per day" },
+  "Barn Owl":{ diet:"Carnivore — mice, voles, shrews, small birds", habitat:"Farmland, open grassland, barns, cliffs", lifespan:"4 years wild, up to 25 in captivity", region:"Worldwide except polar and desert extremes", dailyFood:"2–5 voles or mice per day" },
+  "Snowy Owl":{ diet:"Carnivore — lemmings, voles, hares, birds", habitat:"Arctic tundra and open fields", lifespan:"10 years wild", region:"Arctic regions of North America, Europe, Asia", dailyFood:"3–5 lemmings per day" },
+  "Parrot":{ diet:"Herbivore — seeds, nuts, fruit, berries, flowers", habitat:"Tropical and subtropical forests", lifespan:"50–80 years (large species)", region:"South America, Africa, South Asia, Australia", dailyFood:"50–150 g seeds and fruit" },
+  "Macaw":{ diet:"Herbivore — seeds, fruit, nuts, clay licks (mineral supplement)", habitat:"Tropical and subtropical rainforests", lifespan:"50–70 years wild", region:"Mexico, Central and South America", dailyFood:"100–200 g fruit, nuts, and seeds" },
+  "Cockatoo":{ diet:"Herbivore — seeds, nuts, berries, roots, flowers", habitat:"Woodland, scrubland, farmland", lifespan:"40–70 years captivity", region:"Australia, New Guinea, Indonesia", dailyFood:"50–100 g seeds and plant matter" },
+  "Peacock":{ diet:"Omnivore — seeds, insects, small reptiles, plants", habitat:"Forests, grasslands, open scrubland", lifespan:"15–20 years wild", region:"South Asia — India, Sri Lanka, Myanmar", dailyFood:"200–400 g mixed food" },
+  "Pigeon":{ diet:"Herbivore — grains, seeds, fruit, berries", habitat:"Urban environments, farmland, cliffs", lifespan:"3–6 years wild, up to 15 in captivity", region:"Worldwide (highly adaptable)", dailyFood:"50–100 g seeds and grain" },
+  "Crow":{ diet:"Omnivore — garbage, insects, grain, carrion", habitat:"Farmland, forests, urban areas, coastlines", lifespan:"8–12 years wild", region:"North America, Europe, Asia", dailyFood:"100–200 g mixed food" },
+  "Raven":{ diet:"Omnivore — carrion, garbage, insects, grain, small mammals", habitat:"Mountains, forests, deserts, tundra, coasts", lifespan:"10–15 years wild", region:"Holarctic — Northern Hemisphere broadly", dailyFood:"150–300 g food" },
+  "Sparrow":{ diet:"Herbivore — seeds and grains; insects during breeding season", habitat:"Urban areas, farmland, gardens, woodland edges", lifespan:"3–5 years wild", region:"Worldwide (introduced globally)", dailyFood:"5–10 g seeds" },
+  "Hummingbird":{ diet:"Nectarivore — flower nectar; also small insects and spiders", habitat:"Tropical and subtropical forests, gardens", lifespan:"3–5 years wild, up to 10 in captivity", region:"Americas — primarily tropical Central and South America", dailyFood:"~twice body weight in nectar daily" },
+  "Kingfisher":{ diet:"Piscivore — small fish, aquatic insects, shrimp", habitat:"Riverbanks, streams, lakes, mangroves", lifespan:"7–10 years wild", region:"Europe, Africa, Asia, Australia", dailyFood:"~60% body weight in fish per day" },
+  "Woodpecker":{ diet:"Insectivore — wood-boring insects, ants, bark beetles", habitat:"Forests with mature trees", lifespan:"6–11 years wild", region:"Worldwide except Australia and polar regions", dailyFood:"~15 g insects" },
+  "Toucan":{ diet:"Frugivore — fruit, berries, insects, eggs, small reptiles", habitat:"Tropical rainforests and forest edges", lifespan:"20 years wild", region:"South America and Caribbean", dailyFood:"150–250 g fruit and mixed food" },
+  "Flamingo":{ diet:"Filter feeder — algae, brine shrimp, crustaceans", habitat:"Salt lakes, lagoons, mangrove swamps", lifespan:"20–30 years wild", region:"Africa, southern Europe, Asia, Caribbean", dailyFood:"200–300 g algae and crustaceans" },
+  "Pelican":{ diet:"Piscivore — fish up to 1.8 kg; also amphibians, crustaceans", habitat:"Coastal seas, lakes, rivers", lifespan:"15–25 years wild", region:"Worldwide except polar regions", dailyFood:"1–1.5 kg fish" },
+  "Penguin":{ diet:"Piscivore — fish, krill, squid", habitat:"Antarctic coasts, cold ocean waters, rocky coasts", lifespan:"15–20 years wild", region:"Southern Ocean, Antarctica, Sub-Antarctic islands", dailyFood:"1–3 kg fish and krill" },
+  "Emperor Penguin":{ diet:"Piscivore — fish, squid, krill", habitat:"Antarctic sea ice and surrounding ocean", lifespan:"20–25 years wild", region:"Antarctica", dailyFood:"2–3 kg fish and squid" },
+  "Albatross":{ diet:"Piscivore — fish, squid, krill, carrion", habitat:"Open ocean; breeds on remote islands", lifespan:"50+ years wild (longest-lived birds)", region:"Southern Ocean, North Pacific, North Atlantic", dailyFood:"1–2 kg fish and squid" },
+  "Ostrich":{ diet:"Omnivore — grass, seeds, shrubs, insects, small reptiles", habitat:"African savanna, woodland, semi-desert", lifespan:"40–45 years wild", region:"Sub-Saharan Africa", dailyFood:"1.5–3.5 kg vegetation and insects" },
+  "Cassowary":{ diet:"Frugivore — fruit primarily; fungi, small animals, insects", habitat:"Tropical rainforest", lifespan:"40–50 years captivity", region:"Northeastern Australia, New Guinea, Indonesia", dailyFood:"1–2 kg fruit" },
+  "Sunbird":{ diet:"Nectarivore — nectar; also insects for protein", habitat:"Forests, gardens, shrublands, mangroves", lifespan:"5–10 years wild", region:"Africa, South and Southeast Asia, Australia", dailyFood:"20–50 g nectar and insects" },
+
+  // AQUATIC
+  "Shark":{ diet:"Carnivore — fish, seals, sea lions, turtles", habitat:"Open ocean, coastal waters, deep sea", lifespan:"20–30 years wild (species dependent)", region:"Worldwide oceans", dailyFood:"~1–2% body weight in fish (2–3 times per week)" },
+  "Great White Shark":{ diet:"Carnivore — seals, sea lions, dolphins, fish", habitat:"Coastal and open ocean temperate/subtropical waters", lifespan:"70+ years wild", region:"Worldwide — South Africa, Australia, California", dailyFood:"Up to 11 kg per meal (once every 1–2 weeks)" },
+  "Dolphin":{ diet:"Carnivore — fish, squid, shrimp, octopus", habitat:"Coastal waters, estuaries, open ocean", lifespan:"25–40 years wild", region:"Worldwide oceans and some rivers", dailyFood:"4–6 kg fish and squid" },
+  "Orca":{ diet:"Carnivore — seals, sea lions, sharks, whales, fish", habitat:"All oceans, from polar to tropical", lifespan:"50–80 years wild (females)", region:"Worldwide oceans (common near cold coasts)", dailyFood:"150–250 kg prey" },
+  "Blue Whale":{ diet:"Filter feeder — krill exclusively", habitat:"Open ocean, deep pelagic zone", lifespan:"80–90 years wild", region:"All oceans — most common in Antarctic/North Pacific", dailyFood:"~3,600–4,000 kg krill during feeding season" },
+  "Humpback Whale":{ diet:"Filter feeder — krill, small schooling fish", habitat:"All oceans; coastal areas for feeding", lifespan:"45–100 years wild", region:"All oceans, migrates pole to tropics seasonally", dailyFood:"1,300–1,500 kg krill and fish" },
+  "Octopus":{ diet:"Carnivore — crabs, clams, shrimp, fish", habitat:"Coral reefs, rocky seafloor, open ocean", lifespan:"1–5 years wild", region:"Worldwide oceans", dailyFood:"~5–6% body weight in prey" },
+  "Lobster":{ diet:"Carnivore/Scavenger — fish, mollusks, sea urchins, carrion", habitat:"Rocky seafloor, sand, mud", lifespan:"45–50+ years wild", region:"North Atlantic, Caribbean, Mediterranean", dailyFood:"50–150 g mixed food" },
+  "Jellyfish":{ diet:"Carnivore — fish eggs, small fish, plankton, crustaceans", habitat:"Open ocean, coastal waters, all depths", lifespan:"1 year wild (some immortal species exist)", region:"All oceans worldwide", dailyFood:"Continuous — drifts and traps prey passively" },
+  "Starfish":{ diet:"Carnivore — clams, oysters, mussels, coral polyps", habitat:"Rocky intertidal zones to deep ocean", lifespan:"10–35 years wild", region:"All oceans worldwide", dailyFood:"~1–2 bivalves per day" },
+  "Crab":{ diet:"Omnivore — algae, worms, small fish, fungi, bacteria", habitat:"Intertidal zone, seafloor, mangroves", lifespan:"3–4 years wild", region:"All oceans and freshwater worldwide", dailyFood:"10–30 g mixed organic matter" },
+  "Seal":{ diet:"Carnivore — fish, squid, octopus, shrimp", habitat:"Cold coastal waters and sea ice", lifespan:"25–35 years wild", region:"North Atlantic, Pacific, Arctic, Antarctic", dailyFood:"3–7 kg fish and squid" },
+  "Clownfish":{ diet:"Omnivore — algae, zooplankton, small invertebrates", habitat:"Warm shallow coral reefs and sea anemones", lifespan:"6–10 years wild", region:"Indian and Pacific oceans (Great Barrier Reef)", dailyFood:"2–3% body weight in mixed food" },
+  "Tuna":{ diet:"Carnivore — mackerel, herring, squid, crustaceans", habitat:"Open ocean, pelagic zone, temperate and tropical seas", lifespan:"15–45 years wild", region:"Atlantic, Pacific, Indian Oceans", dailyFood:"~5–10% body weight in fish per day" },
+  "Salmon":{ diet:"Carnivore — insects (juvenile), small fish, squid, krill (adult)", habitat:"Cold ocean and freshwater rivers for spawning", lifespan:"3–8 years wild", region:"North Pacific and North Atlantic", dailyFood:"~5–7% body weight in food" },
+  "Electric Eel":{ diet:"Carnivore — fish, invertebrates, small mammals", habitat:"Murky freshwater streams, floodplains", lifespan:"10–15 years wild", region:"Amazon and Orinoco basins — South America", dailyFood:"~70 g fish and invertebrates" },
+  "Manta Ray":{ diet:"Filter feeder — zooplankton, small fish, krill", habitat:"Tropical and subtropical open ocean and reefs", lifespan:"40+ years wild", region:"Tropical Indian and Pacific Oceans", dailyFood:"~13% body weight in plankton" },
+  "Sea Horse":{ diet:"Carnivore — tiny fish, brine shrimp, plankton", habitat:"Seagrass beds, mangroves, coral reefs", lifespan:"1–5 years wild", region:"Tropical and temperate shallow seas worldwide", dailyFood:"~3,000 brine shrimp or small crustaceans/day" },
+  "Pufferfish":{ diet:"Carnivore — mussels, clams, sea urchins, coral", habitat:"Tropical and subtropical coral reefs", lifespan:"10 years wild", region:"Tropical Indian and Pacific Oceans", dailyFood:"50–200 g hard-shelled invertebrates" },
+
+  // SMALL CREATURES
+  "Ant":{ diet:"Omnivore — seeds, fungi, insects, sugary substances", habitat:"Soil, wood, leaf litter, diverse habitats", lifespan:"1–7 years (workers 1–3 years; queens up to 15)", region:"Worldwide except Antarctica", dailyFood:"~0.1 mg per ant; colonies consume ~50–100 g/day" },
+  "Bee":{ diet:"Herbivore — nectar and pollen only", habitat:"Meadows, gardens, forests, orchards", lifespan:"6 weeks (worker), 5 years (queen)", region:"Worldwide except polar regions", dailyFood:"~10 mg nectar per bee per day" },
+  "Honey Bee":{ diet:"Herbivore — floral nectar and pollen", habitat:"Meadows, orchards, woodland edges, gardens", lifespan:"6 weeks (worker), up to 5 years (queen)", region:"Worldwide (domesticated); native to South Asia", dailyFood:"~60 mg nectar per bee per day" },
+  "Butterfly":{ diet:"Nectarivore — flower nectar; larva: leaves", habitat:"Meadows, forests, gardens, tropical rainforests", lifespan:"2 weeks–1 year wild (species dependent)", region:"Worldwide except polar regions", dailyFood:"~50 mg nectar per day" },
+  "Spider":{ diet:"Carnivore — insects, other spiders, small vertebrates", habitat:"Diverse — forests, deserts, homes, caves", lifespan:"1–30 years wild (species dependent)", region:"Worldwide except polar ice", dailyFood:"1–5 insects per day" },
+  "Tarantula":{ diet:"Carnivore — crickets, beetles, small frogs, mice", habitat:"Deserts, scrublands, rainforests", lifespan:"5–30 years wild (females longer)", region:"Americas, Africa, Asia, Australia", dailyFood:"1–2 crickets per week (slow metabolism)" },
+  "Mosquito":{ diet:"Female: blood (mammals, birds); Male: nectar and plant juices", habitat:"Wetlands, forests, urban areas near standing water", lifespan:"2–3 weeks wild", region:"Worldwide except polar and extreme desert", dailyFood:"~0.003 mg blood per feed (females)" },
+  "Dragonfly":{ diet:"Carnivore — mosquitoes, gnats, flies, small moths", habitat:"Wetlands, ponds, streams, forests near water", lifespan:"6 months–4 years (most life as larva)", region:"Worldwide except polar regions", dailyFood:"~100 small insects per day" },
+  "Grasshopper":{ diet:"Herbivore — grass, leaves, wheat, grain crops", habitat:"Grasslands, meadows, scrubland, farmland", lifespan:"3–6 months wild", region:"Worldwide grasslands", dailyFood:"~0.5 g vegetation (50% of body weight)" },
+  "Scorpion":{ diet:"Carnivore — insects, spiders, small lizards, mice", habitat:"Deserts, tropical forests, grasslands, rocky terrain", lifespan:"3–8 years wild, up to 25 years captivity", region:"All continents except Antarctica", dailyFood:"1–5 insects per week" },
+  "Firefly":{ diet:"Larva: snails, worms; Adult: nectar or nothing", habitat:"Moist meadows, marshes, edges of forests", lifespan:"2–3 months (adult)", region:"Temperate and tropical zones worldwide", dailyFood:"Adults don't feed much; larvae ~1–2 small invertebrates" },
+  "Frog":{ diet:"Carnivore — insects, earthworms, small fish, spiders", habitat:"Freshwater ponds, rivers, rainforests, moist meadows", lifespan:"4–15 years wild (species dependent)", region:"Worldwide except extreme polar and desert", dailyFood:"~3–5% of body weight in insects per day" },
+  "Tree Frog":{ diet:"Carnivore — crickets, moths, flies, small worms", habitat:"Rainforest canopy, bushes near water", lifespan:"5–15 years wild", region:"Tropical Americas, Africa, Asia, Australia", dailyFood:"5–10 small insects per day" },
+  "Salamander":{ diet:"Carnivore — worms, slugs, insects, small fish", habitat:"Moist forests, streams, rocky hillsides", lifespan:"5–30 years wild (species dependent)", region:"North America, Europe, Asia", dailyFood:"5–10 worms or insects per day" },
+  "Caterpillar":{ diet:"Herbivore — leaves (specific host plants)", habitat:"Forests, gardens, meadows", lifespan:"2–4 weeks as caterpillar (larval stage)", region:"Worldwide", dailyFood:"2–3× body weight in leaves per day" },
+  "Earthworm":{ diet:"Detrivore — decomposing organic matter, soil bacteria", habitat:"Moist soil in forests, gardens, meadows", lifespan:"4–8 years wild", region:"Worldwide in temperate regions", dailyFood:"~30 mg decomposing matter per day" },
+  "Termite":{ diet:"Detrivore — wood, soil, leaf litter, cellulose", habitat:"Tropical forests, grasslands, wooden structures", lifespan:"Workers 2 years; queens 15–50 years", region:"Tropical and subtropical regions worldwide", dailyFood:"Colony consumes ~3–5 g wood per day" },
+  "Cockroach":{ diet:"Omnivore — organic waste, food scraps, decaying matter", habitat:"Tropical forests, caves, urban buildings", lifespan:"1–2 years wild", region:"Worldwide in tropical and temperate zones", dailyFood:"~1–5 g organic matter" },
+  "Beetle":{ diet:"Varied — leaves, wood, dung, fungi, nectar (species dependent)", habitat:"Forests, deserts, rivers, farmland, soil", lifespan:"1–3 years wild (varies greatly)", region:"Worldwide (most diverse animal order)", dailyFood:"1–5 g food depending on species" },
+  "Ladybug":{ diet:"Carnivore — aphids, mites, whiteflies, small insects", habitat:"Gardens, meadows, forests, farmland", lifespan:"1–2 years wild", region:"Worldwide except polar regions", dailyFood:"~50 aphids per day" },
+  "Centipede":{ diet:"Carnivore — insects, worms, small rodents, spiders", habitat:"Soil, leaf litter, under rocks and bark", lifespan:"5–7 years wild", region:"Worldwide", dailyFood:"1–3 small invertebrates per day" },
+  "Millipede":{ diet:"Detrivore — decaying wood, leaf litter, fungi", habitat:"Forest floor, soil, rotting logs", lifespan:"5–7 years wild", region:"Worldwide except polar regions", dailyFood:"~0.1–0.5 g decomposing matter" },
+  "Snail":{ diet:"Herbivore — algae, fungi, decaying plants, lettuce", habitat:"Gardens, forests, wetlands, rocky coastlines", lifespan:"2–7 years wild", region:"Worldwide in moist habitats", dailyFood:"~0.1–0.5 g vegetation" },
+  "Tardigrade":{ diet:"Bacteria, plant cells, small invertebrates", habitat:"Extreme environments — volcanoes, tundra, ocean floors, even space", lifespan:"Up to 60+ years with cryptobiosis", region:"Worldwide — every continent including Antarctica", dailyFood:"Microscopic food (algae, bacteria)" },
+
+  // NATURE - adapted fields
+  "Rainforest":{ diet:"N/A", habitat:"Tropical zones with >200 cm annual rainfall", lifespan:"Ancient — millions of years old (Amazon 55M+ years)", region:"Amazon Basin, Congo Basin, Southeast Asian archipelago", dailyFood:"Supports 50% of all Earth's species" },
+  "Savanna":{ diet:"N/A", habitat:"Tropical grassland with scattered trees, distinct wet/dry seasons", lifespan:"Millions of years", region:"Sub-Saharan Africa, Australia, South America", dailyFood:"Sustains millions of large herbivores" },
+  "Glacier":{ diet:"N/A", habitat:"High-altitude or polar zones with perpetual snowfield", lifespan:"Thousands to millions of years", region:"Himalayas, Andes, Alps, Antarctica, Greenland", dailyFood:"N/A — stores 69% of Earth's fresh water" },
+  "Wetland":{ diet:"N/A", habitat:"Transition between land and water — permanently or seasonally saturated", lifespan:"Ongoing ecological formation", region:"Mississippi Delta, Amazon floodplain, Sundarbans, Pantanal", dailyFood:"N/A — filters billions of litres of water daily" },
+  "Volcano":{ diet:"N/A", habitat:"Tectonic plate boundaries and hotspots", lifespan:"Thousands to millions of years", region:"Ring of Fire — Pacific; Italy (Etna); Iceland; Hawaii", dailyFood:"N/A — ejects 100M+ tonnes of magma per eruption" },
+  "Mangrove Forest":{ diet:"N/A", habitat:"Coastal tropical intertidal zones with saltwater and freshwater mix", lifespan:"Decades to centuries per forest patch", region:"Southeast Asia, West Africa, Caribbean, South Asia", dailyFood:"Nursery for 70% of tropical fish species" },
+  "Coral Reef":{ diet:"N/A", habitat:"Shallow warm tropical marine waters, 0–30 m depth", lifespan:"Up to 10,000 years (individual reefs)", region:"Great Barrier Reef, Caribbean, Red Sea, Indo-Pacific", dailyFood:"Supports 25% of all marine species" },
+  "Tundra":{ diet:"N/A", habitat:"Arctic and subarctic zones — permafrost below surface", lifespan:"Ongoing since last ice age (~10,000 years)", region:"Northern Canada, Alaska, Siberia, Scandinavia", dailyFood:"N/A — growing season only 50–60 days" },
+
+  // MOUNTAINS
+  "Mount Everest":{ diet:"N/A", habitat:"Himalayan high-altitude alpine zone, permanent glaciers above 5,000 m", lifespan:"~50–60 million years old", region:"Nepal–Tibet border, Sagarmatha Zone", dailyFood:"N/A — height: 8,849 m above sea level" },
+  "K2":{ diet:"N/A", habitat:"Karakoram alpine terrain, extreme altitude and steep faces", lifespan:"~30–40 million years old", region:"Gilgit-Baltistan, Pakistan — China border", dailyFood:"N/A — height: 8,611 m, second highest peak" },
+  "Kilimanjaro":{ diet:"N/A", habitat:"Volcanic massif with 5 climate zones from rainforest to arctic", lifespan:"~750,000 years (volcanic)", region:"Tanzania, East Africa — near Kenyan border", dailyFood:"N/A — highest peak in Africa at 5,895 m" },
+  "Himalayas":{ diet:"N/A", habitat:"High-altitude ranges with glaciers, alpine meadows, snowfields", lifespan:"~50 million years old (still rising ~5 mm/year)", region:"South Asia — India, Nepal, Tibet, Bhutan, Pakistan", dailyFood:"N/A — world's highest mountain range" },
+  "Alps":{ diet:"N/A", habitat:"Temperate to subalpine zones, extensive glaciers and ski terrain", lifespan:"~30 million years old", region:"France, Switzerland, Italy, Austria, Germany, Slovenia", dailyFood:"N/A — spans 1,200 km across 8 countries" },
+  "Andes":{ diet:"N/A", habitat:"Subtropical to polar zones, volcanic activity, high desert (Atacama)", lifespan:"~25 million years old", region:"South America — Colombia to Patagonia (7 countries)", dailyFood:"N/A — longest continental mountain range (7,000 km)" },
+  "Denali":{ diet:"N/A", habitat:"Sub-Arctic tundra and alpine, heavy snowfall and glaciers", lifespan:"~60–65 million years old", region:"Alaska, USA — Denali National Park", dailyFood:"N/A — highest peak in North America at 6,190 m" },
+  "Mont Blanc":{ diet:"N/A", habitat:"Alpine glaciers, permanent snowfields above 2,500 m", lifespan:"~10 million years old", region:"France–Italy border, near Chamonix", dailyFood:"N/A — highest peak in Western Europe at 4,808 m" },
+
+  // SEA
+  "Pacific Ocean":{ diet:"N/A", habitat:"Earth's largest ocean — 165.25 million km², from polar to tropical", lifespan:"Ongoing for ~750 million years", region:"Between Americas (east) and Asia/Australia (west)", dailyFood:"N/A — contains 25,000+ islands and deepest trench (11 km)" },
+  "Atlantic Ocean":{ diet:"N/A", habitat:"Second-largest ocean — 106.46 million km², spans Arctic to Antarctic", lifespan:"~130 million years old (widening ~2.5 cm/year)", region:"Between the Americas and Europe/Africa", dailyFood:"N/A — major trade route; average depth 3,332 m" },
+  "Coral Reef":{ diet:"N/A", habitat:"Shallow tropical marine waters, built from calcium carbonate skeletons", lifespan:"Up to 10,000 years (Great Barrier Reef ~8,000 years)", region:"Indo-Pacific, Caribbean, Red Sea, Coral Triangle", dailyFood:"N/A — supports 25% of all marine biodiversity" },
+  "Deep Sea":{ diet:"N/A", habitat:"Ocean below 200 m — no sunlight, extreme pressure, near-freezing", lifespan:"Ongoing", region:"All oceans — covers 60% of Earth's surface", dailyFood:"N/A — 95% remains unexplored" },
+  "Hydrothermal Vent":{ diet:"N/A", habitat:"Ocean floor cracks at mid-ocean ridges — superheated mineral water", lifespan:"Decades to centuries", region:"Mid-Atlantic Ridge, East Pacific Rise, Indian Ocean Ridge", dailyFood:"N/A — supports chemosynthetic life without sunlight" },
+  "Ocean Trench":{ diet:"N/A", habitat:"Deep-sea trenches at subduction zones — deepest up to 11,034 m", lifespan:"Geological timescale", region:"Mariana Trench (Pacific), Java Trench (Indian Ocean)", dailyFood:"N/A — extreme pressure, absolute darkness" },
+  "Kelp Forest":{ diet:"N/A", habitat:"Cold nutrient-rich coastal waters, giant kelp canopies up to 30 m tall", lifespan:"Individual kelp lives 4–7 years; forests persist for centuries", region:"California coast, British Columbia, Tasmania, South Africa", dailyFood:"N/A — supports 800+ marine species" },
+
+  // DESERT
+  "Sahara Desert":{ diet:"N/A", habitat:"Hot arid desert — sand seas (ergs), rocky plateaus (hamadas)", lifespan:"~3 million years old as desert", region:"North Africa — 11 countries across 9.2 million km²", dailyFood:"N/A — world's largest hot desert; average rain <25 mm/year" },
+  "Fennec Fox":{ diet:"Omnivore — rodents, insects, lizards, eggs, fruit", habitat:"Sahara and North African desert, sandy terrain", lifespan:"10 years wild, up to 14 in captivity", region:"North Africa and the Sinai Peninsula", dailyFood:"20–50 g food (very drought-tolerant)" },
+  "Camel":{ diet:"Herbivore — thorny shrubs, dried grass, salty plants, leaves", habitat:"Deserts, arid steppes, dry savannas", lifespan:"40–50 years wild", region:"Middle East, Central Asia, North Africa, Horn of Africa", dailyFood:"3–5 kg vegetation; drinks 100–150 L water in one session" },
+  "Scorpion":{ diet:"Carnivore — insects, spiders, small lizards, mice", habitat:"Deserts, rocky terrain, tropical forests", lifespan:"3–8 years wild, up to 25 years captivity", region:"All continents except Antarctica", dailyFood:"1–5 insects per week (very efficient predator)" },
+  "Meerkat":{ diet:"Carnivore — insects, larvae, scorpions, lizards, eggs", habitat:"Dry savanna and desert scrubland", lifespan:"5–15 years wild", region:"Kalahari Desert — Botswana, Namibia, South Africa", dailyFood:"60–100 g insects and invertebrates" },
+  "Desert Tortoise":{ diet:"Herbivore — wildflowers, grasses, cacti, leaves", habitat:"Mojave and Sonoran Desert scrub, rocky slopes", lifespan:"50–80 years wild", region:"Southwestern USA and northwestern Mexico", dailyFood:"~100–200 g vegetation (forages only a few months/year)" },
+  "Jerboa":{ diet:"Herbivore/Omnivore — seeds, roots, insects, plant material", habitat:"Desert and semi-arid scrubland", lifespan:"2–6 years wild", region:"North Africa, Middle East, Central Asia, China", dailyFood:"~20 g seeds and plant material" },
+  "Sidewinder Snake":{ diet:"Carnivore — small lizards and rodents", habitat:"Sandy desert terrain, sandy washes", lifespan:"20+ years wild", region:"Mojave and Sonoran deserts — southwestern USA and Mexico", dailyFood:"1–2 lizards or rodents per week" },
+  "Cactus":{ diet:"Photosynthesis — CO₂, water, sunlight; CAM metabolism", habitat:"Hot and cold deserts, dry scrublands, rocky terrain", lifespan:"25–200+ years depending on species", region:"Americas (native) — Sonoran, Chihuahuan, Atacama", dailyFood:"N/A — stores water in succulent tissues" },
+
+  // TREES
+  "Banyan Tree":{ diet:"Photosynthesis — sunlight, CO₂, water, mineral nutrients via roots", habitat:"Tropical and subtropical forests, roadsides", lifespan:"Over 300 years; Thimmamma Marrimanu (India) is 550+ years old", region:"Indian subcontinent, Southeast Asia, East Africa", dailyFood:"N/A — Great Banyan in India covers 1.41 hectares" },
+  "Baobab Tree":{ diet:"Photosynthesis — sunlight, CO₂, rainwater; stores 120,000 L in trunk", habitat:"African savanna, dry woodland, Madagascar highlands", lifespan:"Up to 3,000+ years (Africa's Tree of Life)", region:"Sub-Saharan Africa, Madagascar, northwestern Australia", dailyFood:"N/A — trunk holds water for drought survival" },
+  "Sequoia Tree":{ diet:"Photosynthesis — massive CO₂ absorption; anchored by shallow root network", habitat:"High-elevation Sierra Nevada mountain slopes with wet winters", lifespan:"3,000–3,500 years (General Sherman ~2,700 years old)", region:"Sierra Nevada, California, USA", dailyFood:"N/A — world's largest tree by volume" },
+  "Redwood Tree":{ diet:"Photosynthesis — absorbs massive CO₂; fog drip provides up to 40% of water", habitat:"Coastal fog belt, humid temperate rainforest", lifespan:"1,200–2,000 years; Hyperion (115.92 m) tallest known", region:"Northern California and southern Oregon coast, USA", dailyFood:"N/A — world's tallest living trees" },
+  "Oak Tree":{ diet:"Photosynthesis — sunlight, CO₂, soil nutrients; deep taproot system", habitat:"Temperate deciduous forests, grassland margins", lifespan:"200–1,000 years (some British oaks 800+ years)", region:"Europe, North America, East Asia, North Africa", dailyFood:"N/A — produces 20,000 acorns per year" },
+  "Pine Tree":{ diet:"Photosynthesis — sunlight, CO₂; mycorrhizal fungi aid nutrient uptake", habitat:"Boreal forests, mountain slopes, sandy coastal soils", lifespan:"100–1,000 years (Bristlecone pine 4,800+ years)", region:"Northern Hemisphere — North America, Europe, Asia", dailyFood:"N/A — needles reduce water loss in cold climates" },
+  "Mango Tree":{ diet:"Photosynthesis — tropical sunlight, CO₂, well-drained soil, monsoon rains", habitat:"Tropical lowland and coastal forests and farmland", lifespan:"100–300 years (can produce fruit for 200+ years)", region:"South Asia — India, Bangladesh, Pakistan; also Southeast Asia", dailyFood:"N/A — produces 100–200 fruits per season" },
+  "Bamboo":{ diet:"Photosynthesis — sunlight, CO₂, water; fastest-growing plant on Earth", habitat:"Tropical and subtropical forests, valleys, riversides", lifespan:"Species varies: 40–120 years (then mass flowers and dies)", region:"Asia (China, Japan, India), Africa, Americas", dailyFood:"N/A — can grow 91 cm in a single day" },
+  "Coconut Tree":{ diet:"Photosynthesis — intense tropical sunlight, CO₂, sandy coastal soil, saltwater tolerance", habitat:"Tropical coastlines, beaches, low-elevation tropical islands", lifespan:"80–100 years productive life", region:"South Asia, Southeast Asia, Pacific Islands, Caribbean", dailyFood:"N/A — produces 50–200 coconuts per year" },
+  "Eucalyptus Tree":{ diet:"Photosynthesis — intense sunlight, CO₂; deep roots extract groundwater", habitat:"Dry sclerophyll forests, coastal scrub, mountain ash forests", lifespan:"250–500 years (mountain ash); some 1,000+ years", region:"Australia (native); introduced in California, Spain, South Africa", dailyFood:"N/A — leaves have antibacterial oils; koala's only food" },
+  "Cherry Blossom":{ diet:"Photosynthesis — sunlight, CO₂, temperate climate with cold winter dormancy", habitat:"Temperate deciduous forests, parks, mountain slopes", lifespan:"15–30 years (ornamental); wild Prunus up to 200 years", region:"Japan (Yoshino), China, South Korea, USA (Washington D.C.)", dailyFood:"N/A — flowers only 7–14 days per year" },
+  "Mangrove Tree":{ diet:"Photosynthesis — sunlight, CO₂; saltwater-tolerant with pneumatophore roots", habitat:"Tropical and subtropical coastal intertidal zones", lifespan:"100+ years per mangrove system", region:"Southeast Asia, South America, West Africa, Caribbean", dailyFood:"N/A — protects coasts from 30 storms and erosion" },
+  "Neem Tree":{ diet:"Photosynthesis — tropical sunlight, CO₂; drought-tolerant deep roots", habitat:"Tropical dry forests and roadsides", lifespan:"150–200 years", region:"South Asia — India, Bangladesh, Sri Lanka, Pakistan", dailyFood:"N/A — leaves and extracts used in traditional medicine for 4,500 years" },
+  "Teak Tree":{ diet:"Photosynthesis — tropical sunlight, CO₂, monsoon rainfall", habitat:"Tropical deciduous forests", lifespan:"100–200 years", region:"Myanmar, India, Thailand, Indonesia, Laos", dailyFood:"N/A — produces world's most durable hardwood timber" },
 };
 
-const dietMap = {
-  Mammals: "Carnivore / Herbivore / Omnivore",
-  Reptiles: "Carnivore / Insectivore",
-  Birds: "Seeds, Insects, Fish",
-  Aquatic: "Plankton, Fish, Crustaceans",
-  "Small Creatures": "Plants, Insects, Nectar",
-  Nature: "Photosynthesis / Water",
-  Mountains: "N/A",
-  Sea: "Plankton, Algae, Marine Life",
-  Desert: "Varies",
-  Trees: "Photosynthesis"
-};
-
-const lifespanMap = {
-  Mammals: "10–80 years",
-  Reptiles: "5–150 years",
-  Birds: "5–60 years",
-  Aquatic: "1–100 years",
-  "Small Creatures": "1–10 years",
-  Nature: "Centuries to millennia",
-  Mountains: "Geological timescale",
-  Sea: "Geological timescale",
-  Desert: "Geological timescale",
-  Trees: "50–1000+ years"
-};
+function getAnimalInfo(name, category) {
+  if (animalInfo[name]) return animalInfo[name];
+  const catDefaults = {
+    Mammals: { diet:"Omnivore/Herbivore — leaves, seeds, small animals", habitat:"Tropical forests and grasslands", lifespan:"8–25 years wild", region:"Africa, Asia, South America", dailyFood:"1–5 kg mixed food" },
+    Reptiles: { diet:"Carnivore — insects, small mammals, birds", habitat:"Tropical and subtropical scrubland", lifespan:"10–30 years wild", region:"Africa, South and Southeast Asia, Americas", dailyFood:"1–3 prey items per week" },
+    Birds: { diet:"Omnivore — insects, seeds, nectar, small vertebrates", habitat:"Forest and open habitat", lifespan:"5–20 years wild", region:"Tropics and temperate zones worldwide", dailyFood:"50–300 g mixed food" },
+    Aquatic: { diet:"Carnivore — fish, plankton, invertebrates", habitat:"Marine and freshwater environments", lifespan:"5–30 years wild", region:"Worldwide oceans and rivers", dailyFood:"2–8% of body weight in prey" },
+    "Small Creatures": { diet:"Insectivore/Herbivore — plants, insects, decomposing matter", habitat:"Soil, forest floor, freshwater", lifespan:"1–10 years wild", region:"Worldwide in temperate and tropical zones", dailyFood:"5–50 mg food" },
+    Nature: { diet:"N/A", habitat:"Natural terrestrial or aquatic ecosystem", lifespan:"Centuries to millennia", region:"Various global biomes", dailyFood:"N/A" },
+    Mountains: { diet:"N/A", habitat:"High-altitude alpine or subalpine terrain", lifespan:"Millions of years (geological)", region:"Major mountain ranges across all continents", dailyFood:"N/A" },
+    Sea: { diet:"N/A", habitat:"Marine and coastal environment", lifespan:"Geological timescale", region:"Global oceans and coastal zones", dailyFood:"N/A" },
+    Desert: { diet:"Omnivore/Carnivore — varies with season and prey availability", habitat:"Arid and semi-arid desert terrain", lifespan:"5–30 years wild", region:"Major deserts — Sahara, Arabian, Gobi, Atacama", dailyFood:"50–500 g food (adapted to survive long without water)" },
+    Trees: { diet:"Photosynthesis — sunlight, CO₂, soil nutrients, rainfall", habitat:"Temperate and tropical forests", lifespan:"50–500+ years", region:"Forests and plantations worldwide", dailyFood:"N/A — net primary producers" },
+  };
+  return catDefaults[category] || catDefaults.Nature;
+}
 
 const animals = [];
 let globalId = 1;
 
 categories.forEach(category => {
   const list = baseNames[category];
-  for (let i = 0; i < 150; i++) {
-    const name = list[i % list.length];
+  const seen = new Set();
+  const unique = list.filter(name => {
+    const clean = name.trim();
+    if (seen.has(clean)) return false;
+    seen.add(clean);
+    return true;
+  });
+
+  unique.forEach((name, localIdx) => {
+    const info = getAnimalInfo(name, category);
     animals.push({
       id: globalId++,
       name,
       baseName: name,
       category,
-      description: `${name} is a remarkable part of the ${category.toLowerCase()} ecosystem. Found across various regions of the world, it plays a vital role in maintaining ecological balance.`,
-      habitat: habitatMap[category],
-      country: "Global",
-      diet: dietMap[category],
-      lifespan: lifespanMap[category]
+      categoryIndex: localIdx,
+      categoryTotal: unique.length,
+      description: `${name} — ${info.habitat}. Found in ${info.region}. Diet: ${info.diet}.`,
+      habitat: info.habitat,
+      diet: info.diet,
+      lifespan: info.lifespan,
+      region: info.region,
+      dailyFood: info.dailyFood,
+      country: info.region.split("—")[0].trim().split(",")[0].trim(),
     });
-  }
+  });
 });
 
 export default animals;
-export { categories };

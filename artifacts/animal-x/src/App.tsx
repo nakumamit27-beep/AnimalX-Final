@@ -13,6 +13,7 @@ import Chatbot from "./pages/Chatbot";
 import HelpDesk from "./pages/HelpDesk";
 import Auth from "./pages/Auth";
 import Premium from "./pages/Premium";
+import LiveTracking from "./pages/LiveTracking";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ function Router() {
           <Route path="/help" component={HelpDesk} />
           <Route path="/auth" component={Auth} />
           <Route path="/premium" component={Premium} />
+          <Route path="/live-tracking" component={LiveTracking} />
           <Route component={NotFound} />
         </Switch>
       </main>

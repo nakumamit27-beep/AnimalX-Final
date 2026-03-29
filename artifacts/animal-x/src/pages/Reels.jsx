@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { getEmoji } from "../utils/image";
-import animals, { categories } from "../data/animals";
+import { useAuth } from "../context/AuthContext";
+import animals from "../data/animals";
+import { Link } from "wouter";
 
 const defaultReels = [
   { id: "d1", type: "default", title: "Lions of the Savanna", category: "Mammals", emoji: "🦁", bg: "linear-gradient(135deg, #f59e0b, #d97706)", desc: "Watch the king of the jungle in their natural habitat. Majestic and powerful.", likes: 0, views: 0, shares: 0 },
@@ -11,6 +13,7 @@ const defaultReels = [
   { id: "d6", type: "default", title: "Mountain Majesty", category: "Mountains", emoji: "⛰️", bg: "linear-gradient(135deg, #64748b, #334155)", desc: "The world's highest peaks — from Everest to the Andes, nature's skyscrapers.", likes: 0, views: 0, shares: 0 },
   { id: "d7", type: "default", title: "Tiny World", category: "Small Creatures", emoji: "🐜", bg: "linear-gradient(135deg, #f97316, #ea580c)", desc: "Ants, bees, and butterflies — small in size but mighty in ecological impact.", likes: 0, views: 0, shares: 0 },
   { id: "d8", type: "default", title: "Coral Kingdom", category: "Sea", emoji: "🌊", bg: "linear-gradient(135deg, #0ea5e9, #0284c7)", desc: "Coral reefs teem with life — from tiny fish to majestic sea turtles.", likes: 0, views: 0, shares: 0 },
+  { id: "d9", type: "default", title: "Ancient Trees", category: "Trees", emoji: "🌲", bg: "linear-gradient(135deg, #166534, #4ade80)", desc: "Redwoods, banyans, and baobabs — trees that have stood for thousands of years.", likes: 0, views: 0, shares: 0 },
 ];
 
 export default function Reels() {
@@ -18,22 +21,27 @@ export default function Reels() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const touchStartY = useRef(null);
   const fileInputRef = useRef(null);
-  const videoRefs = useRef({});
+  const { user } = useAuth();
 
   const goTo = (index) => {
-    if (index < 0 || index >= reels.length) return;
-    setCurrentIndex(index);
+    const clamped = (index + reels.length) % reels.length;
+    setCurrentIndex(clamped);
   };
 
   const handleUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (!user) {
+      alert("Please login first to upload reels.");
+      return;
+    }
     const url = URL.createObjectURL(file);
     const newReel = {
       id: `u_${Date.now()}`,
       type: "video",
       url,
       title: file.name.replace(/\.[^.]+$/, ""),
+      user: user.name || user.email || "Anonymous",
       category: "User Upload",
       likes: 0,
       views: 0,
@@ -65,9 +73,15 @@ export default function Reels() {
     <div className="reels-page" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} onWheel={handleWheel}>
       <div className="reels-upload-bar">
         <span className="reels-label">🎬 Wildlife Reels</span>
-        <button className="upload-btn" onClick={() => fileInputRef.current?.click()}>
-          ➕ Upload MP4
-        </button>
+        {user ? (
+          <button className="upload-btn" onClick={() => fileInputRef.current?.click()}>
+            ➕ Upload MP4
+          </button>
+        ) : (
+          <Link href="/auth" className="upload-btn" style={{ textDecoration: "none" }}>
+            🔑 Login to Upload
+          </Link>
+        )}
         <input
           ref={fileInputRef}
           type="file"
@@ -79,19 +93,13 @@ export default function Reels() {
 
       <div className="reel-card-outer">
         {reel.type === "video" ? (
-          <VideoReel
-            reel={reel}
-            onUpdate={updateReel}
-          />
+          <VideoReel reel={reel} onUpdate={updateReel} />
         ) : (
           <DefaultReel reel={reel} animals={animals} />
         )}
 
         <div className="reel-actions-sidebar">
-          <button
-            className="reel-action-btn liked"
-            onClick={() => updateReel(reel.id, { likes: reel.likes + 1 })}
-          >
+          <button className="reel-action-btn liked" onClick={() => updateReel(reel.id, { likes: reel.likes + 1 })}>
             <span className="reel-action-icon">❤️</span>
             <span>{reel.likes}</span>
           </button>
@@ -117,18 +125,18 @@ export default function Reels() {
             <span>{reel.shares}</span>
           </button>
 
-          <button className="reel-action-btn nav-arrow" onClick={() => goTo(currentIndex - 1)} disabled={currentIndex === 0}>↑</button>
-          <button className="reel-action-btn nav-arrow" onClick={() => goTo(currentIndex + 1)} disabled={currentIndex === reels.length - 1}>↓</button>
+          <button className="reel-action-btn nav-arrow" onClick={() => goTo(currentIndex - 1)}>↑</button>
+          <button className="reel-action-btn nav-arrow" onClick={() => goTo(currentIndex + 1)}>↓</button>
         </div>
 
         <div className="reel-progress-dots">
-          {reels.slice(0, 15).map((_, i) => (
+          {reels.map((_, i) => (
             <div key={i} className={`progress-dot ${i === currentIndex ? "active" : ""}`} onClick={() => goTo(i)} />
           ))}
         </div>
 
         <div className="reel-counter">{currentIndex + 1} / {reels.length}</div>
-        <div className="reel-hint">↕ Scroll or swipe to navigate</div>
+        <div className="reel-hint">↕ Scroll or swipe to navigate · Loops infinitely</div>
       </div>
     </div>
   );
@@ -151,7 +159,7 @@ function VideoReel({ reel, onUpdate }) {
         }}
       />
       <div className="reel-video-info">
-        <div className="reel-user-badge">📤 User Upload</div>
+        <div className="reel-user-badge">👤 {reel.user || "Wildlife Fan"}</div>
         <h2 className="reel-title-overlay">{reel.title}</h2>
       </div>
     </div>

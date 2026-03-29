@@ -1759,6 +1759,89 @@ a { text-decoration: none; color: inherit; }
 
 .auth-nav-link { border-left: 1px solid var(--border); margin-left: 4px; padding-left: 12px; }
 
+/* ===== LIVE TRACKING PAGE ===== */
+.tracking-page { padding-bottom: 40px; }
+
+.tracking-header { margin-bottom: 20px; }
+.tracking-updated { font-size: 0.8rem; color: var(--accent); margin-top: 4px; }
+
+.tracking-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.tracking-filter { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.tracking-filter-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text1);
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.tracking-filter-btn.active,
+.tracking-filter-btn:hover {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+}
+
+.tracking-count { font-size: 0.82rem; color: var(--text2); white-space: nowrap; }
+
+.tracking-map-wrap { margin-bottom: 32px; }
+
+.tracking-list h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text1);
+  margin-bottom: 12px;
+}
+
+.tracking-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.tracking-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: border-color 0.2s;
+}
+
+.tracking-card:hover { border-color: var(--accent); }
+
+.tracking-card-emoji { font-size: 2rem; flex-shrink: 0; }
+
+.tracking-card-info { flex: 1; min-width: 0; }
+.tracking-card-name { font-weight: 700; font-size: 0.95rem; color: var(--text1); }
+.tracking-card-cat { font-size: 0.78rem; color: var(--text2); margin-top: 2px; }
+.tracking-card-coords { font-size: 0.72rem; color: var(--text3, #666); margin-top: 2px; font-family: monospace; }
+
+.tracking-card-distance {
+  text-align: center;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 8px;
+  padding: 6px 10px;
+  flex-shrink: 0;
+}
+
+.distance-num { display: block; font-size: 1.1rem; font-weight: 800; color: var(--accent); }
+.distance-unit { font-size: 0.65rem; color: var(--text2); }
+
 /* ===== LOCKED CARD (CATEGORY LOCK) ===== */
 .locked-card {
   background: var(--card-bg);

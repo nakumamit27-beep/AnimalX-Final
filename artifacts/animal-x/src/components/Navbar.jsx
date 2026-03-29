@@ -6,6 +6,7 @@ const navItems = [
   { href: "/", label: "Home", icon: "🏠" },
   { href: "/animals", label: "Animals", icon: "🐾" },
   { href: "/map", label: "Map", icon: "🗺️" },
+  { href: "/live-tracking", label: "Tracking", icon: "📍" },
   { href: "/reels", label: "Reels", icon: "🎬" },
   { href: "/travel", label: "Travel", icon: "✈️" },
   { href: "/chat", label: "Chat", icon: "🤖" },

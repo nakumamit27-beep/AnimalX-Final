@@ -6,11 +6,12 @@ import CategoryFilter from "../components/CategoryFilter";
 import { useAuth } from "../context/AuthContext";
 
 const PAGE_SIZE = 40;
-const CATEGORY_FREE_LIMIT = 130;
+const LOCK_LAST_N = 20;
 
 function isLockedAnimal(animal) {
-  const localIndex = (animal.id - 1) % 150;
-  return localIndex >= CATEGORY_FREE_LIMIT;
+  const total = animal.categoryTotal || 0;
+  const freeLimit = Math.max(0, total - LOCK_LAST_N);
+  return (animal.categoryIndex ?? 0) >= freeLimit;
 }
 
 export default function Animals() {
