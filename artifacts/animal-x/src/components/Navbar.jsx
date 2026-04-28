@@ -1,59 +1,49 @@
-import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 
-const navItems = [
+const bottomItems = [
   { href: "/", label: "Home", icon: "🏠" },
   { href: "/animals", label: "Animals", icon: "🐾" },
-  { href: "/map", label: "Map", icon: "🗺️" },
-  { href: "/live-tracking", label: "Tracking", icon: "📍" },
   { href: "/reels", label: "Reels", icon: "🎬" },
   { href: "/travel", label: "Travel", icon: "✈️" },
-  { href: "/chat", label: "Chat", icon: "🤖" },
-  { href: "/premium", label: "Premium", icon: "👑" },
-  { href: "/help", label: "Help", icon: "💬" },
+  { href: "/profile", label: "Profile", icon: "👤" },
 ];
 
 export default function Navbar() {
   const [location] = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const { user, isPremium } = useAuth();
+  const { user } = useAuth();
 
   return (
-    <nav className="navbar">
-      <div className="nav-brand">
+    <>
+      <header className="topbar">
         <Link href="/" className="brand-link">
           <span className="brand-icon">🦁</span>
           <span className="brand-name">Animal X</span>
         </Link>
-      </div>
+        <div className="topbar-actions">
+          <Link href="/map" className={`top-pill ${location === "/map" ? "active" : ""}`} title="Zoo Map">🗺️</Link>
+          <Link href="/live-tracking" className={`top-pill ${location === "/live-tracking" ? "active" : ""}`} title="Live Tracking">📍</Link>
+          <Link href="/chat" className={`top-pill ${location === "/chat" ? "active" : ""}`} title="Wildlife Chat">🤖</Link>
+          {!user && (
+            <Link href="/auth" className="top-pill top-pill-primary" title="Login">Login</Link>
+          )}
+        </div>
+      </header>
 
-      <div className={`nav-links ${menuOpen ? "open" : ""}`}>
-        {navItems.map(item => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`nav-link ${location === item.href ? "active" : ""} ${item.href === "/premium" ? "premium-link" : ""}`}
-            onClick={() => setMenuOpen(false)}
-          >
-            <span className="nav-icon">{item.icon}</span>
-            <span className="nav-label">{item.label}</span>
-            {item.href === "/premium" && isPremium && <span className="nav-premium-dot">✓</span>}
-          </Link>
-        ))}
-        <Link
-          href="/auth"
-          className={`nav-link auth-nav-link ${location === "/auth" ? "active" : ""}`}
-          onClick={() => setMenuOpen(false)}
-        >
-          <span className="nav-icon">👤</span>
-          <span className="nav-label">{user ? user.name?.split(" ")[0] || "Account" : "Login"}</span>
-        </Link>
-      </div>
-
-      <button className="hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
-        {menuOpen ? "✕" : "☰"}
-      </button>
-    </nav>
+      <nav className="bottom-nav">
+        {bottomItems.map((item) => {
+          const active =
+            item.href === "/"
+              ? location === "/"
+              : location === item.href || location.startsWith(item.href + "/");
+          return (
+            <Link key={item.href} href={item.href} className={`bn-item ${active ? "active" : ""}`}>
+              <span className="bn-icon">{item.icon}</span>
+              <span className="bn-label">{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </>
   );
 }

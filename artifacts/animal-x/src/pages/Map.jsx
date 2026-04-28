@@ -4,17 +4,12 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import zoos from "../data/zoos";
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
-
-const greenIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+const zooEmojiIcon = L.divIcon({
+  className: "zoo-emoji-marker",
+  html: '<div class="zem-bubble">🏛️</div>',
+  iconSize: [38, 38],
+  iconAnchor: [19, 38],
+  popupAnchor: [0, -34],
 });
 
 function openZooInMap(zoo) {
@@ -29,10 +24,11 @@ export default function Map() {
 
   useEffect(() => { setMapReady(true); }, []);
 
-  const countries = ["All", ...new Set(zoos.map(z => z.country))].sort();
-  const filteredZoos = zoos.filter(z => {
+  const countries = ["All", ...new Set(zoos.map((z) => z.country))].sort();
+  const filteredZoos = zoos.filter((z) => {
     const matchCountry = filterCountry === "All" || z.country === filterCountry;
-    const matchSearch = z.name.toLowerCase().includes(searchZoo.toLowerCase()) ||
+    const matchSearch =
+      z.name.toLowerCase().includes(searchZoo.toLowerCase()) ||
       z.country.toLowerCase().includes(searchZoo.toLowerCase());
     return matchCountry && matchSearch;
   });
@@ -40,8 +36,10 @@ export default function Map() {
   return (
     <div className="map-page">
       <div className="map-header">
-        <h1 className="page-title">Zoo World Map</h1>
-        <p className="page-subtitle">Explore {zoos.length}+ zoos across {new Set(zoos.map(z => z.country)).size} countries</p>
+        <h1 className="page-title">🗺️ Zoo World Map</h1>
+        <p className="page-subtitle">
+          Explore {zoos.length}+ zoos across {new Set(zoos.map((z) => z.country)).size} countries
+        </p>
       </div>
 
       <div className="map-controls">
@@ -50,15 +48,17 @@ export default function Map() {
           className="search-input"
           placeholder="Search zoos..."
           value={searchZoo}
-          onChange={e => setSearchZoo(e.target.value)}
+          onChange={(e) => setSearchZoo(e.target.value)}
           style={{ maxWidth: "220px" }}
         />
-        <select className="country-select" value={filterCountry} onChange={e => setFilterCountry(e.target.value)}>
-          {countries.map(c => (
-            <option key={c} value={c}>{c}{c !== "All" ? ` (${zoos.filter(z => z.country === c).length})` : ""}</option>
+        <select className="country-select" value={filterCountry} onChange={(e) => setFilterCountry(e.target.value)}>
+          {countries.map((c) => (
+            <option key={c} value={c}>
+              {c}{c !== "All" ? ` (${zoos.filter((z) => z.country === c).length})` : ""}
+            </option>
           ))}
         </select>
-        <span className="zoo-count">🗺️ {filteredZoos.length} zoos</span>
+        <span className="zoo-count">🏛️ {filteredZoos.length} zoos</span>
       </div>
 
       {mapReady && (
@@ -73,8 +73,8 @@ export default function Map() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {filteredZoos.map(zoo => (
-              <Marker key={zoo.id} position={[zoo.lat, zoo.lng]} icon={greenIcon}>
+            {filteredZoos.map((zoo) => (
+              <Marker key={zoo.id} position={[zoo.lat, zoo.lng]} icon={zooEmojiIcon}>
                 <Popup>
                   <div className="map-popup-leaflet">
                     {zoo.image && (
@@ -82,10 +82,10 @@ export default function Map() {
                         src={zoo.image}
                         alt={zoo.name}
                         style={{ width: "100%", height: "100px", objectFit: "cover", borderRadius: "6px", marginBottom: "8px" }}
-                        onError={e => { e.target.style.display = "none"; }}
+                        onError={(e) => { e.target.style.display = "none"; }}
                       />
                     )}
-                    <div style={{ fontWeight: 700, fontSize: "0.95rem", marginBottom: "4px" }}>🦁 {zoo.name}</div>
+                    <div style={{ fontWeight: 700, fontSize: "0.95rem", marginBottom: "4px" }}>🏛️ {zoo.name}</div>
                     <div style={{ color: "#555", fontSize: "0.82rem" }}>📍 {zoo.country}</div>
                     <div style={{ color: "#555", fontSize: "0.82rem" }}>🐾 {zoo.animals} animals</div>
                     <div style={{ color: "#555", fontSize: "0.82rem" }}>⭐ {zoo.rating}/5.0</div>
@@ -107,9 +107,14 @@ export default function Map() {
       )}
 
       <div className="zoo-list">
-        <h3>Zoo Directory ({filteredZoos.length}) — <span style={{ fontSize: "0.8rem", color: "var(--text2)", fontWeight: 400 }}>Click a card to open in Google Maps</span></h3>
+        <h3>
+          Zoo Directory ({filteredZoos.length}) —{" "}
+          <span style={{ fontSize: "0.8rem", color: "var(--text2)", fontWeight: 400 }}>
+            Click a card to open in Google Maps
+          </span>
+        </h3>
         <div className="zoo-grid">
-          {filteredZoos.slice(0, 50).map(zoo => (
+          {filteredZoos.slice(0, 50).map((zoo) => (
             <div
               key={zoo.id}
               className="zoo-card zoo-card-clickable"
@@ -122,10 +127,10 @@ export default function Map() {
                   alt={zoo.name}
                   className="zoo-card-img"
                   loading="lazy"
-                  onError={e => { e.target.style.display = "none"; }}
+                  onError={(e) => { e.target.style.display = "none"; }}
                 />
               )}
-              <div className="zoo-card-name">🦁 {zoo.name}</div>
+              <div className="zoo-card-name">🏛️ {zoo.name}</div>
               <div className="zoo-card-country">📍 {zoo.country}</div>
               <div className="zoo-card-meta">
                 <span>🐾 {zoo.animals}</span>

@@ -1,0 +1,100 @@
+Please perform a major UI overhaul and speed optimization:
+​1. Navigation Change (Sidebar to Bottom Bar):
+• ​Remove the Side Drawer/Navigation Menu entirely.
+• ​Implement a Bottom Navigation Bar that stays fixed at the bottom of the screen.
+• ​Add these 5 icons to the Bottom Bar: Home, Animals, Reels, Travel, Profile.
+• ​(Keep 'Map', 'Tracking', and 'Chat' as small floating buttons or inside the Animals page).
+​2. Remove Premium:
+• ​Completely remove the 'Premium' option and all related buttons from the app. Everything should be free for now.
+​3. Emoji Integration:
+• ​In the Map page: Use a  🏛or 🦁 emoji for zoo/animal locations.
+• ​In the Animals List: Add a relevant emoji next to each animal name (e.g., 🦁 Lion, 🐘 Elephant, 🐍 Snake).
+​4. High-Speed Uploads (Critical):
+• ​Fix the lag in Reels, Posts, and Stories.
+• And  instent bluetick
+
+
+Please fix the UI layout, data accuracy, and deep links immediately:
+​1. Photo Sync Fix:
+• ​Currently, the animal photo shows in the top banner but not on the main card/list. Fix the code so the imageSrc is correctly mapped to both the banner and the animal card.
+• ​Ensure that when I upload a photo via Admin Mode, it updates everywhere (card, banner, and details page).
+​2. Admin Edit - Habits & Lifespan:
+• ​Update the 7-tap Admin Edit Form to include two new text fields: 'animal potos.
+• ​Let me manually edit these details for every animal and save them .
+• ​If I don't edit them, use a 'Loading...' placeholder instead of showing wrong/default information.
+​3. Travel Page Deep Linking:
+• ​In the Travel page, link every button (Uber, Ola, Skyscanner, etc.) with Deep Links.
+• ​Clicking 'Book' should directly open the respective app on the user's phone (e.g., uber://, ola://) or their official mobile website if the app is not installed.
+Please upgrade the Chat AI page into a Truly Smart Chatbot with the following intelligence:
+​
+​2. Specialized Knowledge Base:
+• ​Animal Expert: It should have deep knowledge about all 10 categories (Mammals, Reptiles, etc.).
+• ​App Guide: It must answer questions about the app, like 'How to use the map?', 'How to follow creators?', or 'Where is the travel page?'.
+​3. Smart UI & UX:
+• ​Typing Indicator: Show 'AI is thinking...' or a typing animation for a realistic feel.
+• ​Quick Reply Chips: Add buttons like 'Tell me about Lions', 'Top 5 Zoos', or 'How to book a Safari?' above the chat box for easy interaction.
+• ​Auto-Correction: If the user writes a wrong animal name, the AI should say: 'Did you mean Lion? Here is what I found...'
+​4. Personality & Speed:
+• ​The chatbot should be friendly and fast.
+• ​Integrate it with a lightweight AI API (like Gemini or OpenAI) or use a pre-trained animal knowledge JSON for instant offline-like speed.
+​5. Theme Sync:
+• ​Ensure the Chat UI matches our Bright & Colorful theme (Clean white bubbles for users, colorful bubbles for AI)."
+
+Please implement a Creator Content Dashboard with the following logic:
+​1. Profile Click Action:
+• ​When any user clicks on a Creator's Name or Profile Photo (in the Reels feed, Posts, or Stories bar), it must open that specific Creator's Profile Page.
+​2. Content Grid (Instagram Style):
+• ​On the Creator's Profile, show a total count of: 'Posts', 'Followers', and 'Following'.
+• ​Below the stats, add a 3-Tab Grid System: 
+• ​Tab 1 (Grid): Show all photos/posts uploaded by that user.
+• ​Tab 2 (Reels): Show all vertical videos/reels uploaded by them.
+• ​Tab 3 (Tagged): (Optional) Show content where they are mentioned.
+​3. Click to View:
+• ​Clicking any video or photo in the grid should open it in Full Screen mode so the user can watch the video or read the post details.
+​4. Personal Dashboard:
+• ​In my own Profile tab, I should see exactly how many videos and posts I have uploaded so far.
+​5. Data Sync:
+• ​Ensure this is linked to Firebase Firestore so the count of videos and posts updates automatically every time I upload something new via the Admin/Plus button."
+​"I have updated .Now, please add the Follower Booster & Verified Admin Tool with this specific logic:
+​1. Admin UID Binding:
+• ​My Admin UID is in the new Firebase project (link it to the user logged in as malinotaling8@gmail.com).
+• ​Only when I am logged in, enable the 7-tap secret on my profile photo.
+​2. Fake Follower Controller:
+• ​In the Admin Panel, add an input field: 'Set Manual Followers'.
+• ​Whatever number I type (e.g., 50k, 1M), show it on my Profile page immediately.
+• ​Add a 'Verified Blue Tick' 🔵 next to my name when this mode is active.
+​3. Smart Growth Simulation:
+• ​Add a toggle: 'Auto-Grow Followers'. If ON, increase the follower count by 5-10 every time the app starts.
+​4. Manual Stats Edit:
+• ​Let me manually edit the 'Videos Uploaded' and 'Posts' count from the same Admin Tool.
+​5. Data Sync:
+• ​Save these boosted numbers in localStorage and sync with the new Firebase (animal-x-830cf) so they stay permanent.
+
+Please implement a complete Verification & Blue Tick System with two-way logic:
+​1. Auto-Verification (The 100k Rule):
+• ​Create a logic that checks every user's follower count. As soon as a user hits 100,000 followers, a Verified Blue Tick 🔵 must automatically appear next to their name everywhere in the app.
+​2. Super Admin Manual Control (For Me):
+• ​In my 7-tap Admin Mode (linked to my UID), add a 'User Management' tool.
+• ​I should be able to search for any user and toggle a 'Manual Verify' switch to give them a Blue Tick instantly, regardless of their follower count.
+​3. Global Visibility:
+• ​The Blue Tick must be visible on: 
+• ​The Creator's Profile Page.
+• ​Next to their name on Reels and Posts.
+• ​In the Search/Discovery results.
+​4. Data Persistence:
+• ​Save the isVerified status in Firebase Firestore so it is synced for all users.
+To make the Manual Verification process accurate, please update the Admin User Management section:
+​1. User Search with Details:
+• ​In the Admin Panel, when I search for a user, show their Full Name, Registered Email ID, and Profile Photo together.
+• ​This way, I can verify exactly which nakumamit27@gmail.com or nakumamit086@gmail.com I am giving the Blue Tick to.
+​2. Copy UID Button:
+• ​Add a small 'Copy UID' button next to each user's info. This helps if I need to do any deep database changes.
+​3. Verification Toggle:
+• ​Next to each user's email, put a simple Switch/Toggle (ON/OFF) for 'Verified Status'.
+• ​If I turn it ON, that specific email's account gets the Blue Tick instantly.
+​4. Data Security:
+• ​Ensure this sensitive user data (Emails) is ONLY visible to me (the Super Admin) and hidden from everyone else.
+
+Please update the Profile Page UI:
+• ​Remove the Tip Text: Remove the entire text string: 'Tip: Tap your profile photo 7 times to unlock Admin Mode.' from the Settings section.
+• ​Keep Functionality: Ensure that the 7-tap functionality on the profile photo itself is NOT removed. The Super Admin (me) should still be able to unlock Admin Mode by tapping 7 times, even without the instruction text.

@@ -12,8 +12,8 @@ import Travel from "./pages/Travel";
 import Chatbot from "./pages/Chatbot";
 import HelpDesk from "./pages/HelpDesk";
 import Auth from "./pages/Auth";
-import Premium from "./pages/Premium";
 import LiveTracking from "./pages/LiveTracking";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -59,7 +59,7 @@ function Router() {
           <Route path="/chat" component={Chatbot} />
           <Route path="/help" component={HelpDesk} />
           <Route path="/auth" component={Auth} />
-          <Route path="/premium" component={Premium} />
+          <Route path="/profile" component={Profile} />
           <Route path="/live-tracking" component={LiveTracking} />
           <Route component={NotFound} />
         </Switch>
@@ -72,7 +72,7 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
+    const timer = setTimeout(() => setLoading(false), 1500);
     return () => clearTimeout(timer);
   }, []);
 
