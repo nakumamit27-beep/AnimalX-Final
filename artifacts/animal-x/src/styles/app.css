@@ -3074,3 +3074,118 @@ body {
   gap: 4px;
 }
 
+
+/* ========================================================================
+   Floating EDIT Button on animal cards (admin only)
+   ======================================================================== */
+.image-card { position: relative; }
+
+.card-edit-fab {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 4;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: var(--gradient);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+  padding: 0;
+}
+.card-edit-fab:hover {
+  transform: scale(1.1) rotate(8deg);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.6);
+}
+
+/* Edit Modal (popup) */
+.edit-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.18s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.edit-modal {
+  background: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  animation: slideUp 0.22s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.edit-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--gradient);
+  color: #fff;
+  border-radius: 16px 16px 0 0;
+}
+.edit-modal-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+  background: none;
+}
+.edit-modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.edit-modal-close:hover { background: rgba(255, 255, 255, 0.35); }
+
+.edit-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.edit-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+

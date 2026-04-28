@@ -82,6 +82,8 @@ export default function AnimalDetail() {
   // Display values (override OR original)
   const habits = override.habits || "";
   const lifespan = override.lifespan || animal.lifespan;
+  const displayName = override.name || animal.name;
+  const displayDesc = override.description || animal.description;
 
   return (
     <div className="detail-page">
@@ -125,9 +127,9 @@ export default function AnimalDetail() {
             <span className="category-badge">{animal.category}</span>
             <h1 className="detail-name">
               <span style={{ marginRight: 8 }}>{emoji}</span>
-              {animal.name}
+              {displayName}
             </h1>
-            <p className="detail-description">{animal.description}</p>
+            <p className="detail-description">{displayDesc}</p>
 
             <div className="detail-stats">
               <div className="stat-item">
