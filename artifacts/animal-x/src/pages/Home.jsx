@@ -41,8 +41,8 @@ export default function Home() {
 
   const statItems = [
     { icon: "🐾", value: `${animals.length}`, label: "Animals & Wonders" },
-    { icon: "🏛️", value: "200+", label: "Zoos Worldwide" },
-    { icon: "🌍", value: "20+", label: "Countries Covered" },
+    { icon: "🏛️", value: "280+", label: "Zoos Worldwide" },
+    { icon: "🌍", value: "🌐", label: "Worldwide Coverage" },
     { icon: "📚", value: `${categories.length}`, label: "Categories" },
   ];
 

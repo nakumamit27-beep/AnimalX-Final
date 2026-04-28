@@ -11,9 +11,10 @@ export default function Animals() {
   const search = useSearch();
   const params = new URLSearchParams(search);
   const urlCategory = params.get("category");
+  const urlQuery = params.get("q") || "";
 
   const [activeCategory, setActiveCategory] = useState(urlCategory || "All");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(urlQuery);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(false);
   const [customAnimals, setCustomAnimals] = useState(() => getCustomAnimals());
@@ -23,6 +24,10 @@ export default function Animals() {
       setActiveCategory(urlCategory);
     }
   }, [urlCategory]);
+
+  useEffect(() => {
+    if (urlQuery) setSearchQuery(urlQuery);
+  }, [urlQuery]);
 
   useEffect(() => {
     function refresh() { setCustomAnimals(getCustomAnimals()); }

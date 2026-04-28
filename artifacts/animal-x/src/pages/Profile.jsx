@@ -5,6 +5,7 @@ import { useTheme } from "../context/ThemeContext";
 import { addCustomAnimal, getCustomAnimals, deleteCustomAnimal } from "../utils/customAnimals";
 import { fileToDataURL } from "../utils/animalOverrides";
 import { categories } from "../data/animals";
+import BlueTick from "../components/BlueTick";
 
 function formatCount(n) {
   if (n == null || isNaN(n)) return "0";
@@ -22,18 +23,6 @@ function parseCount(str) {
   const n = parseFloat(m[1]);
   const mult = m[2] === "k" ? 1_000 : m[2] === "m" ? 1_000_000 : m[2] === "b" ? 1_000_000_000 : 1;
   return Math.round(n * mult);
-}
-
-function BlueTick() {
-  return (
-    <svg className="blue-tick-svg" viewBox="0 0 24 24" aria-label="Verified">
-      <circle cx="12" cy="12" r="11" fill="#1d9bf0" />
-      <path
-        d="M9.55 16.6 5.4 12.45l1.4-1.4 2.75 2.75 7.65-7.65 1.4 1.4z"
-        fill="#fff"
-      />
-    </svg>
-  );
 }
 
 export default function Profile() {

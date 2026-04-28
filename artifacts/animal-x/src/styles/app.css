@@ -3189,3 +3189,84 @@ body {
   flex-wrap: wrap;
 }
 
+
+/* ========================================================================
+   TOPBAR SEARCH (replaces Reels/Travel pills)
+   ======================================================================== */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.topbar-search {
+  flex: 1;
+  max-width: 460px;
+  display: flex;
+  align-items: center;
+  background: var(--card-bg2);
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  padding: 6px 14px;
+  gap: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.topbar-search:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.topbar-search-icon {
+  font-size: 0.95rem;
+  opacity: 0.7;
+}
+.topbar-search input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 0.92rem;
+  padding: 4px 0;
+}
+.topbar-search input::placeholder {
+  color: var(--text2);
+}
+.topbar-actions { margin-left: auto; }
+
+@media (max-width: 640px) {
+  .topbar { gap: 8px; padding-left: 10px; padding-right: 10px; }
+  .topbar-search { padding: 5px 10px; }
+  .topbar-search input { font-size: 0.85rem; }
+  .brand-name { display: none; }
+}
+
+/* ========================================================================
+   TRAVEL: countries text + Book Now button
+   ======================================================================== */
+.service-countries {
+  color: var(--text);
+  font-size: 0.84rem;
+  margin: 4px 0 2px;
+  font-weight: 600;
+}
+.service-fallback {
+  color: var(--text2);
+  font-size: 0.72rem;
+  opacity: 0.8;
+  margin: 2px 0 0;
+}
+.service-book-btn {
+  background: var(--gradient) !important;
+  color: #fff !important;
+  border: none !important;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.service-book-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+

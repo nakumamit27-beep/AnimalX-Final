@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
 import animals from "../data/animals";
 import { useAuth } from "../context/AuthContext";
+import BlueTick from "../components/BlueTick";
 
 const ALLOWED_KEYWORDS = [
   "animal","lion","tiger","bird","fish","forest","wildlife","nature","jungle","ocean",
@@ -194,7 +195,7 @@ function VideoReel({ reel, onUpdate }) {
       <div className="reel-video-info">
         <div className="reel-user-badge">
           👤 {reel.user || "Wildlife Fan"}
-          {reel.verified && <span className="blue-tick" style={{ marginLeft: 4 }}>✓</span>}
+          {reel.verified && <BlueTick size={16} />}
         </div>
         <h2 className="reel-title-overlay">{reel.title}</h2>
       </div>
@@ -294,7 +295,7 @@ function PostsTab({ user, isVerified, profile, updateProfile }) {
               <div className="post-avatar">{(p.user || "U")[0].toUpperCase()}</div>
               <div className="post-user">
                 {p.user}
-                {p.verified && <span className="blue-tick">✓</span>}
+                {p.verified && <BlueTick size={16} />}
               </div>
             </div>
             <div className="post-media-wrap">
@@ -371,7 +372,7 @@ function StoriesTab({ user, isVerified }) {
             </div>
             <div className="story-name">
               {s.user.split(" ")[0]}
-              {s.verified && <span className="blue-tick">✓</span>}
+              {s.verified && <BlueTick size={16} />}
             </div>
           </div>
         ))}
@@ -385,7 +386,7 @@ function StoriesTab({ user, isVerified }) {
             ) : (
               <img src={s.media} alt={s.user} />
             )}
-            <div className="story-thumb-user">{s.user}{s.verified && <span className="blue-tick">✓</span>}</div>
+            <div className="story-thumb-user">{s.user}{s.verified && <BlueTick size={16} />}</div>
           </div>
         ))}
       </div>
@@ -399,7 +400,7 @@ function StoriesTab({ user, isVerified }) {
             ) : (
               <img src={viewing.media} alt={viewing.user} />
             )}
-            <div className="story-viewer-caption">{viewing.user}{viewing.verified && <span className="blue-tick">✓</span>}</div>
+            <div className="story-viewer-caption">{viewing.user}{viewing.verified && <BlueTick size={16} />}</div>
           </div>
         </div>
       )}

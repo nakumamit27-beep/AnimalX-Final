@@ -1,6 +1,6 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
 
 const bottomItems = [
   { href: "/", label: "Home", icon: "🏠" },
@@ -11,9 +11,17 @@ const bottomItems = [
 ];
 
 export default function Navbar() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const [searchValue, setSearchValue] = useState("");
+
+  function submitSearch(e) {
+    e.preventDefault();
+    const q = searchValue.trim();
+    if (!q) return;
+    navigate(`/animals?q=${encodeURIComponent(q)}`);
+    setSearchValue("");
+  }
 
   return (
     <>
@@ -22,16 +30,19 @@ export default function Navbar() {
           <span className="brand-icon">🦁</span>
           <span className="brand-name">Animal X</span>
         </Link>
+
+        <form className="topbar-search" onSubmit={submitSearch} role="search">
+          <span className="topbar-search-icon">🔍</span>
+          <input
+            type="search"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            placeholder="Search animals…"
+            aria-label="Search animals"
+          />
+        </form>
+
         <div className="topbar-actions">
-          <Link href="/reels" className={`top-pill ${location === "/reels" ? "active" : ""}`} title="Reels">🎬</Link>
-          <Link href="/travel" className={`top-pill ${location === "/travel" ? "active" : ""}`} title="Travel">✈️</Link>
-          <button
-            className="top-pill"
-            onClick={toggleTheme}
-            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          >
-            {theme === "dark" ? "☀️" : "🌙"}
-          </button>
           {!user && (
             <Link href="/auth" className="top-pill top-pill-primary" title="Login">Login</Link>
           )}
