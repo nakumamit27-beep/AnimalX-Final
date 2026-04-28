@@ -1,6 +1,10 @@
 import { useState, useRef } from "react";
 import { Link } from "wouter";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
+import { addCustomAnimal, getCustomAnimals, deleteCustomAnimal } from "../utils/customAnimals";
+import { fileToDataURL } from "../utils/animalOverrides";
+import { categories } from "../data/animals";
 
 function formatCount(n) {
   if (n == null || isNaN(n)) return "0";
@@ -20,6 +24,18 @@ function parseCount(str) {
   return Math.round(n * mult);
 }
 
+function BlueTick() {
+  return (
+    <svg className="blue-tick-svg" viewBox="0 0 24 24" aria-label="Verified">
+      <circle cx="12" cy="12" r="11" fill="#1d9bf0" />
+      <path
+        d="M9.55 16.6 5.4 12.45l1.4-1.4 2.75 2.75 7.65-7.65 1.4 1.4z"
+        fill="#fff"
+      />
+    </svg>
+  );
+}
+
 export default function Profile() {
   const {
     user,
@@ -36,6 +52,7 @@ export default function Profile() {
     getAllUsers,
     logout,
   } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const [tapCount, setTapCount] = useState(0);
   const tapTimer = useRef(null);
@@ -44,6 +61,22 @@ export default function Profile() {
   const [followersInput, setFollowersInput] = useState("");
   const [postsInput, setPostsInput] = useState("");
   const [reelsInput, setReelsInput] = useState("");
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [nameInput, setNameInput] = useState(user?.name || "");
+  const photoFileRef = useRef(null);
+
+  // Add new animal form state
+  const [newName, setNewName] = useState("");
+  const [newCategory, setNewCategory] = useState(categories[0]);
+  const [newImage, setNewImage] = useState(null);
+  const [newHabits, setNewHabits] = useState("");
+  const [newLifespan, setNewLifespan] = useState("");
+  const [newCountry, setNewCountry] = useState("");
+  const [customAnimals, setCustomAnimalsState] = useState(() => getCustomAnimals());
+
+  function refreshCustomList() {
+    setCustomAnimalsState(getCustomAnimals());
+  }
 
   function handleAvatarTap() {
     const next = tapCount + 1;
@@ -62,6 +95,55 @@ export default function Profile() {
       }
       unlockAdminMode();
     }
+  }
+
+  async function handleProfilePhoto(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const dataUrl = await fileToDataURL(file);
+    updateProfile({ photo: dataUrl });
+  }
+
+  function saveProfileEdits() {
+    updateProfile({ name: nameInput });
+    setEditProfileOpen(false);
+  }
+
+  async function handleNewAnimalImage(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const dataUrl = await fileToDataURL(file);
+    setNewImage(dataUrl);
+  }
+
+  function submitNewAnimal() {
+    if (!newName.trim()) {
+      alert("Animal name is required.");
+      return;
+    }
+    addCustomAnimal({
+      name: newName.trim(),
+      category: newCategory,
+      image: newImage,
+      habits: newHabits.trim(),
+      habitat: newHabits.trim() || "Various habitats",
+      lifespan: newLifespan.trim() || "Unknown",
+      country: newCountry.trim() || "Worldwide",
+    });
+    setNewName("");
+    setNewImage(null);
+    setNewHabits("");
+    setNewLifespan("");
+    setNewCountry("");
+    if (photoFileRef.current) photoFileRef.current.value = "";
+    refreshCustomList();
+    alert(`✓ Added "${newName}" to ${newCategory}!`);
+  }
+
+  function removeCustom(id, name) {
+    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    deleteCustomAnimal(id);
+    refreshCustomList();
   }
 
   if (!user) {
@@ -93,23 +175,14 @@ export default function Profile() {
     updateProfile({ followers: n });
     setFollowersInput("");
   }
-
   function applyPosts() {
     const n = parseInt(postsInput, 10);
-    if (!isNaN(n)) {
-      updateProfile({ posts: n });
-      setPostsInput("");
-    }
+    if (!isNaN(n)) { updateProfile({ posts: n }); setPostsInput(""); }
   }
-
   function applyReels() {
     const n = parseInt(reelsInput, 10);
-    if (!isNaN(n)) {
-      updateProfile({ reels: n });
-      setReelsInput("");
-    }
+    if (!isNaN(n)) { updateProfile({ reels: n }); setReelsInput(""); }
   }
-
   function copyText(text) {
     navigator.clipboard?.writeText(text).then(
       () => alert(`Copied: ${text}`),
@@ -117,20 +190,24 @@ export default function Profile() {
     );
   }
 
+  const displayName = profile.name || user.name || user.email;
+  const initial = (displayName || "U")[0].toUpperCase();
+
   return (
     <div className="profile-page">
       <div className="profile-top">
         <button
           className="profile-avatar-btn"
           onClick={handleAvatarTap}
-          aria-label="Profile photo"
+          aria-label="Profile photo (tap 7 times for admin mode)"
+          style={profile.photo ? { backgroundImage: `url(${profile.photo})`, backgroundSize: "cover", backgroundPosition: "center", color: "transparent" } : undefined}
         >
-          {(user.name || user.email || "U")[0].toUpperCase()}
+          {!profile.photo && initial}
         </button>
         <div className="profile-id">
           <h1 className="profile-name">
-            {user.name || user.email}
-            {isVerified && <span className="blue-tick" title="Verified">✓</span>}
+            {displayName}
+            {isVerified && <BlueTick />}
           </h1>
           <p className="profile-email">{user.email}</p>
         </div>
@@ -152,10 +229,61 @@ export default function Profile() {
       </div>
 
       <div className="profile-quick-stats">
-        <Link href="/reels" className="qs-pill">🎬 {profile.reels} Reels</Link>
-        <Link href="/reels" className="qs-pill">📸 {profile.posts} Posts</Link>
+        <button className="qs-pill qs-edit" onClick={() => setEditProfileOpen((v) => !v)}>
+          ✏️ Edit Profile
+        </button>
+        <button className="qs-pill" onClick={toggleTheme}>
+          {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+        </button>
         <button className="qs-pill qs-logout" onClick={logout}>↪ Log out</button>
       </div>
+
+      {editProfileOpen && (
+        <div className="edit-profile-card">
+          <h3>Edit Profile</h3>
+          <div className="ep-photo-row">
+            <div
+              className="ep-photo-preview"
+              style={profile.photo ? { backgroundImage: `url(${profile.photo})` } : undefined}
+            >
+              {!profile.photo && initial}
+            </div>
+            <div style={{ flex: 1 }}>
+              <label className="btn-primary" style={{ cursor: "pointer", display: "inline-block" }}>
+                📷 Upload New Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleProfilePhoto}
+                />
+              </label>
+              {profile.photo && (
+                <button
+                  className="qs-pill"
+                  style={{ marginLeft: 8 }}
+                  onClick={() => updateProfile({ photo: null })}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="aef-row">
+            <label>Display Name</label>
+            <input
+              type="text"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="Your display name"
+            />
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn-primary" onClick={saveProfileEdits}>Save</button>
+            <button className="qs-pill" onClick={() => setEditProfileOpen(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
 
       <div className="profile-tabs">
         <button className={`pt-tab ${tab === "grid" ? "active" : ""}`} onClick={() => setTab("grid")}>📷 Grid</button>
@@ -191,6 +319,95 @@ export default function Profile() {
           <div className="admin-header">
             <h2>👑 Admin Panel</h2>
             <button className="qs-pill" onClick={lockAdminMode}>Lock Admin Mode</button>
+          </div>
+
+          <div className="admin-section">
+            <h3>➕ Add New Animal</h3>
+            <div className="aef-row">
+              <label>Name *</label>
+              <input
+                type="text"
+                placeholder="e.g. Spirit Lion"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+              />
+            </div>
+            <div className="aef-row">
+              <label>Category</label>
+              <select
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="admin-input"
+                style={{ width: "100%" }}
+              >
+                {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="aef-row">
+              <label>Image</label>
+              <input
+                ref={photoFileRef}
+                type="file"
+                accept="image/*"
+                onChange={handleNewAnimalImage}
+              />
+              {newImage && (
+                <img
+                  src={newImage}
+                  alt="preview"
+                  style={{ marginTop: 8, maxWidth: 160, borderRadius: 8, border: "2px solid var(--accent)" }}
+                />
+              )}
+            </div>
+            <div className="aef-row">
+              <label>Habits / Habitat</label>
+              <textarea
+                rows={2}
+                placeholder="e.g. Nocturnal apex predator that lives in prides..."
+                value={newHabits}
+                onChange={(e) => setNewHabits(e.target.value)}
+              />
+            </div>
+            <div className="aef-row">
+              <label>Lifespan</label>
+              <input
+                type="text"
+                placeholder="e.g. 12–16 years wild"
+                value={newLifespan}
+                onChange={(e) => setNewLifespan(e.target.value)}
+              />
+            </div>
+            <div className="aef-row">
+              <label>Country / Region</label>
+              <input
+                type="text"
+                placeholder="e.g. Kenya"
+                value={newCountry}
+                onChange={(e) => setNewCountry(e.target.value)}
+              />
+            </div>
+            <button className="btn-primary" onClick={submitNewAnimal}>
+              ✓ Add Animal to App
+            </button>
+            {customAnimals.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <p className="admin-hint">Custom animals you've added ({customAnimals.length}):</p>
+                <div className="custom-animals-list">
+                  {customAnimals.map((a) => (
+                    <div key={a.id} className="custom-animal-row">
+                      {a.image
+                        ? <img src={a.image} alt={a.name} className="ca-thumb" />
+                        : <div className="ca-thumb ca-thumb-empty">🐾</div>}
+                      <div className="ca-info">
+                        <div className="ca-name">{a.name}</div>
+                        <div className="ca-meta">{a.category} · {a.country}</div>
+                      </div>
+                      <button className="qs-pill qs-logout" onClick={() => removeCustom(a.id, a.name)}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="admin-section">
@@ -258,7 +475,7 @@ export default function Profile() {
                     <div className="adm-info">
                       <div className="adm-name">
                         {u.name || "(no name)"}
-                        {verified && <span className="blue-tick">✓</span>}
+                        {verified && <BlueTick />}
                       </div>
                       <div className="adm-email">{u.email}</div>
                       <div className="adm-uid">UID: {u.uid || "—"}</div>

@@ -52,9 +52,26 @@ const zooData = [
 ];
 
 const countries = [
-  "India","USA","UK","Canada","UAE","Australia",
-  "South Africa","Tanzania","Uganda","Japan",
-  "Germany","France","Italy","Spain","China","Brazil"
+  // Asia
+  "India","China","Japan","South Korea","Thailand","Singapore","Indonesia","Malaysia","Philippines","Vietnam",
+  "Sri Lanka","Bangladesh","Pakistan","Nepal","Bhutan","Mongolia","Kazakhstan","Uzbekistan","Iran","Iraq",
+  "Saudi Arabia","Qatar","Kuwait","Oman","Jordan","Lebanon","Israel","Turkey","Cyprus","Maldives",
+  // Europe
+  "UK","Ireland","Germany","France","Italy","Spain","Portugal","Netherlands","Belgium","Switzerland",
+  "Austria","Sweden","Norway","Finland","Denmark","Iceland","Poland","Czech Republic","Hungary","Romania",
+  "Greece","Croatia","Slovenia","Slovakia","Bulgaria","Estonia","Latvia","Lithuania","Russia","Ukraine",
+  "Serbia","Bosnia","Albania","Moldova","Belarus","Luxembourg","Malta",
+  // Americas
+  "USA","Canada","Mexico","Cuba","Jamaica","Bahamas","Costa Rica","Panama","Guatemala","Honduras",
+  "Brazil","Argentina","Chile","Peru","Colombia","Venezuela","Ecuador","Bolivia","Uruguay","Paraguay","Galápagos",
+  // Africa
+  "South Africa","Egypt","Morocco","Tunisia","Algeria","Libya","Nigeria","Kenya","Tanzania","Uganda",
+  "Ethiopia","Ghana","Senegal","Madagascar","Zimbabwe","Botswana","Namibia","Zambia","Mozambique","Angola",
+  "Cameroon","Rwanda","Sudan","Mauritius","Seychelles",
+  // Oceania
+  "Australia","New Zealand","Fiji","Papua New Guinea","Samoa","Solomon Islands",
+  // Middle East / Other
+  "UAE","Bahrain","Yemen","Afghanistan","Greenland","Antarctica"
 ];
 
 const zooNames = [
@@ -65,29 +82,49 @@ const zooNames = [
 const zoos = zooData.map((z, i) => ({ id: i + 1, ...z }));
 
 let extraId = zooData.length + 1;
-while (zoos.length < 200) {
+// Capital-ish coordinates for each country (approx country center)
+const countryCoords = {
+  "India":[20.59,78.96],"China":[35.86,104.20],"Japan":[36.20,138.25],"South Korea":[35.91,127.77],
+  "Thailand":[15.87,100.99],"Singapore":[1.35,103.82],"Indonesia":[-0.79,113.92],"Malaysia":[4.21,101.98],
+  "Philippines":[12.88,121.77],"Vietnam":[14.06,108.28],"Sri Lanka":[7.87,80.77],"Bangladesh":[23.68,90.36],
+  "Pakistan":[30.38,69.35],"Nepal":[28.39,84.12],"Bhutan":[27.51,90.43],"Mongolia":[46.86,103.85],
+  "Kazakhstan":[48.02,66.92],"Uzbekistan":[41.38,64.59],"Iran":[32.43,53.69],"Iraq":[33.22,43.68],
+  "Saudi Arabia":[23.89,45.08],"Qatar":[25.35,51.18],"Kuwait":[29.31,47.48],"Oman":[21.47,55.98],
+  "Jordan":[30.59,36.24],"Lebanon":[33.85,35.86],"Israel":[31.05,34.85],"Turkey":[38.96,35.24],
+  "Cyprus":[35.13,33.43],"Maldives":[3.20,73.22],
+  "UK":[55.38,-3.44],"Ireland":[53.41,-8.24],"Germany":[51.17,10.45],"France":[46.23,2.21],
+  "Italy":[41.87,12.57],"Spain":[40.46,-3.75],"Portugal":[39.40,-8.22],"Netherlands":[52.13,5.29],
+  "Belgium":[50.50,4.47],"Switzerland":[46.82,8.23],"Austria":[47.52,14.55],"Sweden":[60.13,18.64],
+  "Norway":[60.47,8.47],"Finland":[61.92,25.75],"Denmark":[56.26,9.50],"Iceland":[64.96,-19.02],
+  "Poland":[51.92,19.15],"Czech Republic":[49.82,15.47],"Hungary":[47.16,19.50],"Romania":[45.94,24.97],
+  "Greece":[39.07,21.82],"Croatia":[45.10,15.20],"Slovenia":[46.15,14.99],"Slovakia":[48.67,19.70],
+  "Bulgaria":[42.73,25.49],"Estonia":[58.60,25.01],"Latvia":[56.88,24.60],"Lithuania":[55.17,23.88],
+  "Russia":[61.52,105.32],"Ukraine":[48.38,31.17],"Serbia":[44.02,21.01],"Bosnia":[43.92,17.68],
+  "Albania":[41.15,20.17],"Moldova":[47.41,28.37],"Belarus":[53.71,27.95],"Luxembourg":[49.81,6.13],"Malta":[35.94,14.38],
+  "USA":[37.09,-95.71],"Canada":[56.13,-106.35],"Mexico":[23.63,-102.55],"Cuba":[21.52,-77.78],
+  "Jamaica":[18.11,-77.30],"Bahamas":[25.03,-77.40],"Costa Rica":[9.75,-83.75],"Panama":[8.54,-80.78],
+  "Guatemala":[15.78,-90.23],"Honduras":[15.20,-86.24],"Brazil":[-14.24,-51.93],"Argentina":[-38.42,-63.62],
+  "Chile":[-35.68,-71.54],"Peru":[-9.19,-75.02],"Colombia":[4.57,-74.30],"Venezuela":[6.42,-66.59],
+  "Ecuador":[-1.83,-78.18],"Bolivia":[-16.29,-63.59],"Uruguay":[-32.52,-55.77],"Paraguay":[-23.44,-58.44],
+  "Galápagos":[-0.95,-90.97],
+  "South Africa":[-30.56,22.94],"Egypt":[26.82,30.80],"Morocco":[31.79,-7.09],"Tunisia":[33.89,9.54],
+  "Algeria":[28.03,1.66],"Libya":[26.34,17.23],"Nigeria":[9.08,8.68],"Kenya":[-0.02,37.91],
+  "Tanzania":[-6.37,34.89],"Uganda":[1.37,32.29],"Ethiopia":[9.15,40.49],"Ghana":[7.95,-1.02],
+  "Senegal":[14.50,-14.45],"Madagascar":[-18.77,46.87],"Zimbabwe":[-19.02,29.15],"Botswana":[-22.33,24.68],
+  "Namibia":[-22.96,18.49],"Zambia":[-13.13,27.85],"Mozambique":[-18.67,35.53],"Angola":[-11.20,17.87],
+  "Cameroon":[7.37,12.35],"Rwanda":[-1.94,29.87],"Sudan":[12.86,30.22],"Mauritius":[-20.35,57.55],"Seychelles":[-4.68,55.49],
+  "Australia":[-25.27,133.78],"New Zealand":[-40.90,174.89],"Fiji":[-17.71,178.07],
+  "Papua New Guinea":[-6.31,143.96],"Samoa":[-13.76,-172.10],"Solomon Islands":[-9.65,160.16],
+  "UAE":[23.42,53.85],"Bahrain":[26.07,50.55],"Yemen":[15.55,48.52],"Afghanistan":[33.94,67.71],
+  "Greenland":[71.71,-42.60],"Antarctica":[-75.25,-0.07]
+};
+
+while (zoos.length < 280) {
   const country = countries[(extraId - 1) % countries.length];
   const name = zooNames[(extraId - 1) % zooNames.length];
-  let latBase, lngBase;
-  switch (country) {
-    case "India": latBase = [8, 35]; lngBase = [68, 97]; break;
-    case "USA": latBase = [25, 49]; lngBase = [-125, -67]; break;
-    case "UK": latBase = [50, 59]; lngBase = [-5, 2]; break;
-    case "Canada": latBase = [43, 70]; lngBase = [-140, -52]; break;
-    case "UAE": latBase = [22, 26]; lngBase = [51, 56]; break;
-    case "Australia": latBase = [-43, -10]; lngBase = [114, 154]; break;
-    case "South Africa": latBase = [-34, -22]; lngBase = [17, 33]; break;
-    case "Tanzania": latBase = [-11, -1]; lngBase = [30, 40]; break;
-    case "Uganda": latBase = [-1, 4]; lngBase = [29, 35]; break;
-    case "Japan": latBase = [31, 45]; lngBase = [130, 145]; break;
-    case "Germany": latBase = [47, 55]; lngBase = [6, 15]; break;
-    case "France": latBase = [42, 51]; lngBase = [-5, 8]; break;
-    case "Italy": latBase = [37, 47]; lngBase = [7, 18]; break;
-    case "Spain": latBase = [36, 44]; lngBase = [-9, 4]; break;
-    case "China": latBase = [18, 53]; lngBase = [73, 135]; break;
-    case "Brazil": latBase = [-33, 5]; lngBase = [-73, -35]; break;
-    default: latBase = [-60, 60]; lngBase = [-180, 180];
-  }
+  const c = countryCoords[country];
+  const latBase = c ? [c[0] - 5, c[0] + 5] : [-60, 60];
+  const lngBase = c ? [c[1] - 5, c[1] + 5] : [-180, 180];
   const seed = extraId * 9973;
   const lat = parseFloat((latBase[0] + ((seed % 1000) / 1000) * (latBase[1] - latBase[0])).toFixed(4));
   const lng = parseFloat((lngBase[0] + ((seed % 997) / 997) * (lngBase[1] - lngBase[0])).toFixed(4));

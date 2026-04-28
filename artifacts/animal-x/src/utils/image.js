@@ -26,6 +26,9 @@ export function getImage(name, id) {
 // Use this everywhere (cards, banners, details) so they stay in sync.
 export function getAnimalImage(animal) {
   if (!animal) return getImage("wildlife", null);
+  // Custom-added animals have a direct image (data URL)
+  if (animal.isCustom && animal.image) return animal.image;
+  // Override OR default image
   return getImage(animal.baseName || animal.name, animal.id);
 }
 

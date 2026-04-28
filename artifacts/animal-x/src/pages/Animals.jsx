@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearch } from "wouter";
 import animals, { categories } from "../data/animals";
 import AnimalCard from "../components/AnimalCard";
 import CategoryFilter from "../components/CategoryFilter";
+import { getCustomAnimals } from "../utils/customAnimals";
 
 const PAGE_SIZE = 40;
 
@@ -15,6 +16,7 @@ export default function Animals() {
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(false);
+  const [customAnimals, setCustomAnimals] = useState(() => getCustomAnimals());
 
   useEffect(() => {
     if (urlCategory && categories.includes(urlCategory)) {
@@ -22,7 +24,15 @@ export default function Animals() {
     }
   }, [urlCategory]);
 
-  const filtered = animals.filter((a) => {
+  useEffect(() => {
+    function refresh() { setCustomAnimals(getCustomAnimals()); }
+    window.addEventListener("ax-custom-animals-changed", refresh);
+    return () => window.removeEventListener("ax-custom-animals-changed", refresh);
+  }, []);
+
+  const allAnimals = useMemo(() => [...customAnimals, ...animals], [customAnimals]);
+
+  const filtered = allAnimals.filter((a) => {
     const matchCat = activeCategory === "All" || a.category === activeCategory;
     const matchSearch =
       a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -64,7 +74,7 @@ export default function Animals() {
       <div className="animals-header">
         <h1 className="page-title">Wildlife Explorer</h1>
         <p className="page-subtitle">
-          Discover {animals.length.toLocaleString()} incredible creatures and natural wonders — all free.
+          Discover {allAnimals.length.toLocaleString()} incredible creatures and natural wonders — all free.
         </p>
         <div className="search-bar">
           <input

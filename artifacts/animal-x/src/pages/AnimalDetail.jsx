@@ -69,6 +69,16 @@ export default function AnimalDetail() {
     setOverrideState(getOverride(animal.id));
   }
 
+  async function handleQuickPhoto(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const dataUrl = await fileToDataURL(file);
+    setOverride(animal.id, { image: dataUrl });
+    setOverrideState(getOverride(animal.id));
+    setImgError(false);
+    e.target.value = "";
+  }
+
   // Display values (override OR original)
   const habits = override.habits || "";
   const lifespan = override.lifespan || animal.lifespan;
@@ -91,12 +101,23 @@ export default function AnimalDetail() {
               />
             )}
             {isSuperAdmin && adminMode && (
-              <button
-                className="detail-edit-btn"
-                onClick={(e) => { e.stopPropagation(); setEditOpen((v) => !v); }}
-              >
-                ✏️ {editOpen ? "Close Editor" : "Edit"}
-              </button>
+              <div className="detail-edit-actions" onClick={(e) => e.stopPropagation()}>
+                <label className="detail-edit-btn" style={{ cursor: "pointer" }}>
+                  📷 Update Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={handleQuickPhoto}
+                  />
+                </label>
+                <button
+                  className="detail-edit-btn"
+                  onClick={() => setEditOpen((v) => !v)}
+                >
+                  ✏️ {editOpen ? "Close" : "Edit Info"}
+                </button>
+              </div>
             )}
           </div>
 

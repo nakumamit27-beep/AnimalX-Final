@@ -1,17 +1,19 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 const bottomItems = [
   { href: "/", label: "Home", icon: "🏠" },
   { href: "/animals", label: "Animals", icon: "🐾" },
-  { href: "/reels", label: "Reels", icon: "🎬" },
-  { href: "/travel", label: "Travel", icon: "✈️" },
+  { href: "/map", label: "Map", icon: "🗺️" },
+  { href: "/chat", label: "Chat", icon: "🤖" },
   { href: "/profile", label: "Profile", icon: "👤" },
 ];
 
 export default function Navbar() {
   const [location] = useLocation();
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <>
@@ -21,9 +23,15 @@ export default function Navbar() {
           <span className="brand-name">Animal X</span>
         </Link>
         <div className="topbar-actions">
-          <Link href="/map" className={`top-pill ${location === "/map" ? "active" : ""}`} title="Zoo Map">🗺️</Link>
-          <Link href="/live-tracking" className={`top-pill ${location === "/live-tracking" ? "active" : ""}`} title="Live Tracking">📍</Link>
-          <Link href="/chat" className={`top-pill ${location === "/chat" ? "active" : ""}`} title="Wildlife Chat">🤖</Link>
+          <Link href="/reels" className={`top-pill ${location === "/reels" ? "active" : ""}`} title="Reels">🎬</Link>
+          <Link href="/travel" className={`top-pill ${location === "/travel" ? "active" : ""}`} title="Travel">✈️</Link>
+          <button
+            className="top-pill"
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
           {!user && (
             <Link href="/auth" className="top-pill top-pill-primary" title="Login">Login</Link>
           )}
