@@ -5,8 +5,9 @@ import { useAuth } from "../context/AuthContext";
 const bottomItems = [
   { href: "/", label: "Home", icon: "🏠" },
   { href: "/animals", label: "Animals", icon: "🐾" },
+  { href: "/reels", label: "Reels", icon: "🎬" },
   { href: "/map", label: "Map", icon: "🗺️" },
-  { href: "/chat", label: "Chat", icon: "🤖" },
+  { href: "/travel", label: "Travel", icon: "✈️" },
   { href: "/profile", label: "Profile", icon: "👤" },
 ];
 

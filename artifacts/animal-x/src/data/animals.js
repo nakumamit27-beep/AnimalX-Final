@@ -13,7 +13,12 @@ const baseNames = {
     "Badger","Weasel","Ferret","Mink","Lynx","Caracal","Serval","Snow Leopard","Polar Bear","Grizzly Bear",
     "Sloth","Anteater","Armadillo","Tapir","Okapi","Manatee","Dugong","Porcupine","Beaver","Capybara",
     "Agouti","Tarsier","Lemur","Aye-aye","Galago","Fossa","Bandicoot","Quokka","Tasmanian Devil","Dingo",
-    "Red Panda","Sun Bear","Spectacled Bear","Clouded Leopard","Fishing Cat","Civet","Genet","Pika","Ibex","Chamois"
+    "Red Panda","Sun Bear","Spectacled Bear","Clouded Leopard","Fishing Cat","Civet","Genet","Pika","Ibex","Chamois",
+    "Aardvark","Aardwolf","Addax","African Wild Dog","Antelope","Babirusa","Bilby","Binturong","Bongo","Bontebok",
+    "Boar","Bushbaby","Bushpig","Caribou","Coati","Colobus Monkey","Coyote","Dik-dik","Dormouse","Duiker",
+    "Echidna","Eland","Fisher","Gaur","Gemsbok","Gerbil","Gerenuk","Gibbon","Guanaco","Hamster",
+    "Howler Monkey","Impala","Klipspringer","Kudu","Macaque","Mandrill","Mara","Marmoset","Marmot","Mouflon",
+    "Muntjac","Musk Ox","Numbat","Nyala","Oryx","Pangolin","Pronghorn","Quoll","Spider Monkey","Vervet Monkey"
   ],
   Reptiles: [
     "Cobra","King Cobra","Python","Anaconda","Boa","Viper","Mamba","Rattlesnake","Krait","Coral Snake",
@@ -23,7 +28,12 @@ const baseNames = {
     "Glass Lizard","Slow Worm","Blue Tongue Skink","Sand Lizard","Desert Iguana","Water Dragon","Chinese Alligator","Nile Crocodile","Saltwater Crocodile","American Alligator",
     "Leatherback Turtle","Hawksbill Turtle","Loggerhead Turtle","Green Sea Turtle","Red-eared Slider","Painted Turtle","Mud Turtle","Terrapin","Uromastyx","Chuckwalla",
     "Rock Python","Tree Python","Carpet Python","Ball Python","Sand Boa","Emerald Boa","Green Anaconda","Yellow Anaconda","Sea Snake","Olive Sea Snake",
-    "Blind Snake","Worm Lizard","Gila Monster","Beaded Lizard","Komodo Monitor","Asian Water Monitor","Savannah Monitor","Desert Monitor","Fence Lizard","Anole"
+    "Blind Snake","Worm Lizard","Gila Monster","Beaded Lizard","Komodo Monitor","Asian Water Monitor","Savannah Monitor","Desert Monitor","Fence Lizard","Anole",
+    "Bearded Dragon","Plumed Basilisk","Veiled Chameleon","Panther Chameleon","Pygmy Chameleon","Tegu","Argentine Tegu","Caiman Lizard","Tuatara","Galápagos Tortoise",
+    "Aldabra Tortoise","Sulcata Tortoise","Russian Tortoise","Yellow-footed Tortoise","Marginated Tortoise","Hermann's Tortoise","Musk Turtle","Map Turtle","Diamondback Terrapin","Matamata",
+    "Snake-necked Turtle","Pancake Tortoise","Burmese Python","Reticulated Python","Indian Python","African Rock Python","Eyelash Viper","Copperhead","Cottonmouth","Sidewinder",
+    "Sea Krait","Banded Krait","Yellow-bellied Sea Snake","Ringneck Snake","Garter Snake","Hognose Snake","Corn Snake","Rosy Boa","Rubber Boa","Bushveld Lizard",
+    "Tree Iguana","Rhinoceros Iguana","Cuban Iguana","Black Iguana","Mexican Beaded Lizard","Common Wall Lizard","Sand Skink","Five-lined Skink","Lava Lizard","Crocodile Monitor"
   ],
   Birds: [
     "Eagle","Golden Eagle","Bald Eagle","Hawk","Falcon","Kite","Vulture","Owl","Barn Owl","Snowy Owl",
@@ -34,7 +44,12 @@ const baseNames = {
     "Turkey","Chicken","Rooster","Ostrich","Emu","Cassowary","Secretary Bird","Roadrunner","Cuckoo","Nightjar",
     "Lapwing","Sandpiper","Avocet","Curlew","Bittern","Jacana","Sunbird","Bee-eater","Drongo","Magpie",
     "Starling","Myna","Bulbul","Warbler","Shrike","Flycatcher","Thrush","Robin","Blue Jay","Cardinal",
-    "Goldfinch","Chaffinch","Bunting","Weaver","Ibis","Spoonbill","Bustard","Kestrel","Harrier","Goshawk"
+    "Goldfinch","Chaffinch","Bunting","Weaver","Ibis","Spoonbill","Bustard","Kestrel","Harrier","Goshawk",
+    "Andean Condor","California Condor","Harpy Eagle","Steller's Sea Eagle","Philippine Eagle","Crowned Eagle","Martial Eagle","Osprey","Black Kite","Red Kite",
+    "Great Horned Owl","Eagle Owl","Burrowing Owl","Elf Owl","African Grey Parrot","Eclectus Parrot","Conure","Cockatiel","Lorikeet","Quetzal",
+    "Resplendent Quetzal","Bird of Paradise","Lyrebird","Bowerbird","Blue Tit","Great Tit","Wren","House Sparrow","Tree Sparrow","Brown Thrasher",
+    "Mockingbird","Wood Thrush","Nightingale","Skylark","Meadowlark","Eastern Bluebird","Mountain Bluebird","Indigo Bunting","Painted Bunting","Yellow Warbler",
+    "Wood Duck","Mandarin Duck","Pintail Duck","Mute Swan","Black Swan","Trumpeter Swan","Sandhill Crane","Whooping Crane","Greater Roadrunner","Northern Cardinal"
   ],
   Aquatic: [
     "Shark","Great White Shark","Hammerhead Shark","Tiger Shark","Bull Shark","Whale Shark","Dolphin","Orca","Blue Whale","Humpback Whale",
@@ -44,7 +59,12 @@ const baseNames = {
     "Tuna","Salmon","Trout","Cod","Haddock","Mackerel","Sardine","Anchovy","Barracuda","Swordfish",
     "Marlin","Eel","Moray Eel","Electric Eel","Ray","Manta Ray","Stingray","Skate","Sea Horse","Pipefish",
     "Coral","Anemone","Krill","Plankton","Gobies","Blenny","Snapper","Grouper","Pufferfish","Triggerfish",
-    "Lionfish","Surgeonfish","Parrotfish","Damselfish","Flying Fish","Mudskipper","Catfish","Tilapia","Carp","Goldfish"
+    "Lionfish","Surgeonfish","Parrotfish","Damselfish","Flying Fish","Mudskipper","Catfish","Tilapia","Carp","Goldfish",
+    "Beluga Sturgeon","Atlantic Salmon","Pink Salmon","Sockeye Salmon","Chum Salmon","Coho Salmon","Rainbow Trout","Brown Trout","Lake Trout","Brook Trout",
+    "Pacific Cod","Atlantic Cod","Pollock","King Mackerel","Spanish Mackerel","Yellowfin Tuna","Bluefin Tuna","Skipjack Tuna","Sailfish","Wahoo",
+    "Mahi-Mahi","Bonito","Pompano","Snook","Tarpon","Grunt","Croaker","Red Drum","Black Drum","Spotted Sea Trout",
+    "Halibut","Flounder","Sole","Plaice","Turbot","Goliath Grouper","Black Grouper","Yellow Tang","Royal Gramma","Banggai Cardinalfish",
+    "Mandarinfish","Frogfish","Anglerfish","Viperfish","Lanternfish","Hatchetfish","Coelacanth","Arapaima","Piranha","Pacu"
   ],
   "Small Creatures": [
     "Ant","Fire Ant","Carpenter Ant","Bee","Honey Bee","Bumblebee","Butterfly","Monarch Butterfly","Moth","Silkworm",
@@ -54,7 +74,12 @@ const baseNames = {
     "Aphid","Caterpillar","Glowworm","Firefly","Water Strider","Gnat","Midge","Mayfly","Stonefly","Caddisfly",
     "Antlion","Stick Insect","Leaf Insect","Mantid","Praying Mantis","Thrips","Planthopper","Leafhopper","Cicada","Spittlebug",
     "Frog","Tree Frog","Toad","Poison Frog","Newt","Salamander","Axolotl","Flatworm","Roundworm","Tapeworm",
-    "Hydra","Rotifer","Copepod","Isopod","Amphipod","Barnacle","Krill","Zooplankton","Phytoplankton","Tardigrade"
+    "Hydra","Rotifer","Copepod","Isopod","Amphipod","Barnacle","Zooplankton","Phytoplankton","Tardigrade","Atlas Beetle",
+    "Hercules Beetle","Stag Beetle","Goliath Beetle","Rhinoceros Beetle","Jewel Beetle","Tiger Beetle","Carrion Beetle","Bombardier Beetle","Click Beetle","Soldier Beetle",
+    "Long-horned Beetle","Leaf Beetle","Weaver Ant","Bullet Ant","Driver Ant","Trapdoor Spider","Funnel-web Spider","Brown Recluse","Jumping Spider","Crab Spider",
+    "Orb Weaver","Daddy Long Legs","Velvet Mite","Solifuge","Vinegaroon","Whip Scorpion","Pseudoscorpion","Sea Spider","Horseshoe Crab","Cave Salamander",
+    "Hellbender","Mudpuppy","Olm","Caecilian","Glass Frog","Goliath Frog","Tomato Frog","Surinam Toad","Cane Toad","Fire Salamander",
+    "Spotted Salamander","Crested Newt","Smooth Newt","Velvet Worm","Comb Jelly","Sea Walnut","Heliozoan","Bristletail","Springtail","Booklice"
   ],
   Nature: [
     "Rainforest","Mangrove Forest","Deciduous Forest","Coniferous Forest","Grassland","Savanna","Tundra","Wetland","Swamp","Marsh",
@@ -63,7 +88,12 @@ const baseNames = {
     "Banyan Tree","Neem Tree","Peepal Tree","Oak Tree","Pine Tree","Cedar Tree","Palm Tree","Baobab","Sequoia","Redwood",
     "Coral Reef","Kelp Forest","Sea Grass","Rock Pool","Ice Sheet","Snow Field","Rain Cloud","Thunderstorm","Rainbow","Aurora",
     "Sunset","Sunrise","Sand Dune","Sandstorm","Fog","Mist","Geyser","Hot Spring","Lava Field","Ash Cloud",
-    "Cliff Edge","Hill","Slope","Forest Floor","Root System","Tree Bark","Leaf Canopy","Flower Field","Wildflowers","Shrubland"
+    "Cliff Edge","Hill","Slope","Forest Floor","Root System","Tree Bark","Leaf Canopy","Flower Field","Wildflowers","Shrubland",
+    "Bay","Inlet","Fjord","Cove","Beach","Coastline","Atoll","Karst Landscape","Limestone Cave","Crystal Cave",
+    "Salt Cave","Lava Tube","Rift Valley","Mesa","Butte","Highlands","Lowlands","Floodplain","Bog","Fen",
+    "Mire","Vernal Pool","Subtropical Forest","Boreal Forest","Cloud Forest","Dry Forest","Bamboo Forest","Eucalyptus Forest","Mixed Forest","Old Growth",
+    "Tropical Storm","Cyclone","Hurricane","Typhoon","Tornado","Lightning","Hailstorm","Blizzard","Frost","Dew",
+    "Morning Mist","Twilight","Moonrise","Eclipse","Solstice","Equinox","Geyser Field","Salt Flat","Mineral Pool","Coral Garden"
   ],
   Mountains: [
     "Mount Everest","K2","Kangchenjunga","Lhotse","Makalu","Cho Oyu","Dhaulagiri","Manaslu","Nanga Parbat","Annapurna",
@@ -71,21 +101,36 @@ const baseNames = {
     "Zagros","Ural","Carpathians","Pyrenees","Appalachians","Atlas Mountains","Drakensberg","Tien Shan","Altai","Caucasus",
     "Sierra Nevada","Cascade Range","Alaskan Range","Great Dividing Range","Patagonian Andes","Southern Alps","Blue Mountains","Aravalli Range","Western Ghats","Eastern Ghats",
     "Snow Peak","Ice Ridge","Glacier Peak","Volcanic Peak","Cliff Ridge","Mountain Pass","Summit","Base Camp","Rock Face","Snowfield",
-    "Dolomites","Karakoram","Hindu Kush","Kunlun","Tatra","Beskids","Sudetes","Rila","Rhodopes","Balkan Mountains"
+    "Dolomites","Karakoram","Hindu Kush","Kunlun","Tatra","Beskids","Sudetes","Rila","Rhodopes","Balkan Mountains",
+    "Mauna Kea","Mauna Loa","Mount Kosciuszko","Vinson Massif","Mount Aconcagua","Mount McKinley","Mount Logan","Mount Saint Elias","Mount Foraker","Mount Hunter",
+    "Mount Whitney","Mount Rainier","Mount Hood","Mount Shasta","Mount Adams","Mount Baker","Mount Lassen","Mount Saint Helens","Pikes Peak","Mount Washington",
+    "Mount Mitchell","Mount Olympus","Mount Etna","Stromboli","Mount Vesuvius","Mont Pelée","Hekla","Mount Aso","Sakurajima","Mount Bromo",
+    "Mount Merapi","Mount Pinatubo","Mount Mayon","Krakatoa","Mount Apo","Mount Kinabalu","Pico Bolívar","Mount Kenya","Mount Meru","Ruwenzori",
+    "Margherita Peak","Mount Stanley","Pico de Orizaba","Mount Damavand","Mount Ararat","Olympus Mons","Eyjafjallajökull","Aconcagua Summit","Stok Kangri","Ama Dablam"
   ],
   Sea: [
     "Pacific Ocean","Atlantic Ocean","Indian Ocean","Arctic Ocean","Southern Ocean","Coral Reef","Deep Sea","Ocean Trench","Abyss","Sea Floor",
     "Sea Cave","Sea Cliff","Lagoon","Bay","Gulf","Strait","Harbor","Port","Tidal Pool","Wave",
     "Tsunami","Current","Underwater Volcano","Seamount","Kelp Forest","Seagrass","Marine Ecosystem","Saltwater","Brine Pool","Hydrothermal Vent",
     "Ocean Ridge","Continental Shelf","Open Ocean","Pelagic Zone","Benthic Zone","Neritic Zone","Abyssal Zone","Coral Atoll","Barrier Reef","Fringing Reef",
-    "Bioluminescence","Sea Mist","Tidal Flat","Estuary","Mangrove Coast","Rocky Shore","Sandy Beach","Kelp Bed","Sargasso Sea","Coral Garden"
+    "Bioluminescence","Sea Mist","Tidal Flat","Mangrove Coast","Rocky Shore","Sandy Beach","Kelp Bed","Sargasso Sea",
+    "Mediterranean Sea","Caribbean Sea","Red Sea","Black Sea","Caspian Sea","Aegean Sea","Adriatic Sea","Baltic Sea","North Sea","Bering Sea",
+    "Sea of Japan","Sea of Okhotsk","South China Sea","East China Sea","Yellow Sea","Andaman Sea","Arabian Sea","Bay of Bengal","Persian Gulf","Gulf of Mexico",
+    "Gulf of Aden","Gulf of Oman","Hudson Bay","Bay of Biscay","English Channel","Drake Passage","Bering Strait","Strait of Gibraltar","Strait of Malacca","Bosphorus Strait",
+    "Suez Canal","Panama Canal","Cape Horn","Cape of Good Hope","Mariana Trench","Puerto Rico Trench","Java Trench","Tonga Trench","Mid-Atlantic Ridge","East Pacific Rise",
+    "Great Barrier Reef","Belize Barrier Reef","Maldives Atolls","Galápagos Marine Reserve","Hawaiian Islands","Polynesian Islands","Antarctic Convergence","Sargassum Mat","Ocean Gyre","Salinity Gradient"
   ],
   Desert: [
     "Sahara Desert","Arabian Desert","Gobi Desert","Kalahari Desert","Thar Desert","Mojave Desert","Sonoran Desert","Atacama Desert","Namib Desert","Great Victoria Desert",
     "Sand Dune","Oasis","Salt Flat","Desert Plateau","Rock Desert","Cold Desert","Hot Desert","Desert Storm","Dry River","Wadi",
     "Cactus","Succulent","Desert Shrub","Acacia Tree","Baobab Tree","Desert Grass","Date Palm","Yucca Plant","Agave","Prickly Pear",
     "Fennec Fox","Desert Fox","Camel","Dromedary Camel","Bactrian Camel","Jerboa","Meerkat","Sand Cat","Sidewinder Snake","Horned Viper",
-    "Desert Lizard","Gila Monster","Roadrunner","Desert Tortoise","Scorpion","Dung Beetle","Antlion","Locust","Termite","Dust Devil"
+    "Desert Lizard","Roadrunner","Desert Tortoise","Dung Beetle","Dust Devil",
+    "Patagonian Desert","Karakum Desert","Kyzylkum Desert","Taklamakan Desert","Dasht-e Kavir","Dasht-e Lut","Sechura Desert","Monte Desert","Chihuahuan Desert","Great Basin Desert",
+    "Painted Desert","Black Rock Desert","Owyhee Desert","Yuma Desert","Mojave Yucca","Joshua Tree","Saguaro Cactus","Barrel Cactus","Pincushion Cactus","Organ Pipe Cactus",
+    "Cholla Cactus","Beavertail Cactus","Welwitschia","Quiver Tree","Ocotillo","Creosote Bush","Sagebrush","Desert Sage","Tumbleweed","Desert Marigold",
+    "Desert Lily","Desert Bighorn Sheep","Addax Antelope","Arabian Oryx","Springbok","Sand Gazelle","Ostrich","Sandgrouse","Hoopoe Lark","Desert Hedgehog",
+    "Caracal Cat","Sand Viper","Desert Pupfish","Desert Centipede","Wind-Carved Rock","Rock Arch","Hoodoos","Slot Canyon","Painted Hills","Ghaf Tree"
   ],
   Trees: [
     "Banyan Tree","Neem Tree","Peepal Tree","Oak Tree","Pine Tree","Cedar Tree","Maple Tree","Birch Tree","Willow Tree","Palm Tree",
@@ -94,7 +139,12 @@ const baseNames = {
     "Fig Tree","Olive Tree","Walnut Tree","Almond Tree","Pecan Tree","Chestnut Tree","Hazel Tree","Rubber Tree","Coffee Tree","Cocoa Tree",
     "Acacia Tree","Bamboo","Mahogany Tree","Rosewood Tree","Poplar Tree","Aspen Tree","Dogwood Tree","Juniper Tree","Cypress Tree","Palm Fan Tree",
     "Rain Tree","Flame Tree","Gulmohar Tree","Kadamba Tree","Arjun Tree","Sal Tree","Deodar Tree","Chinar Tree","Khejri Tree","Prosopis Tree",
-    "Tamarind Tree","Jackfruit Tree","Lychee Tree","Avocado Tree","Persimmon Tree","Mulberry Tree","Breadfruit Tree","Starfruit Tree","Durian Tree","Mangrove Tree"
+    "Tamarind Tree","Jackfruit Tree","Lychee Tree","Avocado Tree","Persimmon Tree","Mulberry Tree","Breadfruit Tree","Starfruit Tree","Durian Tree","Mangrove Tree",
+    "Sycamore Tree","Linden Tree","Holly Tree","Magnolia Tree","Yew Tree","Hickory Tree","Larch Tree","Hemlock Tree","Beech Tree","Hornbeam Tree",
+    "Catalpa Tree","Plane Tree","Tulip Tree","Sweet Gum","Black Locust","Honey Locust","Box Elder","Bald Cypress","Sequoia Sempervirens","Giant Sequoia",
+    "Bristlecone Pine","Lodgepole Pine","Ponderosa Pine","Sugar Pine","Eastern White Pine","Black Pine","Stone Pine","Aleppo Pine","Norway Spruce","Sitka Spruce",
+    "Blue Spruce","Engelmann Spruce","Douglas Fir","Balsam Fir","Grand Fir","Silver Fir","Apricot Tree","Plum Tree","Pear Tree","Peach Tree",
+    "Pomegranate Tree","Quince Tree","Loquat Tree","Custard Apple Tree","Sapodilla Tree","Pistachio Tree","Cashew Tree","Brazil Nut Tree","Pine Nut Tree","Karri Tree"
   ]
 };
 

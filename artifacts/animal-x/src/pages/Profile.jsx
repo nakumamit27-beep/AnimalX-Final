@@ -51,6 +51,7 @@ export default function Profile() {
   const [postsInput, setPostsInput] = useState("");
   const [reelsInput, setReelsInput] = useState("");
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [nameInput, setNameInput] = useState(user?.name || "");
   const photoFileRef = useRef(null);
 
@@ -224,8 +225,97 @@ export default function Profile() {
         <button className="qs-pill" onClick={toggleTheme}>
           {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
         </button>
+        <button className="qs-pill" onClick={() => setHelpOpen(true)}>❓ Help & Support</button>
         <button className="qs-pill qs-logout" onClick={logout}>↪ Log out</button>
       </div>
+
+      {helpOpen && (
+        <div className="edit-modal-backdrop" onClick={() => setHelpOpen(false)} role="dialog" aria-modal="true">
+          <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="edit-modal-head">
+              <h3>❓ Help & Support</h3>
+              <button type="button" className="edit-modal-close" onClick={() => setHelpOpen(false)} aria-label="Close">✕</button>
+            </div>
+            <div className="edit-modal-body">
+              <div className="help-section">
+                <h4 className="help-section-title">Connect With Us</h4>
+                <p className="help-section-sub">Reach out — we read every message.</p>
+
+                <a
+                  className="help-contact-row"
+                  href="fb://facewebmodal/f?href=https://www.facebook.com/wild_life_aniaml_fight"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const fallback = "https://www.facebook.com/wild_life_aniaml_fight";
+                    const start = Date.now();
+                    setTimeout(() => {
+                      if (Date.now() - start < 1700) window.open(fallback, "_blank", "noopener");
+                    }, 1300);
+                    try { window.location.href = "fb://facewebmodal/f?href=https://www.facebook.com/wild_life_aniaml_fight"; }
+                    catch { window.open(fallback, "_blank", "noopener"); }
+                  }}
+                >
+                  <span className="help-icon" style={{ background: "#1877f2" }} aria-hidden>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff">
+                      <path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.51 1.5-3.9 3.78-3.9 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.91h-2.33V22c4.78-.79 8.43-4.94 8.43-9.94z" />
+                    </svg>
+                  </span>
+                  <div className="help-contact-info">
+                    <div className="help-contact-name">Facebook</div>
+                    <div className="help-contact-handle">wild_life_aniaml_fight</div>
+                  </div>
+                  <span className="help-arrow">→</span>
+                </a>
+
+                <a
+                  className="help-contact-row"
+                  href="instagram://user?username=wild_life_aniaml_fight"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const fallback = "https://www.instagram.com/wild_life_aniaml_fight";
+                    const start = Date.now();
+                    setTimeout(() => {
+                      if (Date.now() - start < 1700) window.open(fallback, "_blank", "noopener");
+                    }, 1300);
+                    try { window.location.href = "instagram://user?username=wild_life_aniaml_fight"; }
+                    catch { window.open(fallback, "_blank", "noopener"); }
+                  }}
+                >
+                  <span className="help-icon" style={{ background: "linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)" }} aria-hidden>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="5" />
+                      <circle cx="12" cy="12" r="4" />
+                      <circle cx="17.5" cy="6.5" r="1" fill="#fff" stroke="none" />
+                    </svg>
+                  </span>
+                  <div className="help-contact-info">
+                    <div className="help-contact-name">Instagram</div>
+                    <div className="help-contact-handle">@wild_life_aniaml_fight</div>
+                  </div>
+                  <span className="help-arrow">→</span>
+                </a>
+
+                <a
+                  className="help-contact-row"
+                  href="mailto:animalx00003@gmail.com?subject=Animal%20X%20Support%20Request"
+                >
+                  <span className="help-icon" style={{ background: "#ea4335" }} aria-hidden>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="5" width="18" height="14" rx="2" />
+                      <path d="m3 7 9 6 9-6" />
+                    </svg>
+                  </span>
+                  <div className="help-contact-info">
+                    <div className="help-contact-name">Gmail</div>
+                    <div className="help-contact-handle">animalx00003@gmail.com</div>
+                  </div>
+                  <span className="help-arrow">→</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editProfileOpen && (
         <div className="edit-profile-card">
