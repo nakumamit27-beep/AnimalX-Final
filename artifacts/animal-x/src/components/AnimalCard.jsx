@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import {
   getOverride,
   setOverride,
-  fileToDataURL,
+  compressImageFile,
 } from "../utils/animalOverrides";
 
 export default function AnimalCard({ animal }) {
@@ -62,8 +62,12 @@ export default function AnimalCard({ animal }) {
     e.stopPropagation();
     const file = e.target.files?.[0];
     if (!file) return;
-    const dataUrl = await fileToDataURL(file);
-    setFImage(dataUrl);
+    try {
+      const dataUrl = await compressImageFile(file, { maxEdge: 800, quality: 0.82 });
+      setFImage(dataUrl);
+    } catch (err) {
+      alert("Could not process that image. Please try a different photo.");
+    }
   }
 
   function saveAll(e) {
