@@ -51,7 +51,7 @@ export default function Home() {
       <section className="hero">
         <div className="hero-content">
           <div className="hero-badge">🌿 Wildlife Explorer</div>
-          <h1 className="hero-title">Discover the<br /><span className="hero-accent">Animal Kingdom</span></h1>
+          <h1 className="hero-title">Connect with<br /><span className="hero-accent">Nature's Most Magnificent Creatures</span></h1>
           <p className="hero-subtitle">
             Explore {animals.length}+ animals, reptiles, birds, trees and natural wonders.
             All free — no premium, no locks.

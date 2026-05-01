@@ -14,6 +14,7 @@ export default function AnimalCard({ animal }) {
   const [override, setOverrideState] = useState(() => getOverride(animal.id));
   const [imgSrc, setImgSrc] = useState(() => getAnimalImage(animal));
   const [editOpen, setEditOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const isRare = animal.id % 10 === 0;
   const emoji = getAnimalEmoji(animal.baseName || animal.name, animal.category);
@@ -70,19 +71,26 @@ export default function AnimalCard({ animal }) {
     }
   }
 
-  function saveAll(e) {
+  async function saveAll(e) {
     e.preventDefault();
     e.stopPropagation();
     const patch = {};
     if (fName.trim() && fName !== animal.name) patch.name = fName.trim();
-    else if (fName.trim() === animal.name) patch.name = undefined;
     if (fHabits.trim()) patch.habits = fHabits.trim();
     if (fLifespan.trim()) patch.lifespan = fLifespan.trim();
     if (fDescription.trim() && fDescription !== animal.description)
       patch.description = fDescription.trim();
     if (fImage) patch.image = fImage;
-    setOverride(animal.id, patch);
-    setEditOpen(false);
+    if (!Object.keys(patch).length) { setEditOpen(false); return; }
+    setSaving(true);
+    try {
+      await setOverride(animal.id, patch);
+      setEditOpen(false);
+    } catch (err) {
+      alert("Save failed: " + (err?.message || "Unknown error. Check Firebase Storage rules."));
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -231,8 +239,10 @@ export default function AnimalCard({ animal }) {
               </div>
 
               <div className="edit-modal-actions">
-                <button type="submit" className="btn-primary">✓ Save Changes</button>
-                <button type="button" className="qs-pill" onClick={closeEdit}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={saving}>
+                  {saving ? "⏳ Uploading…" : "✓ Save Changes"}
+                </button>
+                <button type="button" className="qs-pill" onClick={closeEdit} disabled={saving}>Cancel</button>
               </div>
             </form>
           </div>
