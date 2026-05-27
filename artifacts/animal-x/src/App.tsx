@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense, startTransition } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
@@ -6,20 +6,34 @@ import { SocialProvider } from "./context/SocialContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import Navbar from "./components/Navbar";
 import FirebaseStatusBanner from "./components/FirebaseStatusBanner";
-import Home from "./pages/Home";
-import Animals from "./pages/Animals";
-import AnimalDetail from "./pages/AnimalDetail";
-import Map from "./pages/Map";
-import Reels from "./pages/Reels";
-import Travel from "./pages/Travel";
-import Chatbot from "./pages/Chatbot";
-import HelpDesk from "./pages/HelpDesk";
-import Auth from "./pages/Auth";
-import Profile from "./pages/Profile";
-import UserProfile from "./pages/UserProfile";
-import Ads from "./pages/Ads";
 
-const queryClient = new QueryClient();
+// Lazy load every page — each becomes its own JS chunk, loaded only when visited
+const Home        = lazy(() => import("./pages/Home"));
+const Animals     = lazy(() => import("./pages/Animals"));
+const AnimalDetail = lazy(() => import("./pages/AnimalDetail"));
+const Map         = lazy(() => import("./pages/Map"));
+const Reels       = lazy(() => import("./pages/Reels"));
+const Travel      = lazy(() => import("./pages/Travel"));
+const Chatbot     = lazy(() => import("./pages/Chatbot"));
+const HelpDesk    = lazy(() => import("./pages/HelpDesk"));
+const Auth        = lazy(() => import("./pages/Auth"));
+const Profile     = lazy(() => import("./pages/Profile"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const Ads         = lazy(() => import("./pages/Ads"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+function PageFallback() {
+  return <div className="page-loading">Loading</div>;
+}
 
 function NotFound() {
   return (
@@ -53,22 +67,24 @@ function Router() {
     <div className="app-layout">
       <Navbar />
       <main className="app-main">
-        <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/animals" component={Animals} />
-          <Route path="/animals/:id" component={AnimalDetail} />
-          <Route path="/map" component={Map} />
-          <Route path="/reels" component={Reels} />
-          <Route path="/travel" component={Travel} />
-          <Route path="/chat" component={Chatbot} />
-          <Route path="/help" component={HelpDesk} />
-          <Route path="/auth" component={Auth} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/user/:userId" component={UserProfile} />
-          <Route path="/ads" component={Ads} />
-          <Route path="/live-tracking" component={Map} />
-          <Route component={NotFound} />
-        </Switch>
+        <Suspense fallback={<PageFallback />}>
+          <Switch>
+            <Route path="/" component={Home} />
+            <Route path="/animals" component={Animals} />
+            <Route path="/animals/:id" component={AnimalDetail} />
+            <Route path="/map" component={Map} />
+            <Route path="/reels" component={Reels} />
+            <Route path="/travel" component={Travel} />
+            <Route path="/chat" component={Chatbot} />
+            <Route path="/help" component={HelpDesk} />
+            <Route path="/auth" component={Auth} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/user/:userId" component={UserProfile} />
+            <Route path="/ads" component={Ads} />
+            <Route path="/live-tracking" component={Map} />
+            <Route component={NotFound} />
+          </Switch>
+        </Suspense>
       </main>
       <FirebaseStatusBanner />
     </div>
@@ -79,7 +95,10 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1500);
+    // Reduced from 1500ms → 400ms splash
+    const timer = setTimeout(() => {
+      startTransition(() => setLoading(false));
+    }, 400);
     return () => clearTimeout(timer);
   }, []);
 

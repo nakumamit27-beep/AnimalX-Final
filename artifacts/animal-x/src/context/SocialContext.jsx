@@ -4,9 +4,14 @@ import {
   query, where, onSnapshot, orderBy, limit,
   serverTimestamp, updateDoc, increment, addDoc,
 } from "firebase/firestore";
-import { ref, onValue, set as rtdbSet, onDisconnect, serverTimestamp as rtdbTs, increment as rtdbIncrement } from "firebase/database";
+import { ref, onValue, set as rtdbSet, onDisconnect } from "firebase/database";
 import { db, rtdb } from "../utils/firebase";
+import { reportFirebaseError } from "../components/FirebaseStatusBanner";
 import { useAuth } from "./AuthContext";
+
+function silentCatch(err) {
+  if (err?.code) reportFirebaseError(err.code, "Firestore");
+}
 
 const EMPTY_CTX = {
   likedReels: {}, likeReel: () => Promise.resolve(),

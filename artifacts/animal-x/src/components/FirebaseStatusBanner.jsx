@@ -1,49 +1,50 @@
-import { useState, useEffect } from "react";
-import { runFullHealthCheck, log } from "../utils/FirebaseHealthChecker";
+import { useState, useEffect, useRef } from "react";
 
-let hasChecked = false;
+// Passive Firebase status banner — does NOT run health checks on startup.
+// Only shows if Firebase throws actual permission/network errors during normal use.
+// This prevents the 5 extra network requests that were slowing down every page load.
+
+const KNOWN_ERRORS = [
+  { code: "permission-denied", msg: "Firestore permission denied", hint: "Paste Security Rules from Admin Debug Panel into Firebase Console → Firestore → Rules" },
+  { code: "unavailable", msg: "Firebase unavailable", hint: "Check your internet connection" },
+  { code: "network-request-failed", msg: "Network request failed", hint: "Device may be offline or Firebase is unreachable" },
+];
+
+let _errorListeners = [];
+export function reportFirebaseError(code, service) {
+  _errorListeners.forEach(fn => fn(code, service));
+}
 
 export default function FirebaseStatusBanner() {
-  const [errors, setErrors] = useState([]);
+  const [error, setError] = useState(null);
   const [dismissed, setDismissed] = useState(false);
+  const seenRef = useRef(new Set());
 
   useEffect(() => {
-    if (hasChecked) return;
-    hasChecked = true;
-
-    const timeout = setTimeout(async () => {
-      try {
-        const result = await runFullHealthCheck();
-        const errs = [];
-        if (!result.firestore.ok) errs.push({ service: "Firestore", msg: result.firestore.error });
-        if (!result.rtdb.ok) errs.push({ service: "Realtime DB", msg: result.rtdb.error });
-        if (errs.length > 0) {
-          setErrors(errs);
-          log("warn", "StatusBanner", `${errs.length} service(s) have issues`);
-        }
-      } catch (err) {
-        log("error", "StatusBanner", "Health check failed", err.message);
+    const handler = (code, service) => {
+      if (seenRef.current.has(code)) return;
+      const known = KNOWN_ERRORS.find(e => code?.includes(e.code));
+      if (known) {
+        seenRef.current.add(code);
+        setDismissed(false);
+        setError({ service, ...known });
       }
-    }, 3000);
-
-    return () => clearTimeout(timeout);
+    };
+    _errorListeners.push(handler);
+    return () => { _errorListeners = _errorListeners.filter(fn => fn !== handler); };
   }, []);
 
-  if (dismissed || errors.length === 0) return null;
+  if (!error || dismissed) return null;
 
   return (
     <div className="fb-status-banner">
       <div className="fb-status-inner">
         <span className="fb-status-icon">⚠️</span>
         <div className="fb-status-msgs">
-          {errors.map((e, i) => (
-            <div key={i} className="fb-status-line">
-              <b>{e.service}:</b> {e.msg}
-            </div>
-          ))}
-          <div className="fb-status-hint">
-            Paste the Security Rules from the Admin Debug Panel (tap 🦁 × 7 as admin) into Firebase Console.
+          <div className="fb-status-line">
+            <b>{error.service}:</b> {error.msg}
           </div>
+          <div className="fb-status-hint">{error.hint}</div>
         </div>
         <button className="fb-status-dismiss" onClick={() => setDismissed(true)}>✕</button>
       </div>

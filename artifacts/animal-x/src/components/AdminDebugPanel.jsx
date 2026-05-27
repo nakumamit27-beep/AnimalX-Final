@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { runFullHealthCheck, getLogs, log } from "../utils/FirebaseHealthChecker";
-import { auth } from "../utils/firebase";
+import PerformanceBenchmark from "./PerformanceBenchmark";
 
 const STATUS_ICON = { true: "✅", false: "❌", null: "⏳" };
 const LEVEL_COLOR = { info: "#10b981", warn: "#f59e0b", error: "#ef4444" };
@@ -13,6 +13,7 @@ export default function AdminDebugPanel({ open, onClose }) {
   const [logs, setLogs] = useState([]);
   const [activeTab, setActiveTab] = useState("status");
   const [latencyHistory, setLatencyHistory] = useState([]);
+  const [benchOpen, setBenchOpen] = useState(false);
 
   const runCheck = useCallback(async () => {
     setChecking(true);
@@ -71,6 +72,7 @@ export default function AdminDebugPanel({ open, onClose }) {
               {t === "status" ? "📊 Status" : t === "logs" ? "📋 Logs" : "🔑 Rules"}
             </button>
           ))}
+          <button className="debug-tab" onClick={() => setBenchOpen(true)}>⚡ Benchmark</button>
           <button
             className="debug-refresh"
             onClick={runCheck}
@@ -79,6 +81,7 @@ export default function AdminDebugPanel({ open, onClose }) {
             {checking ? "⏳" : "🔄"} {checking ? "Checking…" : "Refresh"}
           </button>
         </div>
+        {benchOpen && <PerformanceBenchmark onClose={() => setBenchOpen(false)} />}
 
         {activeTab === "status" && (
           <div className="debug-body">
