@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
 import { useSocial } from "../context/SocialContext";
 import NotificationBell from "./NotificationBell";
+import AdminDebugPanel from "./AdminDebugPanel";
 
 const bottomItems = [
   { href: "/", label: "Home", icon: "🏠" },
@@ -21,6 +22,7 @@ export default function Navbar() {
   const [tapCount, setTapCount] = useState(0);
   const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [broadcastMsg, setBroadcastMsg] = useState("");
+  const [debugOpen, setDebugOpen] = useState(false);
   const tapTimer = useRef(null);
 
   function submitSearch(e) {
@@ -41,12 +43,8 @@ export default function Navbar() {
       setTapCount(0);
       if (!user) { alert("Please login first."); return; }
       if (!isSuperAdmin) { alert("Admin access restricted."); return; }
-      if (!adminMode) {
-        unlockAdminMode();
-        setBroadcastOpen(true);
-      } else {
-        setBroadcastOpen(v => !v);
-      }
+      if (!adminMode) unlockAdminMode();
+      setBroadcastOpen(v => !v);
     }
   }
 
@@ -60,7 +58,6 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Admin Broadcast Banner */}
       {broadcast && (
         <div className="broadcast-banner">
           <span className="broadcast-icon">📢</span>
@@ -88,18 +85,34 @@ export default function Navbar() {
 
         <div className="topbar-actions">
           <NotificationBell />
+          {adminMode && isSuperAdmin && (
+            <button
+              className="debug-panel-btn"
+              onClick={() => setDebugOpen(true)}
+              title="Firebase Debug Panel"
+            >
+              🛠️
+            </button>
+          )}
           {!user && (
             <Link href="/auth" className="top-pill top-pill-primary" title="Login">Login</Link>
           )}
         </div>
       </header>
 
-      {/* Admin Broadcast Panel */}
       {broadcastOpen && isSuperAdmin && adminMode && (
         <div className="broadcast-panel">
           <div className="broadcast-panel-head">
             <span>📢 Admin Broadcast</span>
-            <button onClick={() => setBroadcastOpen(false)}>✕</button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => setDebugOpen(true)}
+                style={{ background: "rgba(168,85,247,.2)", border: "1px solid #a855f7", color: "#a855f7", padding: "4px 10px", borderRadius: 8, cursor: "pointer", fontSize: "0.78rem" }}
+              >
+                🛠️ Debug
+              </button>
+              <button onClick={() => setBroadcastOpen(false)}>✕</button>
+            </div>
           </div>
           <div className="broadcast-panel-body">
             <textarea
@@ -120,6 +133,8 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      <AdminDebugPanel open={debugOpen} onClose={() => setDebugOpen(false)} />
 
       <nav className="bottom-nav">
         {bottomItems.map((item) => {

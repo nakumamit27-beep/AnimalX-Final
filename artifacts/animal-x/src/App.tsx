@@ -5,6 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { SocialProvider } from "./context/SocialContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import Navbar from "./components/Navbar";
+import FirebaseStatusBanner from "./components/FirebaseStatusBanner";
 import Home from "./pages/Home";
 import Animals from "./pages/Animals";
 import AnimalDetail from "./pages/AnimalDetail";
@@ -69,6 +70,7 @@ function Router() {
           <Route component={NotFound} />
         </Switch>
       </main>
+      <FirebaseStatusBanner />
     </div>
   );
 }

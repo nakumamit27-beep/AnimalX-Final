@@ -12,7 +12,7 @@ pnpm workspace monorepo using TypeScript. Contains the Animal X wildlife explore
 - **TypeScript version**: 5.9
 - **Frontend**: React + Vite (react-vite)
 - **API framework**: Express 5
-- **Auth/Database**: Firebase Auth + Firestore (project: animal-x-830cf)
+- **Auth/Database**: Firebase Auth + Firestore + Realtime Database + Storage (project: happy-fd1bc)
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **Styling**: CSS custom properties (dark teal-to-green gradient dark theme)
 

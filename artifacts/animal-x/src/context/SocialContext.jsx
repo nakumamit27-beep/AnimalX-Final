@@ -1,10 +1,11 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import {
-  doc, setDoc, deleteDoc, getDoc, collection,
+  doc, setDoc, getDoc, collection,
   query, where, onSnapshot, orderBy, limit,
   serverTimestamp, updateDoc, increment, addDoc,
 } from "firebase/firestore";
-import { db } from "../utils/firebase";
+import { ref, onValue, set as rtdbSet, onDisconnect, serverTimestamp as rtdbTs, increment as rtdbIncrement } from "firebase/database";
+import { db, rtdb } from "../utils/firebase";
 import { useAuth } from "./AuthContext";
 
 const EMPTY_CTX = {
@@ -13,6 +14,8 @@ const EMPTY_CTX = {
   notifications: [], unreadCount: 0, markAllRead: () => Promise.resolve(),
   broadcast: null, dismissBroadcast: () => Promise.resolve(),
   sendBroadcast: () => Promise.resolve(), submitAd: () => Promise.resolve(false),
+  onlineCount: 0, liveViews: {}, trending: [],
+  trackReelView: () => {}, likeReelLive: () => {},
 };
 const SocialContext = createContext(EMPTY_CTX);
 
@@ -23,6 +26,9 @@ export function SocialProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [broadcast, setBroadcast] = useState(null);
+  const [onlineCount, setOnlineCount] = useState(0);
+  const [liveViews, setLiveViews] = useState({});
+  const [trending, setTrending] = useState([]);
 
   useEffect(() => {
     if (!user?.uid) {
@@ -66,13 +72,60 @@ export function SocialProvider({ children }) {
     const unsub = onSnapshot(
       query(collection(db, "adminBroadcasts"), where("active", "==", true), limit(1)),
       (snap) => {
-        if (!snap.empty) setBroadcast(snap.docs[0].data());
+        if (!snap.empty) setBroadcast({ id: snap.docs[0].id, ...snap.docs[0].data() });
         else setBroadcast(null);
       },
       () => {}
     );
     return unsub;
   }, []);
+
+  useEffect(() => {
+    const onlineRef = ref(rtdb, "online-users");
+    const unsub = onValue(onlineRef, (snap) => {
+      const data = snap.val() || {};
+      setOnlineCount(Object.keys(data).filter(k => data[k] === true).length);
+    }, () => {});
+
+    const trendRef = ref(rtdb, "trending");
+    const trendUnsub = onValue(trendRef, (snap) => {
+      const data = snap.val() || {};
+      const list = Object.entries(data)
+        .map(([id, v]) => ({ id, ...v }))
+        .sort((a, b) => (b.score || 0) - (a.score || 0))
+        .slice(0, 10);
+      setTrending(list);
+    }, () => {});
+
+    const viewsRef = ref(rtdb, "live-views");
+    const viewsUnsub = onValue(viewsRef, (snap) => {
+      setLiveViews(snap.val() || {});
+    }, () => {});
+
+    return () => { unsub(); trendUnsub(); viewsUnsub(); };
+  }, []);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const userOnlineRef = ref(rtdb, `online-users/${user.uid}`);
+    rtdbSet(userOnlineRef, true).catch(() => {});
+    onDisconnect(userOnlineRef).set(null);
+    return () => { rtdbSet(userOnlineRef, null).catch(() => {}); };
+  }, [user?.uid]);
+
+  function trackReelView(reelId) {
+    if (!reelId) return;
+    const viewRef = ref(rtdb, `live-views/${reelId}`);
+    rtdbSet(viewRef, (liveViews[reelId] || 0) + 1).catch(() => {});
+    const trendRef = ref(rtdb, `trending/${reelId}/score`);
+    rtdbSet(trendRef, ((trending.find(t => t.id === reelId)?.score) || 0) + 1).catch(() => {});
+  }
+
+  function likeReelLive(reelId) {
+    if (!reelId) return;
+    const likeRef = ref(rtdb, `live-likes/${reelId}`);
+    rtdbSet(likeRef, (Date.now())).catch(() => {});
+  }
 
   async function loadUserLikes(uid) {
     try {
@@ -209,6 +262,8 @@ export function SocialProvider({ children }) {
       notifications, unreadCount, markAllRead,
       broadcast, dismissBroadcast,
       sendBroadcast, submitAd,
+      onlineCount, liveViews, trending,
+      trackReelView, likeReelLive,
     }}>
       {children}
     </SocialContext.Provider>
