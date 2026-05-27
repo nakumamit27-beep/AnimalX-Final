@@ -1,4 +1,14 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile as fbUpdateProfile,
+  sendPasswordResetEmail,
+} from "firebase/auth";
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "../utils/firebase";
 
 const AuthContext = createContext(null);
 
@@ -9,107 +19,110 @@ const DEFAULT_PROFILE = {
   following: 0,
   posts: 0,
   reels: 0,
-  isVerified: false,
   manualVerified: false,
   autoGrow: false,
+  bio: "",
+  country: "",
 };
-
-function readJSON(key, fallback) {
-  try {
-    const v = localStorage.getItem(key);
-    return v ? JSON.parse(v) : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
-  const [verifiedMap, setVerifiedMap] = useState({});
   const [adminMode, setAdminMode] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const stored = readJSON("ax_user", null);
-    if (stored) setUser(stored);
-
-    const p = readJSON("ax_profile", DEFAULT_PROFILE);
-    setProfile({ ...DEFAULT_PROFILE, ...p });
-
-    const v = readJSON("ax_verified_map", {});
-    setVerifiedMap(v);
-
-    if (sessionStorage.getItem("ax_admin_mode") === "true") {
-      setAdminMode(true);
-    }
+    const unsub = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        const u = {
+          uid: fbUser.uid,
+          email: fbUser.email,
+          name: fbUser.displayName || fbUser.email.split("@")[0],
+        };
+        setUser(u);
+        try {
+          const snap = await getDoc(doc(db, "users", fbUser.uid));
+          if (snap.exists()) {
+            setProfile({ ...DEFAULT_PROFILE, ...snap.data() });
+          } else {
+            const fresh = {
+              ...DEFAULT_PROFILE,
+              name: u.name,
+              email: u.email,
+              createdAt: serverTimestamp(),
+            };
+            await setDoc(doc(db, "users", fbUser.uid), fresh);
+            setProfile(fresh);
+          }
+        } catch {
+          setProfile(DEFAULT_PROFILE);
+        }
+        if (sessionStorage.getItem("ax_admin_mode") === "true") setAdminMode(true);
+      } else {
+        setUser(null);
+        setProfile(DEFAULT_PROFILE);
+        setAdminMode(false);
+      }
+      setAuthLoading(false);
+    });
+    return unsub;
   }, []);
 
-  // Auto-grow followers on every app start (once per session)
-  useEffect(() => {
-    if (!profile.autoGrow) return;
-    const grew = sessionStorage.getItem("ax_grew_session");
-    if (grew) return;
-    sessionStorage.setItem("ax_grew_session", "1");
-    const bump = 5 + Math.floor(Math.random() * 6); // 5-10
-    setProfile((p) => {
-      const next = { ...p, followers: (p.followers || 0) + bump };
-      localStorage.setItem("ax_profile", JSON.stringify(next));
-      return next;
-    });
-  }, [profile.autoGrow]);
-
-  // Persist profile
-  useEffect(() => {
-    localStorage.setItem("ax_profile", JSON.stringify(profile));
-  }, [profile]);
-
-  useEffect(() => {
-    localStorage.setItem("ax_verified_map", JSON.stringify(verifiedMap));
-  }, [verifiedMap]);
-
-  const isSuperAdmin = !!(user && user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL);
-
-  // Auto-verify at 100k followers OR manualVerified ON
+  const isSuperAdmin = !!(user?.email?.toLowerCase() === SUPER_ADMIN_EMAIL);
   const autoVerified = (profile.followers || 0) >= 100000;
-  const isVerified = profile.manualVerified || autoVerified;
+  const isVerified = !!(profile.manualVerified || autoVerified);
 
-  function signup(name, email, password) {
-    if (!email || !password) {
-      alert("Please fill all fields.");
+  async function signup(name, email, password) {
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await fbUpdateProfile(cred.user, { displayName: name });
+      return true;
+    } catch (err) {
+      const msg =
+        err.code === "auth/email-already-in-use" ? "An account with this email already exists." :
+        err.code === "auth/weak-password" ? "Password must be at least 6 characters." :
+        err.message || "Signup failed.";
+      alert(msg);
       return false;
     }
-    const existing = readJSON("ax_users", []);
-    if (existing.find((u) => u.email === email)) {
-      alert("Email already registered.");
-      return false;
-    }
-    const uid = `uid_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const newUser = { uid, name, email, password, createdAt: new Date().toISOString() };
-    localStorage.setItem("ax_users", JSON.stringify([...existing, newUser]));
-    const session = { uid, name, email };
-    localStorage.setItem("ax_user", JSON.stringify(session));
-    setUser(session);
-    return true;
   }
 
-  function login(email, password) {
-    const users = readJSON("ax_users", []);
-    const match = users.find((u) => u.email === email && u.password === password);
-    if (!match) {
-      alert("Invalid email or password.");
+  async function login(email, password) {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      return true;
+    } catch (err) {
+      const msg =
+        err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential"
+          ? "Incorrect email or password." :
+        err.code === "auth/too-many-requests" ? "Too many failed attempts. Please try again later." :
+        err.message || "Login failed.";
+      alert(msg);
       return false;
     }
-    const session = { uid: match.uid, name: match.name, email: match.email };
-    localStorage.setItem("ax_user", JSON.stringify(session));
-    setUser(session);
-    return true;
   }
 
-  function logout() {
-    localStorage.removeItem("ax_user");
+  async function logout() {
+    await signOut(auth);
     sessionStorage.removeItem("ax_admin_mode");
-    setUser(null);
     setAdminMode(false);
+  }
+
+  async function forgotPassword(email) {
+    await sendPasswordResetEmail(auth, email);
+  }
+
+  async function updateProfile(patch) {
+    setProfile((p) => ({ ...p, ...patch }));
+    if (user?.uid) {
+      try {
+        await updateDoc(doc(db, "users", user.uid), patch);
+      } catch {
+        try {
+          await setDoc(doc(db, "users", user.uid), patch, { merge: true });
+        } catch {}
+      }
+    }
   }
 
   function unlockAdminMode() {
@@ -127,47 +140,30 @@ export function AuthProvider({ children }) {
     setAdminMode(false);
   }
 
-  function updateProfile(patch) {
-    setProfile((p) => ({ ...p, ...patch }));
+  function toggleAdminMode() {
+    const next = !adminMode;
+    setAdminMode(next);
+    if (next) sessionStorage.setItem("ax_admin_mode", "true");
+    else sessionStorage.removeItem("ax_admin_mode");
   }
 
-  function setVerifiedFor(emailOrUid, value) {
-    setVerifiedMap((m) => ({ ...m, [emailOrUid]: !!value }));
-  }
-
+  const verifiedMap = {};
+  function setVerifiedFor() {}
   function isUserVerified(u) {
     if (!u) return false;
-    if (u.email && verifiedMap[u.email]) return true;
-    if (u.uid && verifiedMap[u.uid]) return true;
-    if (typeof u.followers === "number" && u.followers >= 100000) return true;
-    return false;
+    return (u.followers || 0) >= 100000;
   }
-
-  function getAllUsers() {
-    return readJSON("ax_users", []);
-  }
+  function getAllUsers() { return []; }
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        adminMode,
-        isSuperAdmin,
-        isVerified,
-        verifiedMap,
-        SUPER_ADMIN_EMAIL,
-        signup,
-        login,
-        logout,
-        unlockAdminMode,
-        lockAdminMode,
-        updateProfile,
-        setVerifiedFor,
-        isUserVerified,
-        getAllUsers,
-      }}
-    >
+    <AuthContext.Provider value={{
+      user, profile, authLoading, isVerified, isSuperAdmin,
+      adminMode, setAdminMode, toggleAdminMode,
+      unlockAdminMode, lockAdminMode,
+      signup, login, logout, forgotPassword, updateProfile,
+      setVerifiedFor, isUserVerified, getAllUsers,
+      verifiedMap, SUPER_ADMIN_EMAIL,
+    }}>
       {children}
     </AuthContext.Provider>
   );

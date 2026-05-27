@@ -3,6 +3,7 @@ import { useParams, Link } from "wouter";
 import animals from "../data/animals";
 import { getAnimalImage, getEmoji, getAnimalEmoji } from "../utils/image";
 import { getOverride, setOverride, fileToDataURL } from "../utils/animalOverrides";
+import { getAbility, getDefaultQuiz } from "../utils/animalAbility";
 import { useAuth } from "../context/AuthContext";
 
 export default function AnimalDetail() {
@@ -43,6 +44,8 @@ export default function AnimalDetail() {
 
   const emoji = getAnimalEmoji(animal.baseName || animal.name, animal.category);
   const imgSrc = getAnimalImage(animal);
+  const ability = override.ability || getAbility(animal);
+  const quiz = override.quiz || getDefaultQuiz(animal);
 
   function handleBannerTap() {
     if (!isSuperAdmin || !adminMode) return;
@@ -79,7 +82,6 @@ export default function AnimalDetail() {
     e.target.value = "";
   }
 
-  // Display values (override OR original)
   const habits = override.habits || "";
   const lifespan = override.lifespan || animal.lifespan;
   const displayName = override.name || animal.name;
@@ -96,31 +98,21 @@ export default function AnimalDetail() {
               <div className="detail-emoji">{emoji}</div>
             ) : (
               <img
-                src={imgSrc}
+                src={animal.imageUrl || imgSrc}
                 alt={animal.name}
                 className="detail-img"
                 onError={() => setImgError(true)}
               />
             )}
-            {isSuperAdmin && adminMode && (
-              <div className="detail-edit-actions" onClick={(e) => e.stopPropagation()}>
-                <label className="detail-edit-btn" style={{ cursor: "pointer" }}>
-                  📷 Update Photo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={handleQuickPhoto}
-                  />
-                </label>
-                <button
-                  className="detail-edit-btn"
-                  onClick={() => setEditOpen((v) => !v)}
-                >
-                  ✏️ {editOpen ? "Close" : "Edit Info"}
-                </button>
-              </div>
-            )}
+            <div className="detail-edit-actions" onClick={(e) => e.stopPropagation()}>
+              <label className="detail-edit-btn" style={{ cursor: "pointer" }}>
+                📷 Update Photo
+                <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleQuickPhoto} />
+              </label>
+              <button className="detail-edit-btn" onClick={() => setEditOpen((v) => !v)}>
+                ✏️ {editOpen ? "Close" : "Edit Info"}
+              </button>
+            </div>
           </div>
 
           <div className="detail-info">
@@ -146,43 +138,50 @@ export default function AnimalDetail() {
               </div>
               <div className="stat-item">
                 <span className="stat-label">⏳ Lifespan</span>
-                <span className="stat-value">{lifespan || "Loading..."}</span>
+                <span className="stat-value">{lifespan || "Unknown"}</span>
               </div>
-              <div className="stat-item" style={{ gridColumn: "1 / -1" }}>
-                <span className="stat-label">🐾 Habits</span>
-                <span className="stat-value">{habits || "Loading..."}</span>
-              </div>
+              {habits && (
+                <div className="stat-item" style={{ gridColumn: "1 / -1" }}>
+                  <span className="stat-label">🐾 Habits</span>
+                  <span className="stat-value">{habits}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
+        {/* ⚡ ABILITY CARD */}
+        <AbilityCard ability={ability} />
+
+        {/* 🧠 QUIZ SECTION */}
+        <QuizSection quiz={quiz} animalName={displayName} />
+
+        {/* Admin Edit */}
         {editOpen && isSuperAdmin && adminMode && (
           <div className="admin-edit-form">
             <h3>👑 Admin: Edit "{animal.name}"</h3>
             <div className="aef-row">
               <label>Photo</label>
               <input type="file" accept="image/*" ref={fileRef} onChange={handleFileChange} />
-              {override.image && <p className="aef-ok">✓ Custom photo set (synced everywhere)</p>}
+              {override.image && <p className="aef-ok">✅ Custom photo set</p>}
             </div>
             <div className="aef-row">
               <label>Habits</label>
-              <textarea
-                rows={3}
-                placeholder="e.g. Nocturnal hunter, lives in prides..."
-                defaultValue={override.habits || ""}
-                onBlur={(e) => saveField("habits", e.target.value)}
-              />
+              <textarea rows={3} placeholder="e.g. Nocturnal hunter, lives in prides..." defaultValue={override.habits || ""} onBlur={(e) => saveField("habits", e.target.value)} />
             </div>
             <div className="aef-row">
               <label>Lifespan</label>
-              <input
-                type="text"
-                placeholder="e.g. 12–16 years wild"
-                defaultValue={override.lifespan || ""}
-                onBlur={(e) => saveField("lifespan", e.target.value)}
-              />
+              <input type="text" placeholder="e.g. 12-16 years" defaultValue={override.lifespan || ""} onBlur={(e) => saveField("lifespan", e.target.value)} />
             </div>
-            <p className="aef-hint">Changes save automatically when you click outside the field. They appear on cards, banner, and detail page.</p>
+            <div className="aef-row">
+              <label>⚡ Ability Title</label>
+              <input type="text" placeholder="e.g. Power Roar" defaultValue={override.ability?.title || ""} onBlur={(e) => saveField("ability", { ...ability, title: e.target.value })} />
+            </div>
+            <div className="aef-row">
+              <label>⚡ Ability Description</label>
+              <textarea rows={2} placeholder="Describe the special ability..." defaultValue={override.ability?.desc || ""} onBlur={(e) => saveField("ability", { ...ability, desc: e.target.value })} />
+            </div>
+            <p className="aef-hint">Changes save automatically when you click outside the field.</p>
           </div>
         )}
 
@@ -204,12 +203,105 @@ export default function AnimalDetail() {
   );
 }
 
+function AbilityCard({ ability }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="ability-card" onClick={() => setExpanded(v => !v)}>
+      <div className="ability-header">
+        <span className="ability-icon">⚡</span>
+        <div className="ability-title-wrap">
+          <div className="ability-label">Special Ability</div>
+          <div className="ability-title">{ability.title}</div>
+        </div>
+        <span className="ability-chevron">{expanded ? "▲" : "▼"}</span>
+      </div>
+      {expanded && (
+        <div className="ability-desc">{ability.desc}</div>
+      )}
+    </div>
+  );
+}
+
+function QuizSection({ quiz, animalName }) {
+  const [answers, setAnswers] = useState({});
+  const [score, setScore] = useState(null);
+
+  function pickAnswer(qIdx, option) {
+    if (score !== null) return;
+    setAnswers(prev => ({ ...prev, [qIdx]: option }));
+  }
+
+  function submit() {
+    if (Object.keys(answers).length < quiz.length) {
+      alert("Please answer all questions first!");
+      return;
+    }
+    let correct = 0;
+    quiz.forEach((q, i) => { if (answers[i] === q.answer) correct++; });
+    setScore(correct);
+  }
+
+  function reset() {
+    setAnswers({});
+    setScore(null);
+  }
+
+  return (
+    <div className="quiz-section">
+      <div className="quiz-header">
+        <span className="quiz-icon">🧠</span>
+        <div>
+          <div className="quiz-label">Wildlife Quiz</div>
+          <div className="quiz-subtitle">{animalName} — Test your knowledge</div>
+        </div>
+      </div>
+
+      {score !== null && (
+        <div className={`quiz-result ${score === quiz.length ? "perfect" : score > 0 ? "partial" : "zero"}`}>
+          {score === quiz.length ? "🎉 Perfect!" : score > 0 ? "👍 Good try!" : "😅 Keep learning!"}
+          <span> {score}/{quiz.length} correct</span>
+          <button className="quiz-retry" onClick={reset}>Try Again</button>
+        </div>
+      )}
+
+      {quiz.map((q, qi) => (
+        <div key={qi} className="quiz-question-block">
+          <div className="quiz-q-num">Q{qi + 1}</div>
+          <div className="quiz-question">{q.question}</div>
+          <div className="quiz-options">
+            {q.options.map((opt, oi) => {
+              const picked = answers[qi] === opt;
+              const revealed = score !== null;
+              const isCorrect = opt === q.answer;
+              let cls = "quiz-option";
+              if (picked && !revealed) cls += " selected";
+              if (revealed && isCorrect) cls += " correct";
+              if (revealed && picked && !isCorrect) cls += " wrong";
+              return (
+                <button key={oi} className={cls} onClick={() => pickAnswer(qi, opt)} disabled={score !== null}>
+                  {revealed && isCorrect ? "✅ " : revealed && picked && !isCorrect ? "❌ " : ""}{opt}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {score === null && (
+        <button className="quiz-submit" onClick={submit}>
+          Submit Answers →
+        </button>
+      )}
+    </div>
+  );
+}
+
 function RelatedImage({ animal }) {
   const [err, setErr] = useState(false);
   if (err) return <div className="related-emoji">{getEmoji(animal.category)}</div>;
   return (
     <img
-      src={getAnimalImage(animal)}
+      src={animal.imageUrl || getAnimalImage(animal)}
       alt={animal.name}
       className="related-img"
       loading="lazy"

@@ -1,0 +1,220 @@
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  doc, setDoc, deleteDoc, getDoc, collection,
+  query, where, onSnapshot, orderBy, limit,
+  serverTimestamp, updateDoc, increment, addDoc,
+} from "firebase/firestore";
+import { db } from "../utils/firebase";
+import { useAuth } from "./AuthContext";
+
+const EMPTY_CTX = {
+  likedReels: {}, likeReel: () => Promise.resolve(),
+  following: {}, followUser: () => Promise.resolve(), unfollowUser: () => Promise.resolve(),
+  notifications: [], unreadCount: 0, markAllRead: () => Promise.resolve(),
+  broadcast: null, dismissBroadcast: () => Promise.resolve(),
+  sendBroadcast: () => Promise.resolve(), submitAd: () => Promise.resolve(false),
+};
+const SocialContext = createContext(EMPTY_CTX);
+
+export function SocialProvider({ children }) {
+  const { user } = useAuth();
+  const [likedReels, setLikedReels] = useState({});
+  const [following, setFollowing] = useState({});
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [broadcast, setBroadcast] = useState(null);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setLikedReels({});
+      setFollowing({});
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+    const cached = {};
+    try {
+      const v = JSON.parse(localStorage.getItem(`ax_liked_${user.uid}`) || "{}");
+      Object.assign(cached, v);
+    } catch {}
+    setLikedReels(cached);
+
+    const followCached = {};
+    try {
+      const v = JSON.parse(localStorage.getItem(`ax_following_${user.uid}`) || "{}");
+      Object.assign(followCached, v);
+    } catch {}
+    setFollowing(followCached);
+
+    loadUserLikes(user.uid);
+    loadUserFollowing(user.uid);
+
+    const notifUnsub = onSnapshot(
+      query(collection(db, "notifications"), where("targetUid", "==", user.uid), orderBy("createdAt", "desc"), limit(30)),
+      (snap) => {
+        const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setNotifications(items);
+        setUnreadCount(items.filter(n => !n.read).length);
+      },
+      () => {}
+    );
+
+    return notifUnsub;
+  }, [user?.uid]);
+
+  useEffect(() => {
+    const unsub = onSnapshot(
+      query(collection(db, "adminBroadcasts"), where("active", "==", true), limit(1)),
+      (snap) => {
+        if (!snap.empty) setBroadcast(snap.docs[0].data());
+        else setBroadcast(null);
+      },
+      () => {}
+    );
+    return unsub;
+  }, []);
+
+  async function loadUserLikes(uid) {
+    try {
+      const snap = await getDoc(doc(db, "userLikes", uid));
+      if (snap.exists()) {
+        const liked = snap.data().liked || {};
+        setLikedReels(liked);
+        localStorage.setItem(`ax_liked_${uid}`, JSON.stringify(liked));
+      }
+    } catch {}
+  }
+
+  async function loadUserFollowing(uid) {
+    try {
+      const snap = await getDoc(doc(db, "userFollowing", uid));
+      if (snap.exists()) {
+        const f = snap.data().following || {};
+        setFollowing(f);
+        localStorage.setItem(`ax_following_${uid}`, JSON.stringify(f));
+      }
+    } catch {}
+  }
+
+  async function likeReel(reelId) {
+    if (!user?.uid) return;
+    const uid = user.uid;
+    const isLiked = !!likedReels[reelId];
+
+    setLikedReels(prev => {
+      const next = { ...prev };
+      if (isLiked) delete next[reelId];
+      else next[reelId] = true;
+      localStorage.setItem(`ax_liked_${uid}`, JSON.stringify(next));
+      return next;
+    });
+
+    try {
+      await setDoc(doc(db, "userLikes", uid), {
+        liked: { [reelId]: isLiked ? null : true },
+      }, { merge: true });
+
+      const delta = isLiked ? -1 : 1;
+      await setDoc(doc(db, "reelMeta", reelId), { likesCount: increment(delta) }, { merge: true });
+    } catch {}
+  }
+
+  async function followUser(targetId, targetName) {
+    if (!user?.uid || targetId === user.uid) return;
+    const uid = user.uid;
+    setFollowing(prev => {
+      const next = { ...prev, [targetId]: true };
+      localStorage.setItem(`ax_following_${uid}`, JSON.stringify(next));
+      return next;
+    });
+    try {
+      await setDoc(doc(db, "userFollowing", uid), { following: { [targetId]: true } }, { merge: true });
+      await setDoc(doc(db, "userFollowers", targetId), { followers: { [uid]: true } }, { merge: true });
+      await addDoc(collection(db, "notifications"), {
+        targetUid: targetId,
+        actorUid: uid,
+        actorName: user.name || user.email,
+        type: "follow",
+        message: `@${user.name || user.email} started following you`,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+    } catch {}
+  }
+
+  async function unfollowUser(targetId) {
+    if (!user?.uid) return;
+    const uid = user.uid;
+    setFollowing(prev => {
+      const next = { ...prev };
+      delete next[targetId];
+      localStorage.setItem(`ax_following_${uid}`, JSON.stringify(next));
+      return next;
+    });
+    try {
+      await setDoc(doc(db, "userFollowing", uid), { following: { [targetId]: null } }, { merge: true });
+      await setDoc(doc(db, "userFollowers", targetId), { followers: { [uid]: null } }, { merge: true });
+    } catch {}
+  }
+
+  async function markAllRead() {
+    if (!user?.uid || notifications.length === 0) return;
+    setUnreadCount(0);
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    for (const n of notifications.filter(n => !n.read)) {
+      try {
+        await updateDoc(doc(db, "notifications", n.id), { read: true });
+      } catch {}
+    }
+  }
+
+  async function sendBroadcast(message) {
+    try {
+      await addDoc(collection(db, "adminBroadcasts"), {
+        message,
+        active: true,
+        createdAt: serverTimestamp(),
+      });
+    } catch {}
+  }
+
+  async function dismissBroadcast(id) {
+    try {
+      await updateDoc(doc(db, "adminBroadcasts", id), { active: false });
+    } catch {}
+    setBroadcast(null);
+  }
+
+  async function submitAd(adData) {
+    if (!user?.uid) return false;
+    try {
+      await addDoc(collection(db, "advertisements"), {
+        ...adData,
+        userId: user.uid,
+        userName: user.name || user.email,
+        status: "pending",
+        viewsCount: 0,
+        createdAt: serverTimestamp(),
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  return (
+    <SocialContext.Provider value={{
+      likedReels, likeReel,
+      following, followUser, unfollowUser,
+      notifications, unreadCount, markAllRead,
+      broadcast, dismissBroadcast,
+      sendBroadcast, submitAd,
+    }}>
+      {children}
+    </SocialContext.Provider>
+  );
+}
+
+export function useSocial() {
+  return useContext(SocialContext);
+}

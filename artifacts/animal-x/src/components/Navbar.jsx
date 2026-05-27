@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "../context/AuthContext";
+import { useSocial } from "../context/SocialContext";
+import NotificationBell from "./NotificationBell";
 
 const bottomItems = [
   { href: "/", label: "Home", icon: "🏠" },
@@ -13,8 +15,13 @@ const bottomItems = [
 
 export default function Navbar() {
   const [location, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user, isSuperAdmin, adminMode, unlockAdminMode, lockAdminMode } = useAuth();
+  const { broadcast, dismissBroadcast, sendBroadcast } = useSocial();
   const [searchValue, setSearchValue] = useState("");
+  const [tapCount, setTapCount] = useState(0);
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [broadcastMsg, setBroadcastMsg] = useState("");
+  const tapTimer = useRef(null);
 
   function submitSearch(e) {
     e.preventDefault();
@@ -24,13 +31,49 @@ export default function Navbar() {
     setSearchValue("");
   }
 
+  function handleLogoTap() {
+    const next = tapCount + 1;
+    setTapCount(next);
+    if (tapTimer.current) clearTimeout(tapTimer.current);
+    tapTimer.current = setTimeout(() => setTapCount(0), 1500);
+
+    if (next >= 7) {
+      setTapCount(0);
+      if (!user) { alert("Please login first."); return; }
+      if (!isSuperAdmin) { alert("Admin access restricted."); return; }
+      if (!adminMode) {
+        unlockAdminMode();
+        setBroadcastOpen(true);
+      } else {
+        setBroadcastOpen(v => !v);
+      }
+    }
+  }
+
+  async function handleSendBroadcast() {
+    if (!broadcastMsg.trim()) return;
+    await sendBroadcast(broadcastMsg.trim());
+    setBroadcastMsg("");
+    setBroadcastOpen(false);
+    alert("✅ Broadcast sent to all users!");
+  }
+
   return (
     <>
+      {/* Admin Broadcast Banner */}
+      {broadcast && (
+        <div className="broadcast-banner">
+          <span className="broadcast-icon">📢</span>
+          <span className="broadcast-msg">{broadcast.message}</span>
+          <button className="broadcast-dismiss" onClick={() => dismissBroadcast(broadcast.id)}>✕</button>
+        </div>
+      )}
+
       <header className="topbar">
-        <Link href="/" className="brand-link">
+        <button className="brand-link" onClick={handleLogoTap} style={{ background: "none", border: "none", cursor: "pointer" }}>
           <span className="brand-icon">🦁</span>
           <span className="brand-name">Animal X</span>
-        </Link>
+        </button>
 
         <form className="topbar-search" onSubmit={submitSearch} role="search">
           <span className="topbar-search-icon">🔍</span>
@@ -44,18 +87,44 @@ export default function Navbar() {
         </form>
 
         <div className="topbar-actions">
+          <NotificationBell />
           {!user && (
             <Link href="/auth" className="top-pill top-pill-primary" title="Login">Login</Link>
           )}
         </div>
       </header>
 
+      {/* Admin Broadcast Panel */}
+      {broadcastOpen && isSuperAdmin && adminMode && (
+        <div className="broadcast-panel">
+          <div className="broadcast-panel-head">
+            <span>📢 Admin Broadcast</span>
+            <button onClick={() => setBroadcastOpen(false)}>✕</button>
+          </div>
+          <div className="broadcast-panel-body">
+            <textarea
+              className="broadcast-input"
+              rows={3}
+              placeholder="Type a message for ALL users..."
+              value={broadcastMsg}
+              onChange={e => setBroadcastMsg(e.target.value)}
+            />
+            <div className="broadcast-panel-actions">
+              <button className="auth-btn" style={{ background: "var(--surface2)", flex: 1 }} onClick={() => { lockAdminMode(); setBroadcastOpen(false); }}>
+                🔒 Lock Admin
+              </button>
+              <button className="auth-btn" style={{ flex: 1 }} onClick={handleSendBroadcast} disabled={!broadcastMsg.trim()}>
+                📢 Send to All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <nav className="bottom-nav">
         {bottomItems.map((item) => {
           const active =
-            item.href === "/"
-              ? location === "/"
-              : location === item.href || location.startsWith(item.href + "/");
+            item.href === "/" ? location === "/" : location === item.href || location.startsWith(item.href + "/");
           return (
             <Link key={item.href} href={item.href} className={`bn-item ${active ? "active" : ""}`}>
               <span className="bn-icon">{item.icon}</span>

@@ -111,14 +111,14 @@ export default function AnimalCard({ animal }) {
           )}
           {imgError ? (
             <div className="emoji">{emoji}</div>
-          ) : (
-            <img
-              src={imgSrc}
-              alt={displayName}
-              loading="lazy"
-              onError={() => setImgError(true)}
-            />
-          )}
+                  ) : (
+          <img 
+            src={animal.imageUrl || imgSrc} 
+            alt={displayName}
+            loading="lazy"
+            onError={() => setImgError(true)}
+          />
+        )}
         </div>
         <div className="card-body">
           <span className="card-category">{animal.category}</span>

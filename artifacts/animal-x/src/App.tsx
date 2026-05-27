@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./context/AuthContext";
+import { SocialProvider } from "./context/SocialContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
@@ -14,6 +15,8 @@ import Chatbot from "./pages/Chatbot";
 import HelpDesk from "./pages/HelpDesk";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
+import UserProfile from "./pages/UserProfile";
+import Ads from "./pages/Ads";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +63,8 @@ function Router() {
           <Route path="/help" component={HelpDesk} />
           <Route path="/auth" component={Auth} />
           <Route path="/profile" component={Profile} />
+          <Route path="/user/:userId" component={UserProfile} />
+          <Route path="/ads" component={Ads} />
           <Route path="/live-tracking" component={Map} />
           <Route component={NotFound} />
         </Switch>
@@ -82,9 +87,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
+          <SocialProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Router />
+            </WouterRouter>
+          </SocialProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
