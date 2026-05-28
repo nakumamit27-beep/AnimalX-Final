@@ -4190,3 +4190,726 @@ body {
 .mod-btn.yellow { background: rgba(245,158,11,.12); color: #f59e0b; border: 1px solid rgba(245,158,11,.3); }
 .mod-btn.green { background: rgba(16,185,129,.12); color: #10b981; border: 1px solid rgba(16,185,129,.3); }
 .mod-btn.blue { background: rgba(99,102,241,.12); color: #818cf8; border: 1px solid rgba(99,102,241,.3); }
+
+/* ========================================================================
+   INSTAGRAM-STYLE 9:16 SNAP-SCROLL REELS
+   ======================================================================== */
+.reels-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 56px - 56px); /* topbar + bottomnav */
+  overflow: hidden;
+  position: relative;
+  background: #000;
+}
+
+.reels-snap-feed {
+  flex: 1;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+.reels-snap-feed::-webkit-scrollbar { display: none; }
+
+.reel-snap-slide {
+  height: 100%;
+  min-height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 9:16 aspect ratio container inside each slide */
+.reel-video-wrap,
+.reel-default {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reel-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+  display: block;
+}
+
+.reel-poster-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reel-default {
+  background: linear-gradient(135deg, #0d1117, #161b22);
+}
+
+/* Keep author overlay & sidebar above video */
+.reel-author-overlay {
+  position: absolute;
+  bottom: 16px;
+  left: 12px;
+  right: 72px;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.reel-actions-sidebar {
+  position: absolute;
+  bottom: 16px;
+  right: 8px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+
+/* Counter badge */
+.reel-counter {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: rgba(0,0,0,.5);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 10px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Fix reels shell so it doesn't overflow bottom nav */
+.reels-shell {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 56px - 56px);
+  overflow: hidden;
+}
+
+.reels-tabs-bar {
+  flex-shrink: 0;
+  display: flex;
+  background: #0d1117;
+  border-bottom: 1px solid #21262d;
+  z-index: 5;
+}
+
+.upload-warning {
+  flex-shrink: 0;
+  background: rgba(245,158,11,.1);
+  border-bottom: 1px solid rgba(245,158,11,.2);
+  color: #f59e0b;
+  font-size: 0.72rem;
+  padding: 5px 12px;
+  text-align: center;
+}
+
+.reels-upload-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(0,0,0,.6);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 8;
+  backdrop-filter: blur(8px);
+}
+
+/* ========================================================================
+   USER SEARCH PAGE
+   ======================================================================== */
+.search-page {
+  min-height: 100%;
+  background: #0d1117;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #0d1117;
+  border-bottom: 1px solid #21262d;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.search-back-btn {
+  background: none;
+  border: none;
+  color: #10b981;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  flex-shrink: 0;
+}
+
+.search-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 12px;
+  padding: 0 12px;
+  gap: 8px;
+}
+
+.search-input-wrap:focus-within {
+  border-color: #10b981;
+}
+
+.search-icon-inner { color: #6b7280; font-size: 1rem; }
+
+.search-main-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #e6edf3;
+  font-size: 0.95rem;
+  padding: 11px 0;
+  outline: none;
+}
+
+.search-main-input::placeholder { color: #6b7280; }
+
+.search-clear {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 4px;
+}
+
+.search-section-label {
+  padding: 10px 16px 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0 24px;
+}
+
+.search-user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #161b22;
+  transition: background .15s;
+}
+.search-user-card:hover { background: #161b22; }
+
+.search-user-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
+  min-width: 0;
+}
+
+.search-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.search-user-info { min-width: 0; flex: 1; }
+
+.search-username {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #e6edf3;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-name {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin-top: 1px;
+}
+
+.search-meta {
+  font-size: 0.72rem;
+  color: #4b5563;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.search-dot { color: #374151; }
+
+.search-follow-btn {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: opacity .2s;
+}
+.search-follow-btn.following {
+  background: #21262d;
+  border: 1px solid #30363d;
+  color: #10b981;
+}
+.search-follow-btn:hover { opacity: .85; }
+
+.search-empty {
+  text-align: center;
+  color: #6b7280;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Navbar user search icon */
+.topbar-search-btn {
+  background: none;
+  border: none;
+  font-size: 1.15rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: background .15s;
+}
+.topbar-search-btn:hover { background: rgba(255,255,255,.08); }
+
+/* ========================================================================
+   ENHANCED USER PROFILE
+   ======================================================================== */
+.up-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #21262d;
+}
+
+.up-back-btn {
+  background: none;
+  border: none;
+  color: #10b981;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+}
+
+.admin-tick-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.atick-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+.atick-btn.give { background: rgba(16,185,129,.15); color: #10b981; border: 1px solid rgba(16,185,129,.3); }
+.atick-btn.remove { background: rgba(239,68,68,.12); color: #ef4444; border: 1px solid rgba(239,68,68,.3); }
+
+.up-avatar-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.up-avatar-tick {
+  position: absolute;
+  bottom: 0;
+  right: -2px;
+  background: #0d1117;
+  border-radius: 50%;
+  padding: 1px;
+}
+
+/* Profile tabs */
+.up-tabs {
+  display: flex;
+  border-bottom: 1px solid #21262d;
+  background: #0d1117;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.up-tab {
+  flex: 1;
+  padding: 12px 8px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+}
+.up-tab:hover { color: #e6edf3; }
+.up-tab.active { color: #10b981; border-bottom-color: #10b981; }
+
+/* Reels grid */
+.up-reels-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  padding: 2px;
+}
+
+.up-reel-thumb {
+  aspect-ratio: 9/16;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.up-reel-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.up-reel-emoji-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.up-reel-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.7) 0%, transparent 50%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 6px;
+}
+
+.up-reel-title {
+  font-size: 0.68rem;
+  color: #fff;
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.up-reel-likes {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,.8);
+  margin-top: 2px;
+}
+
+/* Followers / Following list */
+.up-user-list {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0 24px;
+}
+
+.up-user-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #161b22;
+  gap: 12px;
+}
+
+.up-user-row-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
+}
+
+.up-user-row-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.up-user-row-username {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #e6edf3;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.up-user-row-name {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 1px;
+}
+
+.up-mini-follow-btn {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.up-mini-follow-btn.following {
+  background: #21262d;
+  border: 1px solid #30363d;
+  color: #10b981;
+}
+
+.up-empty {
+  text-align: center;
+  color: #6b7280;
+  padding: 40px 24px;
+  font-size: 0.88rem;
+}
+
+/* Profile toast for tick msg */
+.tick-msg-toast {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 10px;
+  padding: 10px 20px;
+  color: #e6edf3;
+  font-size: 0.88rem;
+  font-weight: 600;
+  z-index: 9999;
+  box-shadow: 0 8px 24px rgba(0,0,0,.6);
+  white-space: nowrap;
+}
+
+/* ========================================================================
+   AUTO BLUE TICK POPUP
+   ======================================================================== */
+.auto-tick-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.8);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(6px);
+}
+
+.auto-tick-popup {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 24px;
+  padding: 36px 28px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 32px 80px rgba(0,0,0,.9);
+  animation: tick-pop .4s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+@keyframes tick-pop {
+  from { opacity: 0; transform: scale(.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.auto-tick-confetti {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  animation: confetti-spin 1s ease-out;
+}
+
+@keyframes confetti-spin {
+  from { transform: rotate(-20deg) scale(.8); }
+  to { transform: rotate(0deg) scale(1); }
+}
+
+.auto-tick-icon {
+  margin-bottom: 16px;
+  animation: tick-bounce .6s .2s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+@keyframes tick-bounce {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.auto-tick-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #e6edf3;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #10b981, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auto-tick-sub {
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.auto-tick-btn {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 14px 32px;
+  cursor: pointer;
+  width: 100%;
+  transition: opacity .2s;
+}
+.auto-tick-btn:hover { opacity: .9; }
+
+/* ========================================================================
+   ADMIN MODERATION PANEL — BLUE TICK SECTION
+   ======================================================================== */
+.mod-tick-section {
+  background: rgba(59,130,246,.06);
+  border: 1px solid rgba(59,130,246,.15);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mod-tick-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #3b82f6;
+}
+
+.mod-tick-search {
+  display: flex;
+  gap: 8px;
+}
+
+.mod-tick-input {
+  flex: 1;
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-radius: 8px;
+  color: #e6edf3;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+}
+.mod-tick-input:focus { outline: none; border-color: #3b82f6; }
+
+.mod-tick-search-btn {
+  background: #3b82f6;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mod-tick-msg {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e6edf3;
+  background: #161b22;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.mod-tick-card {
+  background: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mod-tick-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+}
+
+.mod-tick-actions {
+  display: flex;
+  gap: 8px;
+}

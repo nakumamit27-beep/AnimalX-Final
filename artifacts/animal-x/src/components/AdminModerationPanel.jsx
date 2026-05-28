@@ -1,18 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../utils/firebase";
 import {
-  adminLoadAllModerations,
-  adminRemoveWarning,
-  adminRemoveBan,
-  adminPermanentBan,
-  adminClearAll,
-  getBanTimeLeft,
-  isCurrentlyBanned,
+  adminLoadAllModerations, adminRemoveWarning, adminRemoveBan,
+  adminPermanentBan, adminClearAll, getBanTimeLeft, isCurrentlyBanned,
 } from "../utils/contentModeration";
+import { ALL_USERS } from "../data/demoUsers";
 
 export default function AdminModerationPanel() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(null);
+
+  /* Blue tick admin */
+  const [tickSearch, setTickSearch] = useState("");
+  const [tickResult, setTickResult] = useState(null);
+  const [tickMsg, setTickMsg] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -30,9 +33,30 @@ export default function AdminModerationPanel() {
     setSelected(null);
   }
 
+  function searchTickUser() {
+    const q = tickSearch.trim().toLowerCase();
+    if (!q) return;
+    const found = ALL_USERS.find(u =>
+      u.id === q || u.username.toLowerCase() === q.replace("@","") ||
+      u.username.toLowerCase().includes(q.replace("@",""))
+    );
+    setTickResult(found || { id: q, username: q, name: "Unknown / Firebase user", notFound: true });
+  }
+
+  async function giveTick(uid, give) {
+    // For demo users — mutate in memory
+    const demo = ALL_USERS.find(u => u.id === uid || u.username === uid);
+    if (demo) { demo.verified = give; }
+    // Also try Firestore for real users
+    try {
+      await setDoc(doc(db, "users", uid), { manualVerified: give }, { merge: true });
+    } catch {}
+    setTickMsg(give ? `✅ Blue tick given to @${tickResult?.username || uid}` : `❌ Tick removed from @${tickResult?.username || uid}`);
+    setTimeout(() => setTickMsg(null), 4000);
+  }
+
   const banned = records.filter(r => isCurrentlyBanned(r));
   const warned = records.filter(r => !isCurrentlyBanned(r) && r.warnings > 0);
-  const clean = records.filter(r => !r.warnings && !isCurrentlyBanned(r));
 
   return (
     <div className="mod-panel">
@@ -43,10 +67,50 @@ export default function AdminModerationPanel() {
         </button>
       </div>
 
+      {/* ── Blue Tick Admin ── */}
+      <div className="mod-tick-section">
+        <div className="mod-tick-title">🔵 Manual Blue Tick</div>
+        <div className="mod-tick-search">
+          <input
+            className="mod-tick-input"
+            placeholder="@username or user ID…"
+            value={tickSearch}
+            onChange={e => setTickSearch(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && searchTickUser()}
+          />
+          <button className="mod-tick-search-btn" onClick={searchTickUser}>Search</button>
+        </div>
+        {tickMsg && <div className="mod-tick-msg">{tickMsg}</div>}
+        {tickResult && (
+          <div className="mod-tick-card">
+            <div className="mod-tick-user">
+              <span>{tickResult.avatar || "👤"}</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: "0.88rem" }}>@{tickResult.username}</div>
+                <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>{tickResult.name}</div>
+                {tickResult.notFound && <div style={{ fontSize: "0.72rem", color: "#f59e0b" }}>Will update Firestore only</div>}
+              </div>
+              <div style={{ marginLeft: "auto" }}>
+                {tickResult.verified ? "🔵 Verified" : "⚪ Not Verified"}
+              </div>
+            </div>
+            <div className="mod-tick-actions">
+              <button className="mod-btn green" onClick={() => giveTick(tickResult.id, true)}>
+                ✓ Give Blue Tick
+              </button>
+              <button className="mod-btn red" onClick={() => giveTick(tickResult.id, false)}>
+                ✕ Remove Tick
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Violation stats ── */}
       <div className="mod-stats-row">
         <div className="mod-stat"><div className="mod-stat-num red">{banned.length}</div><div className="mod-stat-label">Banned</div></div>
         <div className="mod-stat"><div className="mod-stat-num yellow">{warned.length}</div><div className="mod-stat-label">Warned</div></div>
-        <div className="mod-stat"><div className="mod-stat-num green">{clean.length}</div><div className="mod-stat-label">Clean</div></div>
+        <div className="mod-stat"><div className="mod-stat-num green">{records.filter(r=>!r.warnings&&!isCurrentlyBanned(r)).length}</div><div className="mod-stat-label">Clean</div></div>
         <div className="mod-stat"><div className="mod-stat-num">{records.reduce((s,r)=>(r.violations?.length||0)+s,0)}</div><div className="mod-stat-label">Violations</div></div>
       </div>
 
@@ -55,8 +119,7 @@ export default function AdminModerationPanel() {
       )}
 
       {[...banned, ...warned].map(rec => (
-        <div
-          key={rec.uid}
+        <div key={rec.uid}
           className={`mod-user-row ${isCurrentlyBanned(rec) ? "mod-banned" : "mod-warned"}`}
           onClick={() => setSelected(selected?.uid === rec.uid ? null : rec)}
         >
@@ -77,7 +140,6 @@ export default function AdminModerationPanel() {
       {selected && (
         <div className="mod-detail">
           <div className="mod-detail-title">Actions for {selected.uid.slice(0, 20)}…</div>
-
           <div className="mod-violations">
             <div className="mod-viol-title">📋 Violations ({selected.violations?.length || 0})</div>
             {(selected.violations || []).map((v, i) => (
@@ -87,24 +149,13 @@ export default function AdminModerationPanel() {
               </div>
             ))}
           </div>
-
           <div className="mod-action-row">
-            <button className="mod-btn yellow" onClick={() => doAction(adminRemoveWarning, selected.uid)}>
-              Remove 1 Warning
-            </button>
-            <button className="mod-btn green" onClick={() => doAction(adminRemoveBan, selected.uid)}>
-              Remove Ban
-            </button>
-            <button className="mod-btn blue" onClick={() => doAction(adminClearAll, selected.uid)}>
-              Clear All
-            </button>
+            <button className="mod-btn yellow" onClick={() => doAction(adminRemoveWarning, selected.uid)}>Remove 1 Warning</button>
+            <button className="mod-btn green" onClick={() => doAction(adminRemoveBan, selected.uid)}>Remove Ban</button>
+            <button className="mod-btn blue" onClick={() => doAction(adminClearAll, selected.uid)}>Clear All</button>
             <button className="mod-btn red" onClick={() => {
-              if (window.confirm(`Permanently ban ${selected.uid.slice(0,20)}?`)) {
-                doAction(adminPermanentBan, selected.uid);
-              }
-            }}>
-              Perm Ban
-            </button>
+              if (window.confirm(`Permanently ban ${selected.uid.slice(0,20)}?`)) doAction(adminPermanentBan, selected.uid);
+            }}>Perm Ban</button>
           </div>
         </div>
       )}

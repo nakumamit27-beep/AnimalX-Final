@@ -6,6 +6,7 @@ import { SocialProvider } from "./context/SocialContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import Navbar from "./components/Navbar";
 import FirebaseStatusBanner from "./components/FirebaseStatusBanner";
+import AutoTickPopup from "./components/AutoTickPopup";
 
 // Lazy load every page — each becomes its own JS chunk, loaded only when visited
 const Home        = lazy(() => import("./pages/Home"));
@@ -20,6 +21,7 @@ const Auth        = lazy(() => import("./pages/Auth"));
 const Profile     = lazy(() => import("./pages/Profile"));
 const UserProfile = lazy(() => import("./pages/UserProfile"));
 const Ads         = lazy(() => import("./pages/Ads"));
+const Search      = lazy(() => import("./pages/Search"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +68,7 @@ function Router() {
   return (
     <div className="app-layout">
       <Navbar />
+      <AutoTickPopup />
       <main className="app-main">
         <Suspense fallback={<PageFallback />}>
           <Switch>
@@ -81,6 +84,7 @@ function Router() {
             <Route path="/profile" component={Profile} />
             <Route path="/user/:userId" component={UserProfile} />
             <Route path="/ads" component={Ads} />
+            <Route path="/search" component={Search} />
             <Route path="/live-tracking" component={Map} />
             <Route component={NotFound} />
           </Switch>

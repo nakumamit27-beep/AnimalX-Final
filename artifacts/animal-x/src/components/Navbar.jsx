@@ -24,13 +24,16 @@ export default function Navbar() {
   const [broadcastMsg, setBroadcastMsg] = useState("");
   const [debugOpen, setDebugOpen] = useState(false);
   const tapTimer = useRef(null);
+  const searchInputRef = useRef(null);
 
   function submitSearch(e) {
     e.preventDefault();
     const q = searchValue.trim();
     if (!q) return;
-    navigate(`/animals?q=${encodeURIComponent(q)}`);
+    // If query looks like a username (@...) or search intent, go to user search
+    navigate(`/search?q=${encodeURIComponent(q)}`);
     setSearchValue("");
+    searchInputRef.current?.blur();
   }
 
   function handleLogoTap() {
@@ -38,7 +41,6 @@ export default function Navbar() {
     setTapCount(next);
     if (tapTimer.current) clearTimeout(tapTimer.current);
     tapTimer.current = setTimeout(() => setTapCount(0), 1500);
-
     if (next >= 7) {
       setTapCount(0);
       if (!user) { alert("Please login first."); return; }
@@ -67,7 +69,7 @@ export default function Navbar() {
       )}
 
       <header className="topbar">
-        <button className="brand-link" onClick={handleLogoTap} style={{ background: "none", border: "none", cursor: "pointer" }}>
+        <button className="brand-link" onClick={handleLogoTap} style={{ background:"none", border:"none", cursor:"pointer" }}>
           <span className="brand-icon">🦁</span>
           <span className="brand-name">Animal X</span>
         </button>
@@ -75,24 +77,20 @@ export default function Navbar() {
         <form className="topbar-search" onSubmit={submitSearch} role="search">
           <span className="topbar-search-icon">🔍</span>
           <input
+            ref={searchInputRef}
             type="search"
             value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            placeholder="Search animals…"
-            aria-label="Search animals"
+            onChange={e => setSearchValue(e.target.value)}
+            placeholder="Search animals or @users…"
+            aria-label="Search"
           />
         </form>
 
         <div className="topbar-actions">
+          <Link href="/search" className="topbar-search-btn" title="Search creators">👥</Link>
           <NotificationBell />
           {adminMode && isSuperAdmin && (
-            <button
-              className="debug-panel-btn"
-              onClick={() => setDebugOpen(true)}
-              title="Firebase Debug Panel"
-            >
-              🛠️
-            </button>
+            <button className="debug-panel-btn" onClick={() => setDebugOpen(true)} title="Firebase Debug Panel">🛠️</button>
           )}
           {!user && (
             <Link href="/auth" className="top-pill top-pill-primary" title="Login">Login</Link>
@@ -104,29 +102,25 @@ export default function Navbar() {
         <div className="broadcast-panel">
           <div className="broadcast-panel-head">
             <span>📢 Admin Broadcast</span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={() => setDebugOpen(true)}
-                style={{ background: "rgba(168,85,247,.2)", border: "1px solid #a855f7", color: "#a855f7", padding: "4px 10px", borderRadius: 8, cursor: "pointer", fontSize: "0.78rem" }}
-              >
+            <div style={{ display:"flex", gap:8 }}>
+              <button onClick={() => setDebugOpen(true)}
+                style={{ background:"rgba(168,85,247,.2)", border:"1px solid #a855f7", color:"#a855f7", padding:"4px 10px", borderRadius:8, cursor:"pointer", fontSize:"0.78rem" }}>
                 🛠️ Debug
               </button>
               <button onClick={() => setBroadcastOpen(false)}>✕</button>
             </div>
           </div>
           <div className="broadcast-panel-body">
-            <textarea
-              className="broadcast-input"
-              rows={3}
+            <textarea className="broadcast-input" rows={3}
               placeholder="Type a message for ALL users..."
-              value={broadcastMsg}
-              onChange={e => setBroadcastMsg(e.target.value)}
-            />
+              value={broadcastMsg} onChange={e => setBroadcastMsg(e.target.value)} />
             <div className="broadcast-panel-actions">
-              <button className="auth-btn" style={{ background: "var(--surface2)", flex: 1 }} onClick={() => { lockAdminMode(); setBroadcastOpen(false); }}>
+              <button className="auth-btn" style={{ background:"var(--surface2)", flex:1 }}
+                onClick={() => { lockAdminMode(); setBroadcastOpen(false); }}>
                 🔒 Lock Admin
               </button>
-              <button className="auth-btn" style={{ flex: 1 }} onClick={handleSendBroadcast} disabled={!broadcastMsg.trim()}>
+              <button className="auth-btn" style={{ flex:1 }} onClick={handleSendBroadcast}
+                disabled={!broadcastMsg.trim()}>
                 📢 Send to All
               </button>
             </div>
@@ -138,8 +132,7 @@ export default function Navbar() {
 
       <nav className="bottom-nav">
         {bottomItems.map((item) => {
-          const active =
-            item.href === "/" ? location === "/" : location === item.href || location.startsWith(item.href + "/");
+          const active = item.href === "/" ? location === "/" : location === item.href || location.startsWith(item.href + "/");
           return (
             <Link key={item.href} href={item.href} className={`bn-item ${active ? "active" : ""}`}>
               <span className="bn-icon">{item.icon}</span>
