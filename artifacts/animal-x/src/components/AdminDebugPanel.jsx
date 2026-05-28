@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { runFullHealthCheck, getLogs, log } from "../utils/FirebaseHealthChecker";
 import PerformanceBenchmark from "./PerformanceBenchmark";
+import AdminModerationPanel from "./AdminModerationPanel";
 
 const STATUS_ICON = { true: "✅", false: "❌", null: "⏳" };
 const LEVEL_COLOR = { info: "#10b981", warn: "#f59e0b", error: "#ef4444" };
@@ -73,6 +74,7 @@ export default function AdminDebugPanel({ open, onClose }) {
             </button>
           ))}
           <button className="debug-tab" onClick={() => setBenchOpen(true)}>⚡ Benchmark</button>
+          <button className={`debug-tab ${activeTab === "moderation" ? "active" : ""}`} onClick={() => setActiveTab("moderation")}>🕵️ Moderation</button>
           <button
             className="debug-refresh"
             onClick={runCheck}
@@ -82,6 +84,12 @@ export default function AdminDebugPanel({ open, onClose }) {
           </button>
         </div>
         {benchOpen && <PerformanceBenchmark onClose={() => setBenchOpen(false)} />}
+
+        {activeTab === "moderation" && (
+          <div className="debug-body">
+            <AdminModerationPanel />
+          </div>
+        )}
 
         {activeTab === "status" && (
           <div className="debug-body">
@@ -173,7 +181,7 @@ export default function AdminDebugPanel({ open, onClose }) {
               </div>
               <div className="debug-info-item">
                 <span className="dii-label">Storage</span>
-                <span className="dii-val">happy-fd1bc.firebasestorage.app</span>
+                <span className="dii-val">Replit Object Storage</span>
               </div>
             </div>
           </div>
@@ -265,6 +273,17 @@ service cloud.firestore {
     match /advertisements/{docId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
+    }
+    match /animals/{animalId} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.token.email == "malinotaling8@gmail.com";
+    }
+    match /userModeration/{uid} {
+      allow read: if request.auth != null
+        && (request.auth.uid == uid
+          || request.auth.token.email == "malinotaling8@gmail.com");
+      allow write: if request.auth != null;
     }
   }
 }`;

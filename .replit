@@ -37,3 +37,6 @@ VITE_FIREBASE_APP_ID = "1:426245078000:web:d94566ffb8a7230385bb35"
 VITE_FIREBASE_DATABASE_URL = "https://happy-fd1bc-default-rtdb.firebaseio.com"
 VITE_FIREBASE_MEASUREMENT_ID = "G-7ZM164H30K"
 VITE_FIREBASE_VAPID_KEY = "sJNaL0-vKU_ZSjD9GhZHGC-Irrt6aI-U_FVIZNha0kg"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-041a9cdd-60c9-43ca-8e4b-612773cc8b83"

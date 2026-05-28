@@ -1,30 +1,19 @@
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { ref, get, set as rtdbSet } from "firebase/database";
-import { db, rtdb, auth, storage } from "./firebase";
-import { ref as storageRef, listAll } from "firebase/storage";
+import { db, rtdb, auth } from "./firebase";
 
 const LOGS = [];
 const MAX_LOGS = 200;
 
 export function log(level, service, message, data) {
-  const entry = {
-    ts: Date.now(),
-    level,
-    service,
-    message,
-    data: data || null,
-  };
+  const entry = { ts: Date.now(), level, service, message, data: data || null };
   LOGS.unshift(entry);
   if (LOGS.length > MAX_LOGS) LOGS.length = MAX_LOGS;
-  if (level === "error") {
-    console.error(`[Firebase:${service}]`, message, data || "");
-  }
+  if (level === "error") console.error(`[Firebase:${service}]`, message, data || "");
   return entry;
 }
 
-export function getLogs() {
-  return [...LOGS];
-}
+export function getLogs() { return [...LOGS]; }
 
 export async function checkFirestore() {
   const start = Date.now();
@@ -79,19 +68,26 @@ export async function checkAuth() {
   }
 }
 
+/** Check Replit Object Storage by pinging the request-url endpoint */
 export async function checkStorage() {
   const start = Date.now();
   try {
-    const rootRef = storageRef(storage, "/");
-    await listAll(rootRef);
+    const res = await fetch("/api/storage/uploads/request-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "health-check.txt", size: 1, contentType: "text/plain" }),
+    });
     const latency = Date.now() - start;
-    log("info", "Storage", `✅ Connected — ${latency}ms`);
-    return { ok: true, latency };
+    if (res.ok) {
+      log("info", "Storage", `✅ Object Storage ready — ${latency}ms`);
+      return { ok: true, latency };
+    }
+    log("warn", "Storage", `⚠️ Object Storage returned ${res.status}`, res.status);
+    return { ok: false, latency, error: `HTTP ${res.status}` };
   } catch (err) {
     const latency = Date.now() - start;
-    const msg = friendlyError(err);
-    log("error", "Storage", `❌ ${msg}`, err.code);
-    return { ok: false, latency, error: msg };
+    log("error", "Storage", `❌ ${err.message}`);
+    return { ok: false, latency, error: err.message };
   }
 }
 
@@ -102,16 +98,10 @@ export async function checkNotifications() {
       return { ok: false, error: "Not supported" };
     }
     const perm = Notification.permission;
-    if (perm === "granted") {
-      log("info", "Notifications", "✅ Permission granted");
-      return { ok: true, permission: perm };
-    } else if (perm === "denied") {
-      log("warn", "Notifications", "❌ Permission denied by user");
-      return { ok: false, permission: perm, error: "Permission denied" };
-    } else {
-      log("info", "Notifications", "ℹ️ Permission not yet requested");
-      return { ok: true, permission: perm };
-    }
+    if (perm === "granted") { log("info", "Notifications", "✅ Permission granted"); return { ok: true, permission: perm }; }
+    if (perm === "denied") { log("warn", "Notifications", "❌ Permission denied by user"); return { ok: false, permission: perm, error: "Permission denied" }; }
+    log("info", "Notifications", "ℹ️ Permission not yet requested");
+    return { ok: true, permission: perm };
   } catch (err) {
     log("error", "Notifications", `❌ ${err.message}`);
     return { ok: false, error: err.message };
@@ -119,21 +109,13 @@ export async function checkNotifications() {
 }
 
 export async function runFullHealthCheck() {
-  log("info", "HealthCheck", "🔍 Starting full Firebase health check…");
+  log("info", "HealthCheck", "🔍 Starting full health check…");
   const [firestoreResult, rtdbResult, authResult, storageResult, notifResult] = await Promise.all([
-    checkFirestore(),
-    checkRTDB(),
-    checkAuth(),
-    checkStorage(),
-    checkNotifications(),
+    checkFirestore(), checkRTDB(), checkAuth(), checkStorage(), checkNotifications(),
   ]);
   const results = {
-    firestore: firestoreResult,
-    rtdb: rtdbResult,
-    auth: authResult,
-    storage: storageResult,
-    notifications: notifResult,
-    timestamp: Date.now(),
+    firestore: firestoreResult, rtdb: rtdbResult, auth: authResult,
+    storage: storageResult, notifications: notifResult, timestamp: Date.now(),
   };
   const allOk = firestoreResult.ok && rtdbResult.ok && authResult.ok;
   log(allOk ? "info" : "warn", "HealthCheck", allOk ? "✅ All services healthy" : "⚠️ Some services need attention");
@@ -145,8 +127,6 @@ function friendlyError(err) {
   if (code === "permission-denied") return "Firestore permission denied — check Security Rules";
   if (code === "unavailable") return "Service unavailable — check internet connection";
   if (code.includes("network")) return "Network error — device may be offline";
-  if (code === "storage/unauthorized") return "Storage permission denied — check Storage Rules";
-  if (code === "storage/bucket-not-found") return "Storage bucket not found — check config";
   if (code === "app/no-app") return "Firebase app not initialized";
   return err?.message || "Unknown error";
 }

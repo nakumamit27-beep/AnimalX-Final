@@ -27,9 +27,11 @@ const NAMED_ABILITIES = {
   "Lyrebird":{ title:"Master Mimicry", desc:"Lyrebirds replicate chainsaws, camera shutters, car alarms, and other bird species with near-perfect fidelity from a single listen." },
   "Coelacanth":{ title:"Living Fossil Locomotion", desc:"Coelacanths swim with paired lobe fins in a trotting gait identical to early land animals, offering a window into vertebrate evolution 400 Ma ago." },
   "Arapaima":{ title:"Air-Breathing Giant", desc:"Arapaima breathe air directly and can survive in oxygen-depleted Amazonian waters where all other large fish suffocate." },
-  "Mantid":{ title:"Lightning Strike Reflex", desc:"Praying mantis strikes at 1/20th of an eye-blink (1 500 m/s²) — too fast for human vision. Their rotating heads give 300° field of view." },
-  "Pistol Shrimp":{ title:"Sonoluminescence Snap", desc:"The snapping claw creates a 4 700 °C cavitation bubble — briefly producing light and sound louder than a gunshot." },
   "Dragonfly":{ title:"Aerial Intercept Targeting", desc:"Dragonflies intercept prey in mid-air with 95% success by predicting flight paths — the highest hunting accuracy of any animal." },
+  "Tiger":{ title:"Ambush Camouflage", desc:"Tiger stripes match the dappled light of tall grass and create an optical illusion called 'disruptive coloration' that makes them invisible until within striking distance." },
+  "Wolf":{ title:"Pack Intelligence", desc:"Wolves use coordinated ambush tactics across distances of 30+ km, communicating via howls with at least 12 distinct meanings." },
+  "Crocodile":{ title:"Death Roll", desc:"Crocodiles spin at up to 3 000 rpm in the 'death roll' to tear prey — generating forces exceeding 3 700 N, more powerful than any other living animal." },
+  "Snake":{ title:"Infrared Heat Vision", desc:"Pit vipers detect prey body heat at 0.003°C precision via facial pits, forming thermal images in total darkness with millisecond response." },
 };
 
 const CATEGORY_ABILITIES = {
@@ -55,20 +57,7 @@ export function getAbility(animal) {
   );
 }
 
-const HABITAT_QUESTIONS = {
-  Mammals:{ q:"How long does the {name} typically live in the wild?", opt:(a)=>[a.lifespan||"10–15 years","1–2 years","50–80 years","200+ years"], ans:(a)=>a.lifespan||"10–15 years" },
-  Reptiles:{ q:"Which class does the {name} belong to?", opt:()=>["Reptilia","Mammalia","Aves","Amphibia"], ans:()=>"Reptilia" },
-  Birds:{ q:"Which feature is UNIQUE to birds like the {name}?", opt:()=>["Feathers","Fur","Scales","Slime"], ans:()=>"Feathers" },
-  Aquatic:{ q:"Where does the {name} spend most of its life?", opt:()=>["In water","Underground","In trees","In caves"], ans:()=>"In water" },
-  "Small Creatures":{ q:"What makes the {name} an invertebrate?", opt:()=>["No backbone","No brain","No heart","No eyes"], ans:()=>"No backbone" },
-  Trees:{ q:"What process does the {name} use to produce energy?", opt:()=>["Photosynthesis","Respiration","Digestion","Fermentation"], ans:()=>"Photosynthesis" },
-  Mountains:{ q:"How are most mountain ranges like this formed?", opt:()=>["Tectonic plate collision","Ocean flooding","Wind erosion","Meteor impact"], ans:()=>"Tectonic plate collision" },
-  Sea:{ q:"What percentage of Earth's surface is covered by oceans?", opt:()=>["71%","29%","50%","90%"], ans:()=>"71%" },
-  Desert:{ q:"What defines a desert environment?", opt:()=>["<250 mm rain/year","Very high temperatures","Sandy terrain","No plant life"], ans:()=>"<250 mm rain/year" },
-  Nature:{ q:"Which gas is most essential for plant photosynthesis?", opt:()=>["Carbon Dioxide (CO₂)","Oxygen (O₂)","Nitrogen (N₂)","Hydrogen (H₂)"], ans:()=>"Carbon Dioxide (CO₂)" },
-};
-
-function shuffle(arr) { return [...arr].sort(() => 0.5 - Math.random()); }
+// ─── Diet helpers ─────────────────────────────────────────────────────────────
 
 function getDietLabel(diet) {
   if (!diet) return "Plants (Herbivore)";
@@ -83,30 +72,82 @@ function getDietLabel(diet) {
   return diet.split("—")[0].trim().split(",")[0].trim() || "Plants (Herbivore)";
 }
 
+function shuffle(arr) { return [...arr].sort(() => 0.5 - Math.random()); }
+
+// ─── Per-category Q2 (habitat/category) ──────────────────────────────────────
+
+const HABITAT_QUESTIONS = {
+  Mammals:{ q:"How long does the {name} typically live in the wild?", opt:(a)=>[a.lifespan||"10–15 years","1–2 years","50–80 years","200+ years"], ans:(a)=>a.lifespan||"10–15 years" },
+  Reptiles:{ q:"Which class does the {name} belong to?", opt:()=>["Reptilia","Mammalia","Aves","Amphibia"], ans:()=>"Reptilia" },
+  Birds:{ q:"Which feature is UNIQUE to birds like the {name}?", opt:()=>["Feathers","Fur","Scales","Slime"], ans:()=>"Feathers" },
+  Aquatic:{ q:"Where does the {name} spend most of its life?", opt:()=>["In water","Underground","In trees","In caves"], ans:()=>"In water" },
+  "Small Creatures":{ q:"What makes the {name} an invertebrate?", opt:()=>["No backbone","No brain","No heart","No eyes"], ans:()=>"No backbone" },
+  Trees:{ q:"What process does the {name} use to produce energy?", opt:()=>["Photosynthesis","Respiration","Digestion","Fermentation"], ans:()=>"Photosynthesis" },
+  Mountains:{ q:"How are most mountain ranges like this formed?", opt:()=>["Tectonic plate collision","Ocean flooding","Wind erosion","Meteor impact"], ans:()=>"Tectonic plate collision" },
+  Sea:{ q:"What percentage of Earth's surface is covered by oceans?", opt:()=>["71%","29%","50%","90%"], ans:()=>"71%" },
+  Desert:{ q:"What defines a desert environment?", opt:()=>["<250 mm rain/year","Very high temperatures","Sandy terrain","No plant life"], ans:()=>"<250 mm rain/year" },
+  Nature:{ q:"Which gas is most essential for plant photosynthesis?", opt:()=>["Carbon Dioxide (CO₂)","Oxygen (O₂)","Nitrogen (N₂)","Hydrogen (H₂)"], ans:()=>"Carbon Dioxide (CO₂)" },
+};
+
+// ─── Per-category Q3 (region) ─────────────────────────────────────────────────
+
+const REGION_QUESTIONS = {
+  Mammals:{ q:"Which continent has the most diverse mammal species?", opt:()=>["Africa","Antarctica","Europe","Australia"], ans:()=>"Africa" },
+  Reptiles:{ q:"Which environment do most reptiles prefer?", opt:()=>["Warm & dry","Cold & wet","Deep ocean","Arctic tundra"], ans:()=>"Warm & dry" },
+  Birds:{ q:"Which bird group has the longest annual migration?", opt:()=>["Arctic Tern","Penguin","Ostrich","Kiwi"], ans:()=>"Arctic Tern" },
+  Aquatic:{ q:"Which ocean is the deepest on Earth?", opt:()=>["Pacific","Atlantic","Indian","Arctic"], ans:()=>"Pacific" },
+  "Small Creatures":{ q:"How many insect species are estimated on Earth?", opt:()=>["1 million+","10,000","50 billion","500"], ans:()=>"1 million+" },
+  Trees:{ q:"Which forest type has the highest biodiversity?", opt:()=>["Tropical rainforest","Boreal forest","Temperate forest","Mangrove"], ans:()=>"Tropical rainforest" },
+  Mountains:{ q:"What is the tallest mountain on Earth?", opt:()=>["Mount Everest","K2","Kilimanjaro","Mont Blanc"], ans:()=>"Mount Everest" },
+  Sea:{ q:"What is the deepest part of the world's ocean called?", opt:()=>["Mariana Trench","Coral Reef","Continental Shelf","Abyssal Plain"], ans:()=>"Mariana Trench" },
+  Desert:{ q:"Which is the largest hot desert on Earth?", opt:()=>["Sahara","Gobi","Arabian","Atacama"], ans:()=>"Sahara" },
+  Nature:{ q:"Which process describes water movement through the environment?", opt:()=>["Water cycle","Carbon cycle","Nitrogen cycle","Oxygen cycle"], ans:()=>"Water cycle" },
+};
+
+// ─── Per-category Q4 (speed/special fact) ────────────────────────────────────
+
+const SPEED_QUESTIONS = {
+  Mammals:{ q:"Which mammal is the fastest land animal?", opt:()=>["Cheetah","Lion","Greyhound","Horse"], ans:()=>"Cheetah" },
+  Reptiles:{ q:"Which reptile can run the fastest on land?", opt:()=>["Black Mamba","Komodo Dragon","Iguana","Crocodile"], ans:()=>"Black Mamba" },
+  Birds:{ q:"Which is the fastest bird in a dive?", opt:()=>["Peregrine Falcon","Swift","Eagle","Albatross"], ans:()=>"Peregrine Falcon" },
+  Aquatic:{ q:"Which fish is the fastest in the ocean?", opt:()=>["Sailfish","Tuna","Shark","Marlin"], ans:()=>"Sailfish" },
+  "Small Creatures":{ q:"Which insect has the fastest wings beat per second?", opt:()=>["Midge","Bee","Butterfly","Dragonfly"], ans:()=>"Midge" },
+  Trees:{ q:"Which tree grows the fastest?", opt:()=>["Bamboo","Oak","Pine","Redwood"], ans:()=>"Bamboo" },
+  Mountains:{ q:"How fast do tectonic plates typically move per year?", opt:()=>["2–5 cm","1 metre","10 metres","0.1 mm"], ans:()=>"2–5 cm" },
+  Sea:{ q:"What is the speed of an ocean current like the Gulf Stream?", opt:()=>["~2 m/s","~50 m/s","~0.01 m/s","~200 m/s"], ans:()=>"~2 m/s" },
+  Desert:{ q:"How hot can a Sahara surface temperature get?", opt:()=>["70°C","30°C","100°C","45°C"], ans:()=>"70°C" },
+  Nature:{ q:"What percentage of species have gone extinct since 1900?", opt:()=>["~50%","~1%","~90%","~10%"], ans:()=>"~50%" },
+};
+
+/**
+ * Generate 4 quiz questions for any animal.
+ * Q1: Diet    Q2: Category/Habitat    Q3: Region    Q4: Speed/Special
+ */
 export function getDefaultQuiz(animal) {
   const correctDiet = getDietLabel(animal.diet);
   const allDiets = ["Meat (Carnivore)","Plants (Herbivore)","Both plants & meat (Omnivore)","Plankton (Filter Feeder)","Insects (Insectivore)","Fruit (Frugivore)","Sunlight (Photosynthesis)"];
   const wrongDiets = allDiets.filter(d => d !== correctDiet);
-  const dietOpts = shuffle([correctDiet, ...wrongDiets.slice(0,3)]);
 
   const q1 = {
     question: `What does the ${animal.name} primarily eat?`,
-    options: dietOpts,
+    options: shuffle([correctDiet, ...wrongDiets.slice(0, 3)]),
     answer: correctDiet,
   };
 
   const hq = HABITAT_QUESTIONS[animal.category];
   const q2 = hq
-    ? {
-        question: hq.q.replace("{name}", animal.name),
-        options: shuffle(hq.opt(animal)),
-        answer: hq.ans(animal),
-      }
-    : {
-        question: `Which region is the ${animal.name} mainly found in?`,
-        options: shuffle([(animal.region||"Africa").split(",")[0].trim(), "Antarctica", "Arctic", "Moon"]),
-        answer: (animal.region||"Africa").split(",")[0].trim(),
-      };
+    ? { question: hq.q.replace("{name}", animal.name), options: shuffle(hq.opt(animal)), answer: hq.ans(animal) }
+    : { question: `Which region is the ${animal.name} mainly found in?`, options: shuffle([(animal.region||"Africa").split(",")[0].trim(),"Antarctica","Arctic","Moon"]), answer: (animal.region||"Africa").split(",")[0].trim() };
 
-  return [q1, q2];
+  const rq = REGION_QUESTIONS[animal.category];
+  const q3 = rq
+    ? { question: rq.q, options: shuffle(rq.opt(animal)), answer: rq.ans(animal) }
+    : { question: `What is the primary habitat of the ${animal.name}?`, options: shuffle([(animal.habitat||"Savanna").split(" ")[0],"Ocean","Arctic tundra","Dense jungle"]), answer: (animal.habitat||"Savanna").split(" ")[0] };
+
+  const sq = SPEED_QUESTIONS[animal.category];
+  const q4 = sq
+    ? { question: sq.q, options: shuffle(sq.opt(animal)), answer: sq.ans(animal) }
+    : { question: `Approximately how old can a ${animal.name} get in the wild?`, options: shuffle([animal.lifespan||"10–20 years","1–2 years","100+ years","50–80 years"]), answer: animal.lifespan||"10–20 years" };
+
+  return [q1, q2, q3, q4];
 }
