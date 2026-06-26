@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useParams, Link } from "wouter";
 import animals from "../data/animals";
 import { getAnimalImage, getEmoji, getAnimalEmoji } from "../utils/image";
@@ -8,18 +8,30 @@ import { useAuth } from "../context/AuthContext";
 
 export default function AnimalDetail() {
   const { id } = useParams();
-  const animal = animals.find((a) => a.id === parseInt(id));
+  const numId = parseInt(id);
+  const animal = animals.find((a) => a.id === numId);
+
   const [imgError, setImgError] = useState(false);
-  const [override, setOverrideState] = useState(() => (animal ? getOverride(animal.id) : {}));
+  const [override, setOverrideState] = useState({});
   const [tapCount, setTapCount] = useState(0);
   const tapTimer = useRef(null);
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminTab, setAdminTab] = useState("photo");
   const { isSuperAdmin, adminMode } = useAuth();
-
-  // Uploading state
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState("");
+
+  /* ── Reset ALL state + scroll to top whenever id changes ── */
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+    setImgError(false);
+    setTapCount(0);
+    setAdminOpen(false);
+    setUploadMsg("");
+    if (animal) {
+      setOverrideState(getOverride(animal.id));
+    }
+  }, [numId]); // numId as dependency, not animal object
 
   useEffect(() => {
     function refresh() {
@@ -44,7 +56,6 @@ export default function AnimalDetail() {
   const related = animals.filter((a) => a.category === animal.category && a.id !== animal.id).slice(0, 6);
   const emoji = getAnimalEmoji(animal.baseName || animal.name, animal.category);
 
-  // Determine display image — prefer admin-uploaded override
   const overrideImg = override.image || (override.imageObjectPath ? objectPathToUrl(override.imageObjectPath) : null);
   const imgSrc = overrideImg || animal.imageUrl || getAnimalImage(animal);
 
@@ -88,8 +99,6 @@ export default function AnimalDetail() {
     await setOverride(animal.id, { image: null, imageObjectPath: null });
     setOverrideState(getOverride(animal.id));
     setImgError(false);
-    setUploadMsg("🗑️ Photo deleted");
-    setTimeout(() => setUploadMsg(""), 2000);
   }
 
   async function saveField(field, value) {
@@ -100,26 +109,35 @@ export default function AnimalDetail() {
   return (
     <div className="detail-page">
       <div className="detail-container">
-        <Link href="/animals" className="back-link">← Back to Animals</Link>
+        <Link
+          href="/animals"
+          className="back-link"
+          onClick={() => {
+            // Signal Animals page to restore scroll
+            sessionStorage.setItem("ax_back_from_detail", "1");
+          }}
+        >
+          ← Back to Animals
+        </Link>
 
         <div className="detail-card">
           <div className="detail-image-wrap" onClick={handleBannerTap}>
             {imgError ? (
               <div className="detail-emoji">{emoji}</div>
             ) : (
-              <img src={imgSrc} alt={animal.name} className="detail-img" onError={() => setImgError(true)} />
+              <img
+                key={`${numId}-${imgSrc}`}
+                src={imgSrc}
+                alt={animal.name}
+                className="detail-img"
+                onError={() => setImgError(true)}
+              />
             )}
             {isSuperAdmin && adminMode && (
               <div className="detail-edit-actions" onClick={e => e.stopPropagation()}>
-                <button className="detail-edit-btn" onClick={() => { setAdminOpen(true); setAdminTab("photo"); }}>
-                  📷 Change Photo
-                </button>
-                <button className="detail-edit-btn" onClick={() => { setAdminOpen(true); setAdminTab("ability"); }}>
-                  ⚡ Edit Ability
-                </button>
-                <button className="detail-edit-btn" onClick={() => { setAdminOpen(true); setAdminTab("quiz"); }}>
-                  🧠 Edit Quiz
-                </button>
+                <button className="detail-edit-btn" onClick={() => { setAdminOpen(true); setAdminTab("photo"); }}>📷 Change Photo</button>
+                <button className="detail-edit-btn" onClick={() => { setAdminOpen(true); setAdminTab("ability"); }}>⚡ Edit Ability</button>
+                <button className="detail-edit-btn" onClick={() => { setAdminOpen(true); setAdminTab("quiz"); }}>🧠 Edit Quiz</button>
               </div>
             )}
           </div>
@@ -147,13 +165,9 @@ export default function AnimalDetail() {
           </div>
         </div>
 
-        {/* ⚡ ABILITY CARD */}
         <AbilityCard ability={ability} />
+        {quiz && quiz.length > 0 && <QuizSection key={numId} quiz={quiz} animalName={displayName} />}
 
-        {/* 🧠 QUIZ SECTION */}
-        <QuizSection quiz={quiz} animalName={displayName} />
-
-        {/* 👑 ADMIN MANAGEMENT POPUP */}
         {adminOpen && isSuperAdmin && adminMode && (
           <AdminAnimalPanel
             animal={animal}
@@ -190,17 +204,12 @@ export default function AnimalDetail() {
   );
 }
 
-// ─── Admin Animal Management Panel ─────────────────────────────────────────────
-
+/* ─── Admin Animal Management Panel ───────────────────────────────────────── */
 function AdminAnimalPanel({ animal, override, ability, quiz, activeTab, setActiveTab, uploading, uploadMsg, onPhotoFile, onDeletePhoto, onSaveField, onSaveQuiz, onClose }) {
   const fileRef = useRef(null);
-
-  // Local ability state
   const [abilityTitle, setAbilityTitle] = useState(ability.title || "");
   const [abilityDesc, setAbilityDesc] = useState(ability.desc || "");
   const [abilitySaving, setAbilitySaving] = useState(false);
-
-  // Local quiz state
   const [quizItems, setQuizItems] = useState(() => quiz.map(q => ({ ...q, options: [...q.options] })));
   const [quizSaving, setQuizSaving] = useState(false);
   const [quizMsg, setQuizMsg] = useState("");
@@ -219,14 +228,8 @@ function AdminAnimalPanel({ animal, override, ability, quiz, activeTab, setActiv
     setTimeout(() => setQuizMsg(""), 2000);
   }
 
-  function addQuestion() {
-    setQuizItems(prev => [...prev, { question: "", options: ["", "", "", ""], answer: "" }]);
-  }
-
-  function deleteQuestion(idx) {
-    setQuizItems(prev => prev.filter((_, i) => i !== idx));
-  }
-
+  function addQuestion() { setQuizItems(prev => [...prev, { question: "", options: ["", "", "", ""], answer: "" }]); }
+  function deleteQuestion(idx) { setQuizItems(prev => prev.filter((_, i) => i !== idx)); }
   function moveQuestion(idx, dir) {
     setQuizItems(prev => {
       const arr = [...prev];
@@ -236,16 +239,11 @@ function AdminAnimalPanel({ animal, override, ability, quiz, activeTab, setActiv
       return arr;
     });
   }
-
-  function updateQuestion(idx, field, value) {
-    setQuizItems(prev => prev.map((q, i) => i === idx ? { ...q, [field]: value } : q));
-  }
-
+  function updateQuestion(idx, field, value) { setQuizItems(prev => prev.map((q, i) => i === idx ? { ...q, [field]: value } : q)); }
   function updateOption(qIdx, optIdx, value) {
     setQuizItems(prev => prev.map((q, i) => {
       if (i !== qIdx) return q;
-      const opts = [...q.options];
-      opts[optIdx] = value;
+      const opts = [...q.options]; opts[optIdx] = value;
       return { ...q, options: opts };
     }));
   }
@@ -257,156 +255,75 @@ function AdminAnimalPanel({ animal, override, ability, quiz, activeTab, setActiv
           <span>👑 Admin — {animal.name}</span>
           <button className="admin-panel-close" onClick={onClose}>✕</button>
         </div>
-
         <div className="admin-panel-tabs">
           {[["photo","📷 Photo"],["ability","⚡ Ability"],["quiz","🧠 Quiz"]].map(([key,label]) => (
-            <button key={key} className={`admin-panel-tab ${activeTab === key ? "active" : ""}`} onClick={() => setActiveTab(key)}>
-              {label}
-            </button>
+            <button key={key} className={`admin-panel-tab ${activeTab === key ? "active" : ""}`} onClick={() => setActiveTab(key)}>{label}</button>
           ))}
         </div>
 
-        {/* ── PHOTO TAB ── */}
         {activeTab === "photo" && (
           <div className="admin-panel-body">
             <div className="admin-section-title">Change Animal Photo</div>
-
-            <div className="admin-current-photo">
-              <CurrentPhoto override={override} animal={animal} />
-            </div>
-
+            <div className="admin-current-photo"><CurrentPhoto override={override} animal={animal} /></div>
             {uploadMsg && <div className={`admin-upload-msg ${uploadMsg.includes("✅") ? "ok" : uploadMsg.includes("❌") ? "err" : ""}`}>{uploadMsg}</div>}
-
             <div className="admin-photo-actions">
               <button className="admin-action-btn primary" onClick={() => fileRef.current?.click()} disabled={uploading}>
                 {uploading ? "⏳ Uploading…" : "📁 Choose New Photo"}
               </button>
               <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onPhotoFile} />
-
-              {override.image && (
-                <button className="admin-action-btn danger" onClick={onDeletePhoto}>
-                  🗑️ Delete Custom Photo
-                </button>
-              )}
+              {override.image && <button className="admin-action-btn danger" onClick={onDeletePhoto}>🗑️ Delete Custom Photo</button>}
             </div>
-
-            <div className="admin-photo-hint">
-              Image is auto-compressed to 1080px WebP and stored in Replit Object Storage. Old photos are replaced automatically.
-            </div>
-
             <div className="admin-section-title" style={{ marginTop: 16 }}>Quick Info Edit</div>
-            <div className="aef-row">
-              <label>Habits</label>
-              <textarea rows={2} placeholder="e.g. Nocturnal hunter, lives in prides…" defaultValue={override.habits || ""} onBlur={e => onSaveField("habits", e.target.value)} />
-            </div>
-            <div className="aef-row">
-              <label>Lifespan</label>
-              <input type="text" placeholder="e.g. 12–16 years" defaultValue={override.lifespan || ""} onBlur={e => onSaveField("lifespan", e.target.value)} />
-            </div>
+            <div className="aef-row"><label>Habits</label><textarea rows={2} defaultValue={override.habits || ""} onBlur={e => onSaveField("habits", e.target.value)} /></div>
+            <div className="aef-row"><label>Lifespan</label><input type="text" defaultValue={override.lifespan || ""} onBlur={e => onSaveField("lifespan", e.target.value)} /></div>
           </div>
         )}
 
-        {/* ── ABILITY TAB ── */}
         {activeTab === "ability" && (
           <div className="admin-panel-body">
             <div className="admin-section-title">Edit Special Ability</div>
-
-            <div className="aef-row">
-              <label>⚡ Ability Title</label>
-              <input
-                type="text"
-                value={abilityTitle}
-                onChange={e => setAbilityTitle(e.target.value)}
-                placeholder="e.g. Power Roar"
-              />
-            </div>
-            <div className="aef-row">
-              <label>📝 Description</label>
-              <textarea
-                rows={4}
-                value={abilityDesc}
-                onChange={e => setAbilityDesc(e.target.value)}
-                placeholder="Describe the special ability in detail…"
-              />
-            </div>
-
+            <div className="aef-row"><label>⚡ Ability Title</label><input type="text" value={abilityTitle} onChange={e => setAbilityTitle(e.target.value)} /></div>
+            <div className="aef-row"><label>📝 Description</label><textarea rows={4} value={abilityDesc} onChange={e => setAbilityDesc(e.target.value)} /></div>
             <button className="admin-action-btn primary" onClick={saveAbility} disabled={abilitySaving}>
               {abilitySaving ? "⏳ Saving…" : "💾 Save Ability"}
             </button>
-
-            <div className="admin-photo-hint">Changes save to Firestore and update all pages instantly.</div>
           </div>
         )}
 
-        {/* ── QUIZ TAB ── */}
         {activeTab === "quiz" && (
           <div className="admin-panel-body">
             <div className="admin-quiz-header">
-              <div className="admin-section-title">Edit Wildlife Quiz ({quizItems.length} questions)</div>
+              <div className="admin-section-title">Edit Quiz ({quizItems.length} questions)</div>
               <button className="admin-add-q-btn" onClick={addQuestion}>➕ Add Question</button>
             </div>
-
             {quizMsg && <div className="admin-upload-msg ok">{quizMsg}</div>}
-
             {quizItems.map((q, qi) => (
               <div key={qi} className="admin-quiz-card">
                 <div className="admin-quiz-card-header">
                   <span className="admin-q-num">Q{qi + 1}</span>
                   <div className="admin-q-controls">
-                    <button onClick={() => moveQuestion(qi, -1)} disabled={qi === 0} title="Move up">↑</button>
-                    <button onClick={() => moveQuestion(qi, 1)} disabled={qi === quizItems.length - 1} title="Move down">↓</button>
-                    <button className="danger-btn" onClick={() => deleteQuestion(qi)} title="Delete">🗑️</button>
+                    <button onClick={() => moveQuestion(qi, -1)} disabled={qi === 0}>↑</button>
+                    <button onClick={() => moveQuestion(qi, 1)} disabled={qi === quizItems.length - 1}>↓</button>
+                    <button className="danger-btn" onClick={() => deleteQuestion(qi)}>🗑️</button>
                   </div>
                 </div>
-
-                <input
-                  className="admin-q-input"
-                  type="text"
-                  placeholder="Question text…"
-                  value={q.question}
-                  onChange={e => updateQuestion(qi, "question", e.target.value)}
-                />
-
-                <div className="admin-q-opts-label">Options (click radio to set correct answer):</div>
+                <input className="admin-q-input" type="text" placeholder="Question text…" value={q.question} onChange={e => updateQuestion(qi, "question", e.target.value)} />
+                <div className="admin-q-opts-label">Options (click radio = correct answer):</div>
                 {q.options.map((opt, oi) => (
                   <div key={oi} className="admin-q-opt-row">
-                    <input
-                      type="radio"
-                      name={`q${qi}-answer`}
-                      checked={q.answer === opt}
-                      onChange={() => updateQuestion(qi, "answer", opt)}
-                      title="Mark as correct answer"
-                    />
-                    <input
-                      className="admin-q-opt-input"
-                      type="text"
-                      placeholder={`Option ${oi + 1}`}
-                      value={opt}
-                      onChange={e => {
-                        const wasAnswer = q.answer === opt;
-                        updateOption(qi, oi, e.target.value);
-                        if (wasAnswer) updateQuestion(qi, "answer", e.target.value);
-                      }}
-                    />
-                    <span className={`opt-badge ${q.answer === opt ? "correct" : ""}`}>
-                      {q.answer === opt ? "✅" : "○"}
-                    </span>
+                    <input type="radio" name={`q${qi}-answer`} checked={q.answer === opt} onChange={() => updateQuestion(qi, "answer", opt)} />
+                    <input className="admin-q-opt-input" type="text" placeholder={`Option ${oi + 1}`} value={opt}
+                      onChange={e => { const wasAnswer = q.answer === opt; updateOption(qi, oi, e.target.value); if (wasAnswer) updateQuestion(qi, "answer", e.target.value); }} />
+                    <span className={`opt-badge ${q.answer === opt ? "correct" : ""}`}>{q.answer === opt ? "✅" : "○"}</span>
                   </div>
                 ))}
               </div>
             ))}
-
             <div className="admin-quiz-footer">
-              <button className="admin-action-btn primary" onClick={saveQuiz} disabled={quizSaving}>
-                {quizSaving ? "⏳ Saving…" : "💾 Save All Quiz Questions"}
-              </button>
+              <button className="admin-action-btn primary" onClick={saveQuiz} disabled={quizSaving}>{quizSaving ? "⏳ Saving…" : "💾 Save All"}</button>
               <button className="admin-action-btn" onClick={() => {
-                if (window.confirm("Reset to auto-generated quiz?")) {
-                  setQuizItems(getDefaultQuiz(animal).map(q => ({ ...q, options: [...q.options] })));
-                }
-              }}>
-                🔄 Reset to Auto
-              </button>
+                if (window.confirm("Reset to auto-generated quiz?")) setQuizItems(getDefaultQuiz(animal).map(q => ({ ...q, options: [...q.options] })));
+              }}>🔄 Reset</button>
             </div>
           </div>
         )}
@@ -423,8 +340,6 @@ function CurrentPhoto({ override, animal }) {
   if (err) return <div className="admin-photo-preview-emoji">{emoji}</div>;
   return <img src={src} alt={animal.name} className="admin-photo-preview" onError={() => setErr(true)} />;
 }
-
-// ─── Ability Card ──────────────────────────────────────────────────────────────
 
 function AbilityCard({ ability }) {
   const [expanded, setExpanded] = useState(false);
@@ -443,8 +358,7 @@ function AbilityCard({ ability }) {
   );
 }
 
-// ─── Quiz Section (4 questions) ───────────────────────────────────────────────
-
+/* ─── Quiz: key={numId} forces full reset on animal change ─── */
 function QuizSection({ quiz, animalName }) {
   const [answers, setAnswers] = useState({});
   const [score, setScore] = useState(null);
@@ -504,9 +418,7 @@ function QuizSection({ quiz, animalName }) {
         </div>
       ))}
 
-      {score === null && (
-        <button className="quiz-submit" onClick={submit}>Submit Answers →</button>
-      )}
+      {score === null && <button className="quiz-submit" onClick={submit}>Submit Answers →</button>}
     </div>
   );
 }
@@ -515,6 +427,13 @@ function RelatedImage({ animal }) {
   const [err, setErr] = useState(false);
   if (err) return <div className="related-emoji">{getEmoji(animal.category)}</div>;
   return (
-    <img src={animal.imageUrl || getAnimalImage(animal)} alt={animal.name} className="related-img" loading="lazy" onError={() => setErr(true)} />
+    <img
+      key={animal.id}
+      src={animal.imageUrl || getAnimalImage(animal)}
+      alt={animal.name}
+      className="related-img"
+      loading="lazy"
+      onError={() => setErr(true)}
+    />
   );
 }

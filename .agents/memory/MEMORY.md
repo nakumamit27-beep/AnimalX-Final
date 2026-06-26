@@ -1,0 +1,6 @@
+- [Animal Detail nav bug fix](animal-detail-nav.md) — use useLayoutEffect([numId]) to reset state + scroll; key prop on QuizSection forces quiz reset
+- [Per-animal quiz system](quiz-system.md) — NAMED_QUIZZES covers 16 species; generic fallback uses animal's own lifespan/country/habitat for truly unique questions
+- [Back navigation UX](back-nav.md) — sessionStorage key "ax_animals_scroll_state" saves scroll+filters; "ax_back_from_detail" signals the restore; cleared after use
+- [WildlifeAI component](wildlife-ai.md) — floating 🤖 FAB (bottom-right, above bottom nav); fully offline local KB; added to App.tsx just before FirebaseStatusBanner
+- [Map upgrades pattern](map-upgrades.md) — migration routes use React.Fragment (not div) inside LayerGroup; RecenterButton uses useMap() inside MapContainer; user location via watchPosition
+- [Zoos data](zoos-data.md) — replaced 280 fake "Wild World N" zoos with ~118 named real zoos; no more procedural generation loop; export default unchanged

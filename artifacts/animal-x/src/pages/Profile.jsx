@@ -269,15 +269,15 @@ export default function Profile() {
 
                 <a
                   className="help-contact-row"
-                  href="instagram://user?username=wild_life_aniaml_fight"
+                  href="instagram://user?username=wildlifeaniamlfight"
                   onClick={(e) => {
                     e.preventDefault();
-                    const fallback = "https://www.instagram.com/wild_life_aniaml_fight";
+                    const fallback = "https://www.instagram.com/wildlifeaniamlfight";
                     const start = Date.now();
                     setTimeout(() => {
                       if (Date.now() - start < 1700) window.open(fallback, "_blank", "noopener");
                     }, 1300);
-                    try { window.location.href = "instagram://user?username=wild_life_aniaml_fight"; }
+                    try { window.location.href = "instagram://user?username=wildlifeaniamlfight"; }
                     catch { window.open(fallback, "_blank", "noopener"); }
                   }}
                 >
@@ -290,14 +290,14 @@ export default function Profile() {
                   </span>
                   <div className="help-contact-info">
                     <div className="help-contact-name">Instagram</div>
-                    <div className="help-contact-handle">@wild_life_aniaml_fight</div>
+                    <div className="help-contact-handle">@wildlifeaniamlfight</div>
                   </div>
                   <span className="help-arrow">→</span>
                 </a>
 
                 <a
                   className="help-contact-row"
-                  href="mailto:animalx00003@gmail.com?subject=Animal%20X%20Support%20Request"
+                  href="mailto:wildlifeanimalfight@gmail.com?subject=Animal%20X%20Support%20Request"
                 >
                   <span className="help-icon" style={{ background: "#ea4335" }} aria-hidden>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -307,12 +307,65 @@ export default function Profile() {
                   </span>
                   <div className="help-contact-info">
                     <div className="help-contact-name">Gmail</div>
-                    <div className="help-contact-handle">animalx00003@gmail.com</div>
+                    <div className="help-contact-handle">wildlifeanimalfight@gmail.com</div>
                   </div>
+                  
                   <span className="help-arrow">→</span>
                 </a>
               </div>
             </div>
+              {/* --- FULL WIDTH VERTICAL LAYOUT FOR FAQS & PRIVACY --- */}
+  <div className="w-full mt-6 block clear-both text-left" style={{ width: '100%', display: 'block', clear: 'both' }}>
+    
+    {/* --- Extra Troubleshooting FAQs --- */}
+        {/* --- Accordion FAQ Section (Click to Open) --- */}
+    
+
+    {/* --- PROFESSIONAL PRIVACY POLICY & COMMUNITY RULES --- */}
+    <div className="mt-6 border-t border-gray-100 pt-4 text-left block w-full">
+      <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1">
+        🔒 Privacy Policy & Community Guidelines
+      </h3>
+      
+      <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 max-h-60 overflow-y-auto space-y-3 block w-full">
+        
+        <div className="block w-full">
+          <h4 className="text-xs font-bold text-emerald-600 mb-1">1. Data Privacy & Security</h4>
+          <p className="text-[11px] text-gray-600 leading-relaxed">
+            Animal X securely stores your personal details (Gmail, Profile Data) and location permissions on Firebase Encrypted Servers. Your data is strictly confidential and is never shared with any third-party applications.
+          </p>
+        </div>
+
+        <div className="block w-full">
+          <h4 className="text-xs font-bold text-emerald-600 mb-1">2. Strict Content Moderation Rules</h4>
+          <p className="text-[11px] text-gray-600 leading-relaxed">
+            Only content related to Wildlife, Animals, Forests, Oceans, Mountains, and Nature is allowed on this platform (Reels/Stories/Posts). AI filters and Admin panels constantly monitor all active feeds.
+          </p>
+        </div>
+
+        <div className="block w-full">
+          <h4 className="text-xs font-bold text-red-500 mb-1">3. Strike Policy & Account Blocks</h4>
+          <p className="text-[11px] text-gray-600 leading-relaxed font-semibold">
+            ⚠️ If a user violates the community guidelines and uploads inappropriate content, their account will receive warnings (strikes). Violating the content rules 3 times (3 Violations) will result in a temporary or permanent feature block, restricting the user from uploading Reels or Stories for 30 days or indefinitely.
+          </p>
+        </div>
+
+        <div className="block w-full">
+          <h4 className="text-xs font-bold text-emerald-600 mb-1">4. Verification & Blue Ticks</h4>
+          <p className="text-[11px] text-gray-600 leading-relaxed">
+            Our verification system is fully automated. Users will automatically receive a verified Blue Tick upon reaching 100K (100,000) followers. Additionally, for core community safety and authentication, the App Admin reserves the right to manually verify accounts from the hidden admin panel.
+          </p>
+        </div>
+
+        <p className="text-[10px] text-gray-400 text-center pt-2 border-t border-gray-200/50 block w-full">
+          Last Updated: May 2026 • Animal X Team
+        </p>
+
+      </div>
+    </div>
+
+  </div>
+
           </div>
         </div>
       )}

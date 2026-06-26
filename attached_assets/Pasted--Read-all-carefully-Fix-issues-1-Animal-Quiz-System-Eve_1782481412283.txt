@@ -1,0 +1,351 @@
+
+
+ Read all carefully
+
+Fix  issues:
+
+1) Animal Quiz System
+- Every animal card must have its own quiz.
+- Lion card = Lion quiz.
+- Tiger card = Tiger quiz.
+- Elephant card = Elephant quiz.
+- Wallaby card = Wallaby quiz.
+- Do NOT show the same quiz for all animals.
+
+- When opening an animal page, load the quiz linked to that animal's ID.
+- If no quiz exists, hide the quiz section.
+
+
+
+
+
+Upgrade the Live Tracking section with real wildlife data.
+
+Requirements:
+
+1. Replace generic names with the real tracked animal names.
+
+2. Add 30 new live tracked animals from around the world.
+
+
+
+3. Add 30 new Zoos worldwide.
+
+
+4. Show for each tracked animal:
+- Real tracking name/ID
+- Species
+- Country
+- Last GPS location
+- Last updated time
+- Status (Moving / Resting / Feeding)
+- Battery (if available)
+
+5. Make the map searchable by animal name and zoo.
+
+6. Support unlimited future additions.
+
+
+
+Do not generate fake live GPS coordinates or fake tracking IDs. Use verified public tracking data where available, and otherwise clearly mark entries as demo data.
+
+
+Fix the Animal Details page navigation bug.
+
+Current issue:
+When I open an animal (example: Lion), then scroll down and tap another animal from "More from Mammals" (example: Leopard), only the text changes. The main hero image and some page data still belong to the previous animal.
+
+Requirements:
+
+1. When any animal card is clicked (including "More from Mammals"), reload the entire Animal Details page.
+
+. Scroll automatically to the top after opening another animal.
+
+. Test by opening 20 different animals in succession and verify that every image and every detail matches the selected animal.
+
+The Animal Details page must always display the correct image and information for the currently selected animal with no stale or cached content.
+
+Optimize the entire app for maximum speed and instant loading.
+The goal is to make the app feel as fast and smooth as Instagram or YouTube Shorts, with instant navigation and minimal loading delays.
+
+
+
+Create a smart AI Assistant for the Wildlife Hub app.
+
+Requirements:
+
+1. Add a floating AI Chat button beside the Notification (Bell) icon in the top navigation.
+2. The chatbot must scan and understand the entire app automatically.
+3. It should answer only app-related and wildlife-related questions.
+
+Knowledge Base:
+
+• Animals
+  - Habitat
+  - Diet
+  - Lifespan
+  - Scientific name
+  - Conservation status
+  - Interesting facts
+  - Special abilities
+  - Similar animals
+  - Animal cards
+  - Animal quizzes
+
+• Reels
+  - How to upload reels
+  - Like, comment, follow, share
+  - Report reels
+  - Community Guidelines
+  - Copyright rules
+  - Video requirements
+
+• Maps
+  - Live GPS tracking explanation
+  - Zoo locations
+  - Animal tracking information
+  - Navigation help
+
+• Travel
+  - Zoo travel guide
+  - Best visiting times
+  - Tickets
+  - Travel safety tips
+
+• Profile
+  - Login
+  - Sign Up
+  - Forgot Password
+  - Edit Profile
+  - Follow/Unfollow
+  - Notifications
+  - Ads
+  - Privacy Policy
+  - Terms & Conditions
+  - Help & Support
+  - FAQ
+
+Admin Knowledge
+
+The AI should understand every admin feature including:
+- Upload animals
+- Upload reels
+- Advertisement system
+- Notifications
+- User management
+- Reports
+- Analytics
+
+Chat Features
+
+• Instant replies
+• Typing animation
+• Suggested questions
+• Search inside chat
+• Conversation history
+• Mobile friendly
+• Dark theme matching the app
+• Fast response (<1 second if answer exists locally)
+
+Suggested Questions
+
+- How do I upload a reel?
+- How do I follow users?
+- How do I reset my password?
+- How does Live Tracking work?
+- Tell me about Lions.
+- Where can I find Tigers?
+- How do ads work?
+- How do I contact support?
+- How do I report a reel?
+- What are Community Guidelines?
+
+Animal Questions
+
+If the user asks about any animal available in the app, the chatbot should automatically fetch that animal's data from the database and answer with complete details instead of using hardcoded text.
+
+Offline Knowledge
+
+Most answers should work offline using a local knowledge base. Use AI only when needed for complex questions.
+
+Do not use placeholder responses. Build a production-ready AI Help Assistant.
+
+
+Upgrade the Map page with a real-time user location system.
+Requirements
+• Request the user's location permission using the Geolocation API.
+• Once permission is granted, automatically detect the user's current GPS location.
+• Display a blue animated marker on the map labeled "You are Here" or "My Location".
+• Use navigator.geolocation.watchPosition() so the marker updates in real time as the user moves.
+• Automatically center and zoom the map (zoom level 12–15) on the user's location when the Map page opens.
+• Add a floating 📍 My Location button that instantly recenters the map on the user's current position.
+• If the user denies location permission, show a friendly message: "Location permission is required to show your current position."
+• Keep all existing zoo markers and live animal tracking markers. Do not remove or replace them. The user's location marker should appear alongside them.
+• Ensure the user's location marker is always rendered above all other markers so it remains clearly visible.
+• Optimize performance by updating the location only every 5–10 seconds or when the user has moved a significant distance.
+• Make the feature fully responsive and smooth on both mobile and desktop.
+• If GPS is unavailable, automatically fall back to an IP-based approximate location and inform the user that an approximate location is being shown.
+Final Result
+When the Map page opens, the app should automatically display the user's live location with a blue animated marker, center the map on that location, and continue updating it in real time while still showing all zoo and animal tracking markers.
+Upgrade the Map page for production quality.
+Performance Fix
+• The map currently lags while panning and zooming. Optimize it for smooth performance.
+• Enable marker clustering so nearby zoo markers are grouped together when zoomed out.
+• Use lazy loading and virtual rendering so only visible markers are rendered.
+• Cache marker data in memory and avoid re-fetching on every map movement.
+• Optimize images with lazy loading and compressed thumbnails.
+• Debounce search and filter updates.
+• Keep the map running smoothly at 60 FPS on both Android and desktop.
+Real Zoo Data
+• Remove all fake zoo names such as "Wild World 219".
+• Replace them with real zoo names from around the world.
+• Each zoo must display: 
+• Official Zoo Name
+• City
+• Country
+• Real coordinates
+• Rating (if available)
+• Number of animals
+• Zoo image
+• Include at least 300+ real zoos worldwide.
+• "Open in Maps" must open Google Maps navigation to the correct zoo location.
+• Searching by zoo name, city, or country should instantly find the correct zoo.
+Final Result
+The map should be fast and smooth with no lag. Every marker must represent a real zoo with its official name, real location, and working Google Maps navigation. No fake or randomly generated zoo names should remain anywhere in the app.
+
+Add a new Live Wildlife Migration system to the Map page.
+Wildlife Migration Layer
+Create a new map layer called "Live Wildlife Migration" that users can enable or disable.
+Migration Species
+Show real migration routes for species such as:
+• Wildebeest
+• Zebra
+• Caribou
+• Reindeer
+• African Elephant
+• American Bison
+• Mongolian Gazelle
+• Saiga Antelope
+• Arctic Tern
+• Flamingo
+• Monarch Butterfly
+• Humpback Whale
+• Gray Whale
+• Sea Turtle
+• Salmon
+• Penguin
+• Crane
+• Stork
+• Snow Goose
+• Other well-known migratory species
+Map Display
+• Show a moving herd/flock icon instead of a single marker.
+• Display the herd size (for example: "12,450 Wildebeest").
+• Draw the migration route with a colored line.
+• Animate the movement smoothly along the route.
+• Show movement direction with arrows.
+• Update the position every few seconds when live data is available.
+Animal Information Popup
+When a user taps a migrating herd, display:
+• Species name
+• Current location
+• Destination
+• Distance traveled
+• Estimated arrival
+• Herd size
+• Speed
+• Migration season
+• Last updated time
+• Photo of the species
+Data Sources
+Use real migration data wherever available (Movebank, GBIF, eBird, OTN, or other public wildlife tracking APIs). If live tracking is unavailable for a species, display clearly labeled Seasonal Migration Route (Historical Data) instead of fake live movement.
+Filters
+Allow filtering by:
+• Species
+• Continent
+• Migration season
+• Currently active migrations
+Performance
+• Load migration data lazily.
+• Only render migration routes visible on the screen.
+• Keep map scrolling smooth with no lag.
+• Cache migration data locally for faster loading.
+Final Result
+Users should be able to open the map, enable Live Wildlife Migration, and watch migrating animal herds (such as wildebeest and zebras) moving along their real migration routes when live data exists. If only historical migration data is available, clearly indicate that it is historical rather than live.
+
+
+
+
+Improve the Animal Details → Back Navigation UX.
+Current issue: When a user opens an animal (for example, Panda) and then taps "Back to Animals", the app always returns to the top of the animal list. The user must scroll all the way down again to find Panda.
+Required behavior:
+• Save the user's current scroll position before opening an animal details page.
+• Save the selected animal ID/index (for example, Panda).
+• When the user taps "Back to Animals", restore the previous scroll position instead of scrolling to the top.
+• The previously opened animal card should still be visible in the same position (for example, Panda remains on screen).
+• Do not reload or recreate the animal list when returning.
+• Preserve all filters, search text, selected category, and sorting options.
+• Restore the page instantly without any flicker or loading animation.
+• If the user refreshes the page, it is okay to start from the top, but normal back navigation must always restore the previous position.
+• Use browser history state or sessionStorage (or React Router state) to save and restore the scroll position.
+• This should work for every animal card, not just Panda.
+Final result: If a user scrolls to Panda, opens Panda, then taps Back to Animals, the app should return to the exact same place where Panda was visible, allowing the user to continue scrolling from there instead of starting again from the top.
+
+
+
+Make the Users/Creators feature fully functional (100% working).
+Search
+• The search bar must work in real time.
+• Users can search by: 
+• Username (@username)
+• Display name
+• Country
+• Animal category
+• Show matching results instantly while typing.
+User Profiles
+• Clicking any creator opens their profile.
+• Profile must display: 
+• Profile photo
+• Cover image
+• Username
+• Bio
+• Country
+• Followers
+• Following
+• Total likes
+• Total reels
+• Join date
+• Verification badge (if verified)
+Follow System
+• Follow button must work with Firebase.
+• One tap = Follow.
+• Second tap = Unfollow.
+• Follower and Following counts must update instantly.
+• Follow state must remain after app restart.
+Creator Reels
+• Show all reels uploaded by that creator.
+• Opening a reel should play the selected reel first.
+• Likes, comments and shares must sync in real time.
+Firebase Integration
+Store everything in Firebase:
+• Users
+• Profiles
+• Followers
+• Following
+• Creator reels
+• Likes
+• Verification status
+Performance
+• Use pagination or lazy loading.
+• Cache user profiles.
+• Search results should appear in under 300ms.
+• No duplicate users.
+• No UI flickering.
+Final Result
+The Users button should behave like Instagram:
+• Search creators
+• Open profiles
+• Follow/Unfollow
+• View creator reels
+• Live follower counts
+• Everything fully functional with Firebase and production-ready.

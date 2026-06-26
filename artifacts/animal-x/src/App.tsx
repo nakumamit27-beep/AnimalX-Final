@@ -7,6 +7,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import Navbar from "./components/Navbar";
 import FirebaseStatusBanner from "./components/FirebaseStatusBanner";
 import AutoTickPopup from "./components/AutoTickPopup";
+import WildlifeAI from "./components/WildlifeAI";
 
 // Lazy load every page — each becomes its own JS chunk, loaded only when visited
 const Home        = lazy(() => import("./pages/Home"));
@@ -90,6 +91,7 @@ function Router() {
           </Switch>
         </Suspense>
       </main>
+      <WildlifeAI />
       <FirebaseStatusBanner />
     </div>
   );
