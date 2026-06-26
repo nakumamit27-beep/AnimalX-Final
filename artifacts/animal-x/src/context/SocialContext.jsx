@@ -116,7 +116,8 @@ export function SocialProvider({ children }) {
   }, [user?.uid]);
 
   function trackReelView(reelId) {
-    if (!reelId) return;
+    if (!reelId || !user?.uid) return;
+    if (reelId.startsWith("ff") || reelId.startsWith("dr") || reelId.startsWith("du") || reelId.startsWith("fu")) return;
     const viewRef = ref(rtdb, `live-views/${reelId}`);
     rtdbSet(viewRef, (liveViews[reelId] || 0) + 1).catch(() => {});
     const trendRef = ref(rtdb, `trending/${reelId}/score`);
@@ -124,7 +125,7 @@ export function SocialProvider({ children }) {
   }
 
   function likeReelLive(reelId) {
-    if (!reelId) return;
+    if (!reelId || !user?.uid) return;
     const likeRef = ref(rtdb, `live-likes/${reelId}`);
     rtdbSet(likeRef, Date.now()).catch(() => {});
   }
