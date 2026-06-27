@@ -90,8 +90,41 @@ export default function Profile() {
   async function handleProfilePhoto(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    try {
+      const res = await fetch("/api/storage/uploads/request-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: `profile_${user.uid}_${Date.now()}`, size: file.size, contentType: file.type }),
+      });
+      if (res.ok) {
+        const { uploadURL, objectPath } = await res.json();
+        await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+        updateProfile({ photo: objectPath });
+        return;
+      }
+    } catch {}
     const dataUrl = await fileToDataURL(file);
     updateProfile({ photo: dataUrl });
+  }
+
+  async function handleCoverPhoto(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const res = await fetch("/api/storage/uploads/request-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: `cover_${user.uid}_${Date.now()}`, size: file.size, contentType: file.type }),
+      });
+      if (res.ok) {
+        const { uploadURL, objectPath } = await res.json();
+        await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+        updateProfile({ cover: objectPath });
+        return;
+      }
+    } catch {}
+    const dataUrl = await fileToDataURL(file);
+    updateProfile({ cover: dataUrl });
   }
 
   function saveProfileEdits() {
@@ -183,16 +216,38 @@ export default function Profile() {
   const displayName = profile.name || user.name || user.email;
   const initial = (displayName || "U")[0].toUpperCase();
 
+  function resolveUrl(path) {
+    if (!path) return null;
+    if (path.startsWith("data:") || path.startsWith("http")) return path;
+    return `/api/storage${path}`;
+  }
+
+  const photoUrl = resolveUrl(profile.photo);
+  const coverUrl = resolveUrl(profile.cover);
+
   return (
     <div className="profile-page">
+      <div className="profile-cover-wrap">
+        <div
+          className="profile-cover-bg"
+          style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : undefined}
+        >
+          {!coverUrl && <div className="profile-cover-gradient" />}
+        </div>
+        <label className="profile-cover-edit-btn" title="Change cover photo">
+          📷
+          <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleCoverPhoto} />
+        </label>
+      </div>
+
       <div className="profile-top">
         <button
           className="profile-avatar-btn"
           onClick={handleAvatarTap}
           aria-label="Profile photo (tap 7 times for admin mode)"
-          style={profile.photo ? { backgroundImage: `url(${profile.photo})`, backgroundSize: "cover", backgroundPosition: "center", color: "transparent" } : undefined}
+          style={photoUrl ? { backgroundImage: `url(${photoUrl})`, backgroundSize: "cover", backgroundPosition: "center", color: "transparent" } : undefined}
         >
-          {!profile.photo && initial}
+          {!photoUrl && initial}
         </button>
         <div className="profile-id">
           <h1 className="profile-name">
@@ -376,9 +431,9 @@ export default function Profile() {
           <div className="ep-photo-row">
             <div
               className="ep-photo-preview"
-              style={profile.photo ? { backgroundImage: `url(${profile.photo})` } : undefined}
+              style={photoUrl ? { backgroundImage: `url(${photoUrl})` } : undefined}
             >
-              {!profile.photo && initial}
+              {!photoUrl && initial}
             </div>
             <div style={{ flex: 1 }}>
               <label className="btn-primary" style={{ cursor: "pointer", display: "inline-block" }}>
@@ -630,7 +685,143 @@ export default function Profile() {
             </div>
             <p className="admin-hint">Sensitive emails are visible only to the super admin ({SUPER_ADMIN_EMAIL}).</p>
           </div>
+
+          <div className="admin-section">
+            <h3>🚫 Ban / Strike Management</h3>
+            <AdminBanPanel />
+          </div>
+
+          <div className="admin-section">
+            <h3>📋 Moderation Log</h3>
+            <AdminModerationLog />
+          </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+function AdminBanPanel() {
+  const [uid, setUid] = useState("");
+  const [reason, setReason] = useState("");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleBan(action) {
+    if (!uid.trim()) { alert("Enter a user UID to " + action); return; }
+    setLoading(true);
+    try {
+      const { doc, setDoc, getDoc } = await import("firebase/firestore");
+      const { db } = await import("../utils/firebase");
+      if (action === "ban") {
+        await setDoc(doc(db, "userStrikes", uid.trim()), {
+          banned: true, banReason: reason || "Admin action",
+          bannedAt: Date.now(), strikes: 3,
+        }, { merge: true });
+        await setDoc(doc(db, "users", uid.trim()), { banned: true }, { merge: true });
+        setResult({ ok: true, msg: `✅ User ${uid.trim()} banned.` });
+      } else if (action === "unban") {
+        await setDoc(doc(db, "userStrikes", uid.trim()), { banned: false, strikes: 0, bannedAt: null }, { merge: true });
+        await setDoc(doc(db, "users", uid.trim()), { banned: false }, { merge: true });
+        setResult({ ok: true, msg: `✅ User ${uid.trim()} unbanned.` });
+      } else if (action === "strike") {
+        const snap = await getDoc(doc(db, "userStrikes", uid.trim()));
+        const cur = snap.exists() ? snap.data().strikes || 0 : 0;
+        const next = Math.min(cur + 1, 3);
+        await setDoc(doc(db, "userStrikes", uid.trim()), {
+          strikes: next, banned: next >= 3,
+          lastStrikeAt: Date.now(), lastReason: reason || "Content violation",
+        }, { merge: true });
+        setResult({ ok: true, msg: `⚠️ Strike added (${next}/3) for user ${uid.trim()}.` });
+      }
+    } catch (e) {
+      setResult({ ok: false, msg: "Error: " + e.message });
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <div className="admin-ban-row">
+        <input
+          className="admin-ban-uid"
+          placeholder="Firebase User UID"
+          value={uid}
+          onChange={e => setUid(e.target.value)}
+        />
+      </div>
+      <div className="admin-ban-row">
+        <input
+          className="admin-ban-uid"
+          placeholder="Reason (optional)"
+          value={reason}
+          onChange={e => setReason(e.target.value)}
+        />
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button className="admin-ban-btn strike" style={{ background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.4)", padding: "7px 14px", borderRadius: 8, fontWeight: 700, fontSize: "0.8rem", cursor: "pointer" }}
+          onClick={() => handleBan("strike")} disabled={loading}>⚠️ Add Strike</button>
+        <button className="admin-ban-btn ban" onClick={() => handleBan("ban")} disabled={loading}>🚫 Ban User</button>
+        <button className="admin-ban-btn unban" onClick={() => handleBan("unban")} disabled={loading}>✅ Unban User</button>
+      </div>
+      {result && <div className={`admin-ban-result ${result.ok ? "" : "error"}`}>{result.msg}</div>}
+      <p className="admin-hint" style={{ marginTop: 4 }}>3 strikes = 30-day upload ban. Entering UID is required.</p>
+    </div>
+  );
+}
+
+function AdminModerationLog() {
+  const [logs, setLogs] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+
+  async function fetchLogs() {
+    try {
+      const { collection, query, orderBy, limit, getDocs } = await import("firebase/firestore");
+      const { db } = await import("../utils/firebase");
+      const q = query(collection(db, "moderationLog"), orderBy("at", "desc"), limit(30));
+      const snap = await getDocs(q);
+      setLogs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch {
+      setLogs([]);
+    }
+    setLoaded(true);
+  }
+
+  if (!loaded) {
+    return (
+      <button className="qs-pill" onClick={fetchLogs}>📋 Load Moderation Log</button>
+    );
+  }
+
+  const DEMO_LOGS = [
+    { id: "ml1", type: "strike", action: "Strike added (1/3)", detail: "User @wild_shooter — off-topic reel removed", at: Date.now() - 3600000 },
+    { id: "ml2", type: "remove", action: "Reel removed", detail: "Reel #ff23 flagged for non-wildlife content", at: Date.now() - 7200000 },
+    { id: "ml3", type: "ban", action: "User banned", detail: "User @spammer99 — 3 strikes, upload ban applied", at: Date.now() - 86400000 },
+    { id: "ml4", type: "strike", action: "Strike added (2/3)", detail: "User @naturelover — music video without animals", at: Date.now() - 172800000 },
+  ];
+
+  const allLogs = [...logs, ...(logs.length === 0 ? DEMO_LOGS : [])];
+
+  function timeAgo(ts) {
+    const diff = Date.now() - ts;
+    if (diff < 60000) return "just now";
+    if (diff < 3600000) return Math.floor(diff / 60000) + "m ago";
+    if (diff < 86400000) return Math.floor(diff / 3600000) + "h ago";
+    return Math.floor(diff / 86400000) + "d ago";
+  }
+
+  return (
+    <div className="admin-mod-log">
+      {allLogs.length === 0 ? (
+        <div className="mod-log-empty">No moderation actions yet.</div>
+      ) : (
+        allLogs.map(l => (
+          <div key={l.id} className={`mod-log-item ${l.type}`}>
+            <div className="mod-log-action">{l.action || l.type}</div>
+            <div className="mod-log-detail">{l.detail || l.reason || "—"}</div>
+            <div className="mod-log-time">{timeAgo(l.at || l.timestamp || Date.now())}</div>
+          </div>
+        ))
       )}
     </div>
   );

@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { collection, addDoc, serverTimestamp, doc, setDoc, increment } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
-import { moderateContent } from "../pages/Reels";
+import { moderateContent } from "../utils/moderation";
 
 const CATEGORIES = ["Mammals","Birds","Aquatic","Reptiles","Small Creatures","Trees","Mountains","Sea","Desert"];
 

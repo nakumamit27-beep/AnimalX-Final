@@ -6250,3 +6250,208 @@ body {
   background: var(--bg3); border-radius: 12px; padding: 14px 20px;
   font-size: 0.85rem; line-height: 1.6;
 }
+
+/* ===================================================================
+   PROFILE — Cover image + misc fixes
+   =================================================================== */
+.profile-cover-wrap {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0a2e1a 0%, #0a1628 50%, #1a0a2e 100%);
+  flex-shrink: 0;
+}
+.profile-cover-bg {
+  position: absolute; inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.profile-cover-gradient {
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(34,197,94,0.3) 0%, rgba(14,165,233,0.2) 50%, rgba(168,85,247,0.2) 100%);
+}
+.profile-cover-edit-btn {
+  position: absolute; bottom: 10px; right: 12px;
+  background: rgba(0,0,0,0.6); color: #fff;
+  border-radius: 8px; padding: 5px 10px;
+  cursor: pointer; font-size: 0.85rem;
+  border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(4px);
+  transition: background 0.2s;
+}
+.profile-cover-edit-btn:hover { background: rgba(0,0,0,0.8); }
+
+/* Push avatar up so it overlaps the cover */
+.profile-page .profile-top {
+  margin-top: -32px;
+  position: relative;
+  z-index: 2;
+}
+.profile-page .profile-avatar-btn {
+  border: 3px solid var(--bg) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+
+/* ===================================================================
+   ADMIN — Ban panel + moderation log
+   =================================================================== */
+.admin-ban-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.admin-ban-row:last-child { border-bottom: none; }
+.admin-ban-uid {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); padding: 7px 10px;
+  font-size: 0.82rem; outline: none; font-family: monospace;
+}
+.admin-ban-btn {
+  padding: 7px 14px; border-radius: 8px; border: none;
+  font-weight: 700; font-size: 0.8rem; cursor: pointer;
+}
+.admin-ban-btn.ban { background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid rgba(239,68,68,0.4); }
+.admin-ban-btn.unban { background: rgba(34,197,94,0.15); color: var(--accent); border: 1px solid rgba(34,197,94,0.3); }
+.admin-ban-result {
+  font-size: 0.8rem; color: var(--accent); padding: 6px 0;
+  background: rgba(34,197,94,0.08); border-radius: 8px; padding: 6px 10px; margin-top: 6px;
+}
+
+.admin-mod-log {
+  max-height: 280px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.mod-log-item {
+  background: var(--bg3); border-radius: 10px; padding: 10px 12px;
+  border-left: 3px solid var(--border);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.mod-log-item.strike { border-left-color: #f59e0b; }
+.mod-log-item.ban { border-left-color: #ef4444; }
+.mod-log-item.remove { border-left-color: #8b5cf6; }
+.mod-log-action { font-weight: 700; font-size: 0.82rem; }
+.mod-log-detail { color: var(--text2); font-size: 0.78rem; }
+.mod-log-time { color: var(--text2); font-size: 0.7rem; }
+.mod-log-empty { color: var(--text2); font-size: 0.85rem; text-align: center; padding: 20px; }
+
+/* ===================================================================
+   TICK MSG TOAST
+   =================================================================== */
+.tick-msg-toast {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  background: var(--bg3); border: 1px solid var(--accent);
+  color: var(--text); border-radius: 12px; padding: 10px 20px;
+  font-weight: 700; font-size: 0.9rem; z-index: 9999;
+  animation: toast-pop 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+@keyframes toast-pop {
+  from { transform: translateX(-50%) translateY(-10px); opacity: 0; }
+  to   { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+/* ===================================================================
+   HELP PAGE — Missing classes
+   =================================================================== */
+.help-page { padding: 0 0 80px; min-height: 100%; }
+.help-header { text-align: center; padding: 24px 16px 16px; border-bottom: 1px solid var(--border); }
+.help-ads-btn {
+  display: inline-block; margin-top: 12px;
+  background: linear-gradient(135deg, var(--accent), #16a34a);
+  color: #000; padding: 10px 24px; border-radius: 20px;
+  font-weight: 700; text-decoration: none; font-size: 0.9rem;
+}
+.help-tabs {
+  display: flex; overflow-x: auto; scrollbar-width: none;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--bg2); z-index: 10;
+}
+.help-tabs::-webkit-scrollbar { display: none; }
+.help-tab {
+  flex-shrink: 0; padding: 12px 16px;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--text2); font-size: 0.85rem; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.help-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.help-grid { padding: 16px; display: flex; flex-direction: column; gap: 24px; max-width: 680px; margin: 0 auto; }
+.section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; }
+.contact-section, .faq-section, .contact-form-section { }
+.contact-cards { display: flex; flex-direction: column; gap: 10px; }
+.contact-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; background: var(--bg3);
+  border-radius: 12px; text-decoration: none; color: inherit;
+  transition: background 0.2s;
+}
+.contact-card:hover { background: var(--border); }
+.contact-icon { font-size: 1.5rem; flex-shrink: 0; }
+.contact-label { font-weight: 700; font-size: 0.85rem; }
+.contact-value { color: var(--text2); font-size: 0.8rem; }
+.faq-item {
+  border: 1px solid var(--border); border-radius: 10px;
+  overflow: hidden; margin-bottom: 8px; background: var(--bg3);
+}
+.faq-q {
+  padding: 12px 16px; cursor: pointer; font-weight: 700; font-size: 0.9rem;
+  list-style: none; user-select: none;
+}
+.faq-q::marker { display: none; }
+.faq-a { padding: 0 16px 12px; color: var(--text2); font-size: 0.85rem; line-height: 1.6; }
+.help-form { display: flex; flex-direction: column; gap: 10px; }
+.help-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.help-input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); padding: 9px 12px; font-size: 0.88rem; outline: none;
+}
+.help-input:focus { border-color: var(--accent); }
+.help-textarea {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); padding: 9px 12px;
+  font-size: 0.88rem; outline: none; resize: vertical; font-family: inherit;
+}
+.help-textarea:focus { border-color: var(--accent); }
+.form-success {
+  text-align: center; padding: 32px 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.help-content { padding: 16px; max-width: 680px; margin: 0 auto; }
+.help-text { color: var(--text2); font-size: 0.85rem; margin-bottom: 16px; }
+.policy-section { margin-bottom: 18px; }
+.policy-section h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; color: var(--accent); }
+.policy-section p { color: var(--text2); font-size: 0.85rem; line-height: 1.6; }
+.community-rules { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.community-rule { display: flex; gap: 14px; align-items: flex-start; }
+.community-rule-icon { font-size: 1.5rem; flex-shrink: 0; }
+.community-rule-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 3px; }
+.community-rule-desc { color: var(--text2); font-size: 0.82rem; line-height: 1.5; }
+.report-section {
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 12px; padding: 14px; margin-top: 16px;
+}
+.report-section h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; color: #fca5a5; }
+.report-section p { color: var(--text2); font-size: 0.82rem; line-height: 1.6; }
+.report-section a { color: var(--accent); }
+
+/* ===================================================================
+   USER PROFILE — Not-found + missing classes
+   =================================================================== */
+.user-profile-page { min-height: 100%; background: var(--bg); padding-bottom: 80px; }
+.not-found {
+  text-align: center; padding: 60px 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.up-empty { text-align: center; color: var(--text2); padding: 32px 16px; font-size: 0.9rem; }
+
+/* ===================================================================
+   RESPONSIVE — Mobile tweaks for new features
+   =================================================================== */
+@media (max-width: 480px) {
+  .help-form-row { grid-template-columns: 1fr; }
+  .ads-account-type-row { grid-template-columns: 1fr; }
+  .search-user-card { padding: 10px 12px; }
+  .search-user-avatar { width: 44px; height: 44px; font-size: 1.2rem; }
+  .profile-cover-wrap { height: 110px; }
+  .reels-page { height: calc(100dvh - var(--nav-h) - 64px); }
+}

@@ -29,7 +29,7 @@ const WILDLIFE_KW = [
   "mountain","desert","rainforest","conservation","wild","mammal","primate","raptor","marine",
 ];
 
-export function moderateContent(title, desc, hashtags) {
+function moderateContent(title, desc, hashtags) {
   const text = `${title} ${desc} ${hashtags}`.toLowerCase();
   return WILDLIFE_KW.some(w => text.includes(w));
 }

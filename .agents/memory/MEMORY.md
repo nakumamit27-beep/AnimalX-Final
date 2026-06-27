@@ -4,3 +4,6 @@
 - [WildlifeAI component](wildlife-ai.md) — floating 🤖 FAB (bottom-right, above bottom nav); fully offline local KB; added to App.tsx just before FirebaseStatusBanner
 - [Map upgrades pattern](map-upgrades.md) — migration routes use React.Fragment (not div) inside LayerGroup; RecenterButton uses useMap() inside MapContainer; user location via watchPosition
 - [Zoos data](zoos-data.md) — replaced 280 fake "Wild World N" zoos with ~118 named real zoos; no more procedural generation loop; export default unchanged
+- [RTDB demo-reel write flood](rtdb-demo-write-flood.md) — trackReelView must guard: skip demo IDs (ff/dr/du/fu prefix) + require user?.uid or 80+ permission_denied logs flood console on every page load.
+- [moderateContent export pattern](moderation-export.md) — named exports from page files break Vite Fast Refresh; move shared logic (moderation, utils) to dedicated utils/ files.
+- [Profile photo Object Storage fallback](profile-photo-storage.md) — profile photo upload tries Object Storage presigned URL first, falls back to base64 dataURL; display with /api/storage prefix for path-based URLs.
