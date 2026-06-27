@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { collection, addDoc, serverTimestamp, doc, setDoc, increment } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
-import { moderateContent } from "../utils/moderation";
 
 const CATEGORIES = ["Mammals","Birds","Aquatic","Reptiles","Small Creatures","Trees","Mountains","Sea","Desert"];
 
@@ -11,6 +10,11 @@ const WILDLIFE_KEYWORDS = [
   "gorilla","panda","penguin","crocodile","leopard","orca","falcon","bear","fox","lynx",
   "wildlife","nature","wild","jungle","forest","ocean","reptile","bird","marine","safari",
   "savanna","arctic","mountain","desert","rainforest","conservation","habitat","species",
+  "snake","lizard","parrot","owl","butterfly","bee","frog","coral","rhino","hippo",
+  "giraffe","zebra","buffalo","deer","rabbit","squirrel","turtle","fish","crab","jellyfish",
+  "migration","ecosystem","biodiversity","endangered","predator","prey","carnivore",
+  "herbivore","mammal","amphibian","insect","moss","fern","cactus","swamp","wetland",
+  "national park","zoo","sanctuary","reserve","savannah","tundra","taiga","meadow",
 ];
 
 function checkModeration(title, desc, hashtags) {
@@ -29,7 +33,7 @@ async function getStrikeInfo(uid) {
 async function addStrike(uid) {
   try {
     const ref = doc(db, "userStrikes", uid);
-    const { getDoc, updateDoc, setDoc: setDocFn } = await import("firebase/firestore");
+    const { getDoc, setDoc: setDocFn } = await import("firebase/firestore");
     const snap = await getDoc(ref);
     const data = snap.exists() ? snap.data() : { strikes: 0 };
     const newStrikes = (data.strikes || 0) + 1;
@@ -40,9 +44,11 @@ async function addStrike(uid) {
   } catch { return { strikes: 1, banned: false }; }
 }
 
+const STEP_LABELS = ["Details", "Video", "Review"];
+
 export default function UploadReel({ onClose, onUploaded }) {
   const { user, profile } = useAuth();
-  const [step, setStep] = useState(1); // 1=details, 2=video, 3=review
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     title: "", description: "", hashtags: "", category: "Mammals", location: "",
   });
@@ -54,11 +60,13 @@ export default function UploadReel({ onClose, onUploaded }) {
   const [error, setError] = useState(null);
   const [warning, setWarning] = useState(null);
   const [banned, setBanned] = useState(false);
+  const [addingStrike, setAddingStrike] = useState(false);
   const videoInputRef = useRef(null);
   const thumbInputRef = useRef(null);
 
   function handleField(key, val) {
     setForm(f => ({ ...f, [key]: val }));
+    setError(null);
   }
 
   function handleVideoFile(e) {
@@ -88,19 +96,35 @@ export default function UploadReel({ onClose, onUploaded }) {
     return objectPath;
   }
 
-  async function handleNext() {
+  async function goNext() {
+    setError(null);
     if (step === 1) {
-      if (!form.title.trim()) { setError("Please enter a title."); return; }
+      if (!form.title.trim()) { setError("Title is required to continue."); return; }
       const isWildlife = checkModeration(form.title, form.description, form.hashtags);
       if (!isWildlife) {
-        setWarning("⚠️ Content Warning: Your title/description doesn't appear to contain wildlife content. Animal X only allows wildlife, nature, and animal-related reels. Please revise or you may receive a strike.");
+        setWarning("⚠️ Your title and description don't contain recognisable wildlife content. Animal X only allows wildlife, nature, and animal-related reels.");
         return;
       }
       setWarning(null);
       setStep(2);
     } else if (step === 2) {
-      if (!videoFile) { setError("Please select a video."); return; }
+      if (!videoFile) { setError("Please select a video file to continue."); return; }
       setStep(3);
+    }
+  }
+
+  async function handleProceedWithStrike() {
+    if (!user) return;
+    setAddingStrike(true);
+    const { strikes, banned: isBanned } = await addStrike(user.uid);
+    setAddingStrike(false);
+    setWarning(null);
+    if (isBanned) {
+      setBanned(true);
+      setError("Upload access banned for 30 days due to repeated community guideline violations.");
+    } else {
+      alert(`⚠️ Strike ${strikes}/3 recorded. ${3 - strikes} warning(s) remaining before a 30-day upload ban.`);
+      setStep(2);
     }
   }
 
@@ -114,7 +138,7 @@ export default function UploadReel({ onClose, onUploaded }) {
       if (strikeInfo.banned && strikeInfo.banExpiry > Date.now()) {
         const days = Math.ceil((strikeInfo.banExpiry - Date.now()) / 86400000);
         setBanned(true);
-        setError(`Your upload access is banned for ${days} more day(s) due to community guideline violations.`);
+        setError(`Upload access is banned for ${days} more day(s).`);
         setUploading(false);
         return;
       }
@@ -128,8 +152,8 @@ export default function UploadReel({ onClose, onUploaded }) {
 
       if (thumbnailFile) {
         thumbnailUrl = await uploadToStorage(thumbnailFile, thumbnailFile.type);
+        setProgress(85);
       }
-      setProgress(85);
 
       const reelData = {
         title: form.title.trim(),
@@ -143,10 +167,7 @@ export default function UploadReel({ onClose, onUploaded }) {
         username: profile?.username || user.name || user.email?.split("@")[0],
         userVerified: profile?.manualVerified || false,
         userAvatar: profile?.avatar || null,
-        likes: 0,
-        views: 0,
-        comments: 0,
-        shares: 0,
+        likes: 0, views: 0, comments: 0, shares: 0,
         createdAt: serverTimestamp(),
         type: "live",
         moderated: true,
@@ -158,188 +179,276 @@ export default function UploadReel({ onClose, onUploaded }) {
       onUploaded?.();
     } catch (e) {
       setError("Upload failed: " + e.message);
+      setUploading(false);
     }
-    setUploading(false);
   }
 
   return (
-    <div className="upload-modal-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="upload-modal">
-        <div className="upload-modal-header">
-          <div className="upload-modal-steps">
-            {[1, 2, 3].map(s => (
-              <div key={s} className={`upload-step ${step === s ? "active" : step > s ? "done" : ""}`}>{s}</div>
-            ))}
-          </div>
-          <div className="upload-modal-title">
+    <div className="upload-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="upload-sheet">
+
+        {/* Header */}
+        <div className="upload-header">
+          <button className="upload-close-btn" onClick={onClose} aria-label="Close">✕</button>
+          <div className="upload-header-title">
             {step === 1 ? "📝 Reel Details" : step === 2 ? "🎬 Upload Video" : "✅ Review & Post"}
           </div>
-          <button className="upload-modal-close" onClick={onClose}>✕</button>
+          <div className="upload-step-dots">
+            {STEP_LABELS.map((label, i) => (
+              <div key={i} className={`upload-dot ${step === i + 1 ? "active" : step > i + 1 ? "done" : ""}`}>
+                <span className="upload-dot-num">{step > i + 1 ? "✓" : i + 1}</span>
+                <span className="upload-dot-label">{label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {banned && (
-          <div className="upload-banned-msg">
-            🚫 Upload access banned. Please contact support.
-          </div>
-        )}
+        {/* Body */}
+        <div className="upload-body">
 
-        {error && <div className="upload-error">{error}</div>}
-        {warning && (
-          <div className="upload-warning">
-            {warning}
-            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              <button className="upload-warning-revise" onClick={() => setWarning(null)}>✏️ Revise</button>
-              <button className="upload-warning-proceed" onClick={async () => {
-                const { strikes } = await addStrike(user.uid);
-                setWarning(null);
-                if (strikes >= 3) { setBanned(true); setError("Upload access banned due to repeat violations."); }
-                else { alert(`⚠️ Strike ${strikes}/3 added. ${3 - strikes} violation(s) remaining before 30-day ban.`); }
-              }}>Post Anyway (Risk Strike)</button>
+          {/* Banned */}
+          {banned && (
+            <div className="upload-banned-card">
+              <div style={{ fontSize: "2.5rem" }}>🚫</div>
+              <h3>Upload Access Banned</h3>
+              <p>Your account has received 3 community guideline violations. Upload access is suspended for 30 days.</p>
+              <p style={{ marginTop: 8, fontSize: "0.82rem", color: "var(--text2)" }}>
+                Contact: <a href="mailto:wildlifeanimalfight@gmail.com" style={{ color: "var(--accent)" }}>wildlifeanimalfight@gmail.com</a>
+              </p>
             </div>
-          </div>
-        )}
+          )}
 
-        {!warning && !banned && (
-          <>
-            {step === 1 && (
-              <div className="upload-form">
-                <label className="upload-label">Title *</label>
-                <input
-                  className="upload-input"
-                  value={form.title}
-                  onChange={e => handleField("title", e.target.value)}
-                  placeholder="e.g. Lion Pride at Dusk 🦁"
-                  maxLength={100}
-                />
-                <label className="upload-label">Description</label>
-                <textarea
-                  className="upload-textarea"
-                  value={form.description}
-                  onChange={e => handleField("description", e.target.value)}
-                  placeholder="Describe your wildlife footage…"
-                  maxLength={500}
-                  rows={3}
-                />
-                <label className="upload-label">Hashtags</label>
-                <input
-                  className="upload-input"
-                  value={form.hashtags}
-                  onChange={e => handleField("hashtags", e.target.value)}
-                  placeholder="#wildlife #lion #nature"
-                />
-                <label className="upload-label">Category</label>
-                <select
-                  className="upload-select"
-                  value={form.category}
-                  onChange={e => handleField("category", e.target.value)}
-                >
-                  {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                </select>
-                <label className="upload-label">Location (optional)</label>
-                <input
-                  className="upload-input"
-                  value={form.location}
-                  onChange={e => handleField("location", e.target.value)}
-                  placeholder="e.g. Maasai Mara, Kenya"
-                />
-                <div className="upload-moderation-note">
-                  🤖 AI Moderation: Only wildlife, nature & animal content allowed.
-                </div>
-              </div>
-            )}
+          {/* Error bar */}
+          {!banned && error && (
+            <div className="upload-error-bar">
+              <span>⚠️</span> {error}
+              <button onClick={() => setError(null)} className="upload-error-dismiss">✕</button>
+            </div>
+          )}
 
-            {step === 2 && (
-              <div className="upload-video-step">
-                <div
-                  className="upload-drop-zone"
-                  onClick={() => videoInputRef.current?.click()}
-                >
-                  {videoPreview ? (
-                    <video src={videoPreview} className="upload-preview-video" muted playsInline />
-                  ) : (
-                    <>
-                      <div style={{ fontSize: "4rem" }}>🎬</div>
-                      <div className="upload-drop-text">Tap to select video</div>
-                      <div className="upload-drop-hint">MP4, MOV, WebM · Max 200 MB</div>
-                    </>
-                  )}
-                </div>
-                <input
-                  ref={videoInputRef}
-                  type="file"
-                  accept="video/*"
-                  style={{ display: "none" }}
-                  onChange={handleVideoFile}
-                />
-                {videoFile && (
-                  <div className="upload-file-info">
-                    ✅ {videoFile.name} ({(videoFile.size / 1024 / 1024).toFixed(1)} MB)
+          {/* Step 1 — Details */}
+          {!banned && step === 1 && (
+            <div className="upload-step-body">
+              {warning && (
+                <div className="upload-warning-card">
+                  <div className="upload-warning-icon">🌿</div>
+                  <div className="upload-warning-text">
+                    <strong>Wildlife Content Required</strong>
+                    <p>{warning}</p>
+                    <p style={{ fontSize: "0.78rem", marginTop: 6, color: "var(--text2)" }}>
+                      Posting unrelated content will add a strike to your account (3 strikes = 30-day ban).
+                    </p>
                   </div>
-                )}
-                <div className="upload-thumb-row">
-                  <label className="upload-label">Custom Thumbnail (optional)</label>
-                  <button className="upload-thumb-btn" onClick={() => thumbInputRef.current?.click()}>
-                    {thumbnailFile ? "✅ " + thumbnailFile.name : "📷 Choose thumbnail"}
-                  </button>
-                  <input
-                    ref={thumbInputRef}
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={e => setThumbnailFile(e.target.files?.[0] || null)}
+                  <div className="upload-warning-actions">
+                    <button
+                      className="upload-warn-revise"
+                      onClick={() => setWarning(null)}
+                    >
+                      ✏️ Revise Content
+                    </button>
+                    <button
+                      className="upload-warn-proceed"
+                      onClick={handleProceedWithStrike}
+                      disabled={addingStrike}
+                    >
+                      {addingStrike ? "Processing…" : "Post Anyway (+ Strike)"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!warning && (
+                <div className="upload-form-grid">
+                  <div className="upload-field">
+                    <label className="upload-label">Title <span className="upload-required">*</span></label>
+                    <input
+                      className="upload-input"
+                      value={form.title}
+                      onChange={e => handleField("title", e.target.value)}
+                      placeholder="e.g. Lion Pride at Dusk 🦁"
+                      maxLength={100}
+                      autoFocus
+                    />
+                    <span className="upload-char-count">{form.title.length}/100</span>
+                  </div>
+                  <div className="upload-field">
+                    <label className="upload-label">Description</label>
+                    <textarea
+                      className="upload-textarea"
+                      value={form.description}
+                      onChange={e => handleField("description", e.target.value)}
+                      placeholder="Describe your wildlife footage…"
+                      maxLength={500}
+                      rows={3}
+                    />
+                    <span className="upload-char-count">{form.description.length}/500</span>
+                  </div>
+                  <div className="upload-field">
+                    <label className="upload-label">Hashtags</label>
+                    <input
+                      className="upload-input"
+                      value={form.hashtags}
+                      onChange={e => handleField("hashtags", e.target.value)}
+                      placeholder="#wildlife #lion #nature"
+                    />
+                  </div>
+                  <div className="upload-row-2col">
+                    <div className="upload-field">
+                      <label className="upload-label">Category</label>
+                      <select
+                        className="upload-select"
+                        value={form.category}
+                        onChange={e => handleField("category", e.target.value)}
+                      >
+                        {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="upload-field">
+                      <label className="upload-label">Location</label>
+                      <input
+                        className="upload-input"
+                        value={form.location}
+                        onChange={e => handleField("location", e.target.value)}
+                        placeholder="e.g. Maasai Mara"
+                      />
+                    </div>
+                  </div>
+                  <div className="upload-ai-note">
+                    🤖 <strong>AI Moderation active</strong> — only wildlife & nature content is allowed
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 2 — Video */}
+          {!banned && step === 2 && (
+            <div className="upload-step-body">
+              <div
+                className={`upload-dropzone ${videoFile ? "has-file" : ""}`}
+                onClick={() => videoInputRef.current?.click()}
+              >
+                {videoPreview ? (
+                  <video
+                    src={videoPreview}
+                    className="upload-preview-vid"
+                    muted
+                    playsInline
+                    controls
                   />
-                </div>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="upload-review-step">
-                <div className="upload-review-card">
-                  <div className="upload-review-emoji">🎬</div>
-                  <div className="upload-review-details">
-                    <div className="upload-review-title">{form.title}</div>
-                    <div className="upload-review-cat">{form.category}{form.location ? " · " + form.location : ""}</div>
-                    {form.hashtags && <div className="upload-review-tags">{form.hashtags}</div>}
-                    <div className="upload-review-file">{videoFile?.name}</div>
-                  </div>
-                </div>
-                <div className="upload-guidelines">
-                  <div className="upload-guidelines-title">📋 Community Guidelines</div>
-                  <ul>
-                    <li>✅ Wildlife, nature, animals, oceans, forests</li>
-                    <li>❌ No unrelated content (gets rejected + strike)</li>
-                    <li>❌ No violence, abuse, or harmful content</li>
-                    <li>3 strikes = 30-day upload ban</li>
-                  </ul>
-                </div>
-                {uploading && (
-                  <div className="upload-progress-wrap">
-                    <div className="upload-progress-bar" style={{ width: `${progress}%` }} />
-                    <div className="upload-progress-text">Uploading… {progress}%</div>
+                ) : (
+                  <div className="upload-dropzone-inner">
+                    <div className="upload-dropzone-icon">🎬</div>
+                    <div className="upload-dropzone-title">Tap to select video</div>
+                    <div className="upload-dropzone-hint">MP4 · MOV · WebM · max 200 MB</div>
                   </div>
                 )}
               </div>
-            )}
-
-            <div className="upload-modal-footer">
-              {step > 1 && !uploading && (
-                <button className="upload-back-btn" onClick={() => setStep(s => s - 1)}>← Back</button>
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/*"
+                style={{ display: "none" }}
+                onChange={handleVideoFile}
+              />
+              {videoFile && (
+                <div className="upload-file-chip">
+                  ✅ {videoFile.name} <span className="upload-file-size">({(videoFile.size / 1024 / 1024).toFixed(1)} MB)</span>
+                  <button className="upload-file-remove" onClick={() => { setVideoFile(null); setVideoPreview(null); }}>✕</button>
+                </div>
               )}
-              {step < 3 ? (
-                <button className="upload-next-btn" onClick={handleNext}>
-                  {step === 2 ? "Review →" : "Next →"}
+              <div className="upload-thumb-section">
+                <label className="upload-label">Custom Thumbnail <span className="upload-optional">(optional)</span></label>
+                <button className="upload-thumb-btn" onClick={() => thumbInputRef.current?.click()}>
+                  {thumbnailFile ? `✅ ${thumbnailFile.name}` : "📷 Choose thumbnail image"}
                 </button>
-              ) : (
-                <button
-                  className="upload-post-btn"
-                  onClick={handleSubmit}
-                  disabled={uploading}
-                >
-                  {uploading ? "Posting…" : "🚀 Post Reel"}
-                </button>
+                <input
+                  ref={thumbInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={e => setThumbnailFile(e.target.files?.[0] || null)}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Step 3 — Review */}
+          {!banned && step === 3 && (
+            <div className="upload-step-body">
+              <div className="upload-review-card">
+                <div className="upload-review-header">
+                  <span className="upload-review-cat-badge">{form.category}</span>
+                  {form.location && <span className="upload-review-loc">📍 {form.location}</span>}
+                </div>
+                <div className="upload-review-title">{form.title}</div>
+                {form.description && (
+                  <div className="upload-review-desc">{form.description}</div>
+                )}
+                {form.hashtags && (
+                  <div className="upload-review-tags">
+                    {String(form.hashtags).split(/[\s,]+/).filter(Boolean).map(h => (
+                      <span key={h} className="upload-review-tag">{h.startsWith("#") ? h : "#" + h}</span>
+                    ))}
+                  </div>
+                )}
+                <div className="upload-review-file-row">
+                  <span>🎬</span>
+                  <span>{videoFile?.name}</span>
+                  <span className="upload-file-size">({(videoFile?.size / 1024 / 1024).toFixed(1)} MB)</span>
+                </div>
+              </div>
+
+              <div className="upload-guidelines-box">
+                <div className="upload-guidelines-title">📋 Before you post</div>
+                <div className="upload-guideline-row">✅ Wildlife, nature, animals, oceans, forests</div>
+                <div className="upload-guideline-row">❌ Non-wildlife content → instant strike</div>
+                <div className="upload-guideline-row">❌ No violence, abuse, or harmful content</div>
+                <div className="upload-guideline-row">⚠️ 3 strikes = 30-day upload ban</div>
+              </div>
+
+              {uploading && (
+                <div className="upload-progress-wrap">
+                  <div className="upload-progress-track">
+                    <div className="upload-progress-fill" style={{ width: `${progress}%` }} />
+                  </div>
+                  <div className="upload-progress-label">Uploading… {progress}%</div>
+                </div>
               )}
             </div>
-          </>
+          )}
+        </div>
+
+        {/* Footer — always visible */}
+        {!banned && (
+          <div className="upload-footer">
+            {step > 1 && !uploading && (
+              <button className="upload-btn-back" onClick={() => { setStep(s => s - 1); setError(null); }}>
+                ← Back
+              </button>
+            )}
+            <div style={{ flex: 1 }} />
+            {step < 3 && !warning && (
+              <button className="upload-btn-next" onClick={goNext}>
+                {step === 1 ? "Next: Upload Video →" : "Review →"}
+              </button>
+            )}
+            {step === 3 && (
+              <button
+                className="upload-btn-post"
+                onClick={handleSubmit}
+                disabled={uploading}
+              >
+                {uploading ? `Uploading ${progress}%…` : "🚀 Post Reel"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {banned && (
+          <div className="upload-footer">
+            <button className="upload-btn-back" onClick={onClose}>Close</button>
+          </div>
         )}
       </div>
     </div>

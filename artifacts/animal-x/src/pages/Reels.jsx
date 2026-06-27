@@ -59,7 +59,7 @@ export default function Reels() {
   const [feed, setFeed] = useState([]);
   const [catFilter, setCatFilter] = useState("All");
   const [activeIdx, setActiveIdx] = useState(0);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
   const [commentsReel, setCommentsReel] = useState(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [heartAnims, setHeartAnims] = useState({});

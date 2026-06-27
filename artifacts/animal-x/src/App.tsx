@@ -10,19 +10,22 @@ import AutoTickPopup from "./components/AutoTickPopup";
 import WildlifeAI from "./components/WildlifeAI";
 
 // Lazy load every page — each becomes its own JS chunk, loaded only when visited
-const Home        = lazy(() => import("./pages/Home"));
-const Animals     = lazy(() => import("./pages/Animals"));
-const AnimalDetail = lazy(() => import("./pages/AnimalDetail"));
-const Map         = lazy(() => import("./pages/Map"));
-const Reels       = lazy(() => import("./pages/Reels"));
-const Travel      = lazy(() => import("./pages/Travel"));
-const Chatbot     = lazy(() => import("./pages/Chatbot"));
-const HelpDesk    = lazy(() => import("./pages/HelpDesk"));
-const Auth        = lazy(() => import("./pages/Auth"));
-const Profile     = lazy(() => import("./pages/Profile"));
-const UserProfile = lazy(() => import("./pages/UserProfile"));
-const Ads         = lazy(() => import("./pages/Ads"));
-const Search      = lazy(() => import("./pages/Search"));
+const Home             = lazy(() => import("./pages/Home"));
+const Animals          = lazy(() => import("./pages/Animals"));
+const AnimalDetail     = lazy(() => import("./pages/AnimalDetail"));
+const Map              = lazy(() => import("./pages/Map"));
+const Reels            = lazy(() => import("./pages/Reels"));
+const Travel           = lazy(() => import("./pages/Travel"));
+const Chatbot          = lazy(() => import("./pages/Chatbot"));
+const HelpDesk         = lazy(() => import("./pages/HelpDesk"));
+const Auth             = lazy(() => import("./pages/Auth"));
+const Profile          = lazy(() => import("./pages/Profile"));
+const UserProfile      = lazy(() => import("./pages/UserProfile"));
+const Ads              = lazy(() => import("./pages/Ads"));
+const Search           = lazy(() => import("./pages/Search"));
+const PrivacyPolicy    = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService   = lazy(() => import("./pages/TermsOfService"));
+const CommunityGuidelines = lazy(() => import("./pages/CommunityGuidelines"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,7 +38,13 @@ const queryClient = new QueryClient({
 });
 
 function PageFallback() {
-  return <div className="page-loading">Loading</div>;
+  return (
+    <div className="page-loading">
+      <div className="page-loading-dot" />
+      <div className="page-loading-dot" />
+      <div className="page-loading-dot" />
+    </div>
+  );
 }
 
 function NotFound() {
@@ -87,6 +96,10 @@ function Router() {
             <Route path="/ads" component={Ads} />
             <Route path="/search" component={Search} />
             <Route path="/live-tracking" component={Map} />
+            {/* Policy pages */}
+            <Route path="/privacy" component={PrivacyPolicy} />
+            <Route path="/terms" component={TermsOfService} />
+            <Route path="/guidelines" component={CommunityGuidelines} />
             <Route component={NotFound} />
           </Switch>
         </Suspense>
@@ -101,7 +114,6 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Reduced from 1500ms → 400ms splash
     const timer = setTimeout(() => {
       startTransition(() => setLoading(false));
     }, 400);
