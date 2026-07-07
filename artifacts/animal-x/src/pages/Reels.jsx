@@ -101,9 +101,14 @@ export default function Reels() {
           if (reel?.id) trackReelView(reel.id);
           Object.entries(videoRefs.current).forEach(([vi, el]) => {
             if (!el) return;
-            if (Number(vi) === idx) { el.muted = muted; el.play().catch(() => {}); }
-            else { el.pause(); }
-          });
+            if (Number(vi) === idx) {
+  el.currentTime = 0;
+  el.muted = muted;
+  el.play().catch(console.error);
+} else {
+  el.pause();
+            }
+});
         }
       });
     }, { threshold: 0.6, root: scrollRef.current });
@@ -217,14 +222,20 @@ export default function Reels() {
               >
                 {reel.videoUrl ? (
                   <video
-                    ref={el => { if (el) videoRefs.current[idx] = el; }}
-                    className="reel-video"
-                    src={`/api/storage${reel.videoUrl}`}
-                    loop
-                    playsInline
-                    muted={muted}
-                    poster={reel.thumbnailUrl ? `/api/storage${reel.thumbnailUrl}` : undefined}
-                  />
+  ref={el => { if (el) videoRefs.current[idx] = el; }}
+  className="reel-video"
+  src={`/api/storage${reel.videoUrl}`}
+  autoPlay
+  loop
+  playsInline
+  muted={muted}                 
+  preload="auto"
+  poster={reel.thumbnailUrl ? `/api/storage${reel.thumbnailUrl}` : undefined}
+  onLoadedMetadata={(e) => {
+    e.currentTarget.volume = 1.0;
+    e.currentTarget.play().catch(() => {});
+  }}
+/>
                 ) : (
                   <div className="reel-demo-bg" style={{ background: reel.bg || "linear-gradient(135deg,#0f4c2a,#065f46)" }}>
                     <div className="reel-demo-emoji">{reel.emoji || "🐾"}</div>
