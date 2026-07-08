@@ -102,9 +102,8 @@ export default function Reels() {
           Object.entries(videoRefs.current).forEach(([vi, el]) => {
             if (!el) return;
             if (Number(vi) === idx) {
-  el.currentTime = 0;
   el.muted = muted;
-  el.play().catch(console.error);
+  el.play().catch(() => {});
 } else {
   el.pause();
             }
@@ -229,12 +228,8 @@ export default function Reels() {
   loop
   playsInline
   muted={muted}                 
-  preload="auto"
+  preload="metadata"
   poster={reel.thumbnailUrl ? `/api/storage${reel.thumbnailUrl}` : undefined}
-  onLoadedMetadata={(e) => {
-    e.currentTarget.volume = 1.0;
-    e.currentTarget.play().catch(() => {});
-  }}
 />
                 ) : (
                   <div className="reel-demo-bg" style={{ background: reel.bg || "linear-gradient(135deg,#0f4c2a,#065f46)" }}>
