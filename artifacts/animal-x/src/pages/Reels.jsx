@@ -75,13 +75,38 @@ export default function Reels() {
   const lastTapRef = useRef({});
 
   useEffect(() => {
-    const q = query(collection(db, "reels"), orderBy("createdAt", "desc"), limit(100));
-    const unsub = onSnapshot(q, snap => {
-      const reels = snap.docs.map(d => ({ id: d.id, ...d.data(), type: "live" }));
+  const q = query(
+    collection(db, "reels"),
+    orderBy("createdAt", "desc"),
+    limit(100)
+  );
+
+  const unsub = onSnapshot(
+    q,
+    (snap) => {
+      const reels = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+        type: "live",
+      }));
+
+      console.log("REELS DATA:", reels);
+      console.log(
+        reels.map((r) => ({
+          title: r.title,
+          videoUrl: r.videoUrl,
+        }))
+      );
+
       setLiveReels(reels);
-    }, () => {});
-    return unsub;
-  }, []);
+    },
+    (err) => {
+      console.error(err);
+    }
+  );
+
+  return unsub;
+}, []);
 
   useEffect(() => {
     setFeed(buildFeed(liveReels, catFilter));
@@ -100,13 +125,16 @@ export default function Reels() {
           const reel = feed[idx];
           if (reel?.id) trackReelView(reel.id);
           Object.entries(videoRefs.current).forEach(([vi, el]) => {
-            if (!el) return;
-            if (Number(vi) === idx) {
-  el.muted = muted;
-  el.play().catch(() => {});
-} else {
-  el.pause();
-            }
+  if (!el) return;
+
+  if (Number(vi) === idx) {
+    el.muted = muted;
+    el.play().catch((err) => {
+      console.error("VIDEO PLAY ERROR:", err);
+    });
+  } else {
+    el.pause();
+  }
 });
         }
       });
@@ -220,16 +248,22 @@ export default function Reels() {
                 onClick={(e) => handleDoubleTap(reel, e)}
               >
                 {reel.videoUrl ? (
-                  <video
-  ref={el => { if (el) videoRefs.current[idx] = el; }}
+                 <video
+  ref={el => {
+    if (el) videoRefs.current[idx] = el;
+  }}
   className="reel-video"
   src={`/api/storage${reel.videoUrl}`}
+  poster={
+    reel.thumbnailUrl
+      ? `/api/storage${reel.thumbnailUrl}`
+      : undefined
+  }
+  preload="metadata"
   autoPlay
   loop
   playsInline
-  muted={muted}                 
-  preload="metadata"
-  poster={reel.thumbnailUrl ? `/api/storage${reel.thumbnailUrl}` : undefined}
+  muted={muted}
 />
                 ) : (
                   <div className="reel-demo-bg" style={{ background: reel.bg || "linear-gradient(135deg,#0f4c2a,#065f46)" }}>
