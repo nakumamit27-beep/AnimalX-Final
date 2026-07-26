@@ -1,175 +1,347 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation, useSearch } from "wouter";
-import { ALL_USERS } from "../data/demoUsers";
+import {
+  collection, query, orderBy, limit, where,
+  getDocs, startAt, endAt
+} from "firebase/firestore";
+import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useSocial } from "../context/SocialContext";
 import BlueTick from "../components/BlueTick";
 
-function fmtNum(n) {
+function fmt(n) {
   if (!n) return "0";
   if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
   if (n >= 1000) return (n / 1000).toFixed(1) + "K";
   return String(n);
 }
 
-function score(user, q) {
-  const lq = q.toLowerCase().trim().replace(/^@/, "");
-  const un = (user.username || "").toLowerCase();
-  const nm = (user.name || "").toLowerCase();
-  const ct = (user.country || "").toLowerCase();
-  const bi = (user.bio || "").toLowerCase();
-  let s = 0;
-  if (un === lq || nm === lq) s += 100;
-  if (un.startsWith(lq) || nm.startsWith(lq)) s += 80;
-  if (un.includes(lq)) s += 60;
-  if (nm.includes(lq)) s += 50;
-  if (ct.includes(lq)) s += 40;
-  if (bi.includes(lq)) s += 20;
-  return s;
+function resolveUrl(path) {
+  if (!path) return null;
+  if (path.startsWith("data:") || path.startsWith("http")) return path;
+  return `/api/storage${path}`;
 }
 
-const CATS = [
-  { label: "All", icon: "🌍" },
-  { label: "Mammals", icon: "🦁" },
-  { label: "Birds", icon: "🦅" },
-  { label: "Aquatic", icon: "🐬" },
-  { label: "Reptiles", icon: "🐍" },
-  { label: "Desert", icon: "🏜️" },
-  { label: "Mountains", icon: "🏔️" },
-];
+const CATS = ["All","Mammals","Birds","Aquatic","Reptiles","Small Creatures","Mountains","Sea","Desert"];
 
 export default function Search() {
-  const [query, setQuery] = useState("");
+  const [q, setQ] = useState("");
+  const [tab, setTab] = useState("users"); // users | reels | hashtags
   const [catFilter, setCatFilter] = useState("All");
-  const [sortBy, setSortBy] = useState("followers");
+  const [users, setUsers] = useState([]);
+  const [reels, setReels] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
   const [, navigate] = useLocation();
   const searchStr = useSearch();
   const { user } = useAuth();
   const { following, followUser, unfollowUser } = useSocial();
   const inputRef = useRef(null);
+  const debounceRef = useRef(null);
 
   useEffect(() => {
     inputRef.current?.focus();
     const params = new URLSearchParams(searchStr);
-    const q = params.get("q");
-    if (q) setQuery(q);
+    const qParam = params.get("q");
+    if (qParam) {
+      setQ(qParam);
+      runSearch(qParam);
+    }
   }, []);
 
-  const results = useMemo(() => {
-    let list = [...ALL_USERS];
-    if (catFilter !== "All") {
-      list = list.filter(u =>
-        u.bio?.toLowerCase().includes(catFilter.toLowerCase()) ||
-        u.username?.toLowerCase().includes(catFilter.toLowerCase())
-      );
-    }
-    if (query.trim()) {
-      const q = query.trim();
-      list = list
-        .map(u => ({ ...u, _score: score(u, q) }))
-        .filter(u => u._score > 0)
-        .sort((a, b) => b._score - a._score);
+  const runSearch = useCallback(async (searchQ) => {
+    const trimmed = (searchQ || q).trim().replace(/^@/, "").toLowerCase();
+    if (!trimmed) return;
+    setLoading(true);
+    setSearched(true);
+
+    try {
+      // Search users by email prefix, name, or username
+      const [byName, byEmail] = await Promise.all([
+        getDocs(query(
+          collection(db, "users"),
+          orderBy("name"),
+          startAt(trimmed),
+          endAt(trimmed + "\uf8ff"),
+          limit(20)
+        )).catch(() => ({ docs: [] })),
+        getDocs(query(
+          collection(db, "users"),
+          orderBy("email"),
+          startAt(trimmed),
+          endAt(trimmed + "\uf8ff"),
+          limit(20)
+        )).catch(() => ({ docs: [] })),
+      ]);
+
+      const seen = new Set();
+      const userResults = [];
+      [...byName.docs, ...byEmail.docs].forEach(d => {
+        if (!seen.has(d.id)) {
+          seen.add(d.id);
+          userResults.push({ uid: d.id, ...d.data() });
+        }
+      });
+
+      // Also search all users and filter client-side for username/bio matches
+      const allUsersSnap = await getDocs(query(collection(db, "users"), limit(200)));
+      allUsersSnap.docs.forEach(d => {
+        if (!seen.has(d.id)) {
+          const data = d.data();
+          const match = [data.name, data.username, data.email, data.bio, data.country]
+            .filter(Boolean).join(" ").toLowerCase();
+          if (match.includes(trimmed)) {
+            seen.add(d.id);
+            userResults.push({ uid: d.id, ...data });
+          }
+        }
+      });
+
+      setUsers(userResults);
+
+      // Search reels by title, hashtags, or category
+      const reelsSnap = await getDocs(query(
+        collection(db, "reels"),
+        orderBy("createdAt", "desc"),
+        limit(200)
+      ));
+      const reelResults = reelsSnap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(r => {
+          const text = [r.title, r.desc, r.hashtags, r.category, r.location]
+            .filter(Boolean).join(" ").toLowerCase();
+          const catMatch = catFilter === "All" || r.category === catFilter;
+          return text.includes(trimmed) && catMatch;
+        });
+      setReels(reelResults);
+    } catch {}
+
+    setLoading(false);
+  }, [q, catFilter]);
+
+  function handleInput(val) {
+    setQ(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (val.trim().length >= 2) {
+      debounceRef.current = setTimeout(() => runSearch(val), 400);
     } else {
-      list = list.sort((a, b) =>
-        sortBy === "followers" ? (b.followers || 0) - (a.followers || 0) :
-        sortBy === "reels" ? (b.reelCount || 0) - (a.reelCount || 0) :
-        0
-      );
+      setUsers([]); setReels([]); setSearched(false);
     }
-    return list.slice(0, 80);
-  }, [query, catFilter, sortBy]);
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    runSearch(q);
+  }
+
+  // Filter reels by category
+  const filteredReels = catFilter === "All" ? reels : reels.filter(r => r.category === catFilter);
+
+  // Extract hashtags from reels
+  const hashtagMap = {};
+  reels.forEach(r => {
+    if (!r.hashtags) return;
+    String(r.hashtags).split(/[\s,]+/).filter(h => h.startsWith("#")).forEach(h => {
+      hashtagMap[h] = (hashtagMap[h] || 0) + 1;
+    });
+  });
+  const hashtags = Object.entries(hashtagMap).sort((a, b) => b[1] - a[1]).slice(0, 20);
 
   return (
     <div className="search-page">
-      <div className="search-header">
-        <button className="search-back-btn" onClick={() => navigate(-1)}>←</button>
-        <div className="search-input-wrap">
-          <span className="search-icon-inner">🔍</span>
+      {/* Search bar */}
+      <form className="search-bar-wrap" onSubmit={handleSubmit}>
+        <div className="search-bar">
+          <span className="search-bar-icon">🔍</span>
           <input
             ref={inputRef}
-            className="search-main-input"
-            type="text"
-            placeholder="Search @username, name, country…"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
+            className="search-bar-input"
+            type="search"
+            value={q}
+            onChange={e => handleInput(e.target.value)}
+            placeholder="Search users, reels, #hashtags…"
             autoComplete="off"
-            spellCheck={false}
           />
-          {query && (
-            <button className="search-clear-btn" onClick={() => setQuery("")}>✕</button>
+          {q && (
+            <button type="button" className="search-clear-btn" onClick={() => { setQ(""); setUsers([]); setReels([]); setSearched(false); }}>✕</button>
           )}
         </div>
-      </div>
+        <button type="submit" className="search-submit-btn">Search</button>
+      </form>
 
-      <div className="search-filter-row">
-        <div className="search-cats">
+      {/* Tabs */}
+      {searched && (
+        <div className="search-tabs">
+          <button className={`search-tab ${tab === "users" ? "active" : ""}`} onClick={() => setTab("users")}>
+            👥 Users {users.length > 0 && `(${users.length})`}
+          </button>
+          <button className={`search-tab ${tab === "reels" ? "active" : ""}`} onClick={() => setTab("reels")}>
+            🎬 Reels {filteredReels.length > 0 && `(${filteredReels.length})`}
+          </button>
+          <button className={`search-tab ${tab === "hashtags" ? "active" : ""}`} onClick={() => setTab("hashtags")}>
+            # Hashtags {hashtags.length > 0 && `(${hashtags.length})`}
+          </button>
+        </div>
+      )}
+
+      {/* Category filter (for reels tab) */}
+      {searched && tab === "reels" && (
+        <div className="search-cat-row">
           {CATS.map(c => (
             <button
-              key={c.label}
-              className={`search-cat-pill ${catFilter === c.label ? "active" : ""}`}
-              onClick={() => setCatFilter(c.label)}
-            >{c.icon} {c.label}</button>
+              key={c}
+              className={`search-cat-pill ${catFilter === c ? "active" : ""}`}
+              onClick={() => setCatFilter(c)}
+            >
+              {c}
+            </button>
           ))}
         </div>
-        <div className="search-sort-row">
-          <span className="search-sort-label">Sort:</span>
-          <select className="search-sort-sel" value={sortBy} onChange={e => setSortBy(e.target.value)}>
-            <option value="followers">Followers</option>
-            <option value="reels">Reels</option>
-          </select>
+      )}
+
+      {/* Loading */}
+      {loading && (
+        <div className="search-loading">
+          <div style={{ fontSize: "2.5rem" }}>🔍</div>
+          <p>Searching…</p>
         </div>
-      </div>
+      )}
 
-      <div className="search-results-count">
-        {query ? `${results.length} results for "${query}"` : `${results.length} creators`}
-      </div>
-
-      <div className="search-results">
-        {results.length === 0 ? (
-          <div className="search-empty">
-            <div style={{ fontSize: "3rem" }}>🔍</div>
-            <p>No creators found for "{query}"</p>
+      {/* Empty state (not searched yet) */}
+      {!loading && !searched && (
+        <div className="search-discovery">
+          <div className="search-discovery-title">🌍 Discover Wildlife</div>
+          <div className="search-discovery-tip">Search for creators, reels, and wildlife hashtags</div>
+          <div className="search-discovery-grid">
+            {["🦁 Lion", "🐘 Elephant", "🦅 Eagle", "🐬 Dolphin", "🦁 Wildlife", "🌿 Conservation"].map(s => (
+              <button
+                key={s}
+                className="search-quick-pill"
+                onClick={() => { const q2 = s.split(" ").slice(1).join(" "); setQ(q2); runSearch(q2); }}
+              >
+                {s}
+              </button>
+            ))}
           </div>
-        ) : (
-          results.map(u => {
-            const isFollowing = !!following[u.id];
-            const isMe = user?.uid === u.id;
-            return (
-              <div key={u.id} className="search-user-card">
-                <Link href={`/user/${u.id}`} className="search-user-main">
-                  <div className="search-user-avatar">{u.avatar || u.name?.[0] || "🐾"}</div>
-                  <div className="search-user-info">
-                    <div className="search-user-name">
-                      {u.name}
-                      {u.verified && <BlueTick size={14} />}
+        </div>
+      )}
+
+      {/* No results */}
+      {!loading && searched && users.length === 0 && reels.length === 0 && (
+        <div className="search-no-results">
+          <div style={{ fontSize: "3rem" }}>🔍</div>
+          <h3>No results for "{q}"</h3>
+          <p>Try a different keyword, username, or hashtag</p>
+        </div>
+      )}
+
+      {/* Users tab */}
+      {!loading && searched && tab === "users" && (
+        <div className="search-results">
+          {users.length === 0 ? (
+            <div className="search-no-results">
+              <div style={{ fontSize: "2rem" }}>👤</div>
+              <p>No users found for "{q}"</p>
+            </div>
+          ) : (
+            users.map(u => {
+              const isFollowingU = !!following[u.uid];
+              const isOwn = user?.uid === u.uid;
+              const photoUrl = resolveUrl(u.photo || u.avatar || null);
+              const isVerified = u.manualVerified || u.verified || false;
+              return (
+                <div key={u.uid} className="search-user-card">
+                  <Link href={`/user/${u.uid}`} className="search-user-left">
+                    {photoUrl
+                      ? <img src={photoUrl} alt={u.name} className="search-user-avatar-img" />
+                      : <div className="search-user-avatar">{(u.name || u.email || "U")[0].toUpperCase()}</div>
+                    }
+                    <div className="search-user-info">
+                      <div className="search-user-name">
+                        {u.name || u.email?.split("@")[0]}
+                        {isVerified && <BlueTick size={14} />}
+                      </div>
+                      <div className="search-user-handle">
+                        @{u.username || u.email?.split("@")[0]}
+                      </div>
+                      {u.country && <div className="search-user-country">📍 {u.country}</div>}
+                      <div className="search-user-meta">
+                        {u.followers > 0 && <span>👥 {fmt(u.followers)}</span>}
+                        {(u.reels || 0) > 0 && <span>🎬 {fmt(u.reels)} reels</span>}
+                      </div>
                     </div>
-                    <div className="search-user-handle">@{u.username}</div>
-                    {u.country && <div className="search-user-country">📍 {u.country}</div>}
-                    {u.bio && <div className="search-user-bio">{u.bio.length > 60 ? u.bio.slice(0, 60) + "…" : u.bio}</div>}
-                  </div>
-                </Link>
-                <div className="search-user-right">
-                  <div className="search-user-stats">
-                    <span>{fmtNum(u.followers)}</span>
-                    <span className="search-stat-label">followers</span>
-                  </div>
-                  {!isMe && (
+                  </Link>
+                  {!isOwn && user && (
                     <button
-                      className={`search-follow-btn ${isFollowing ? "following" : ""}`}
-                      onClick={() => {
-                        if (!user) { navigate("/auth"); return; }
-                        isFollowing ? unfollowUser(u.id) : followUser(u.id);
-                      }}
+                      className={`search-follow-btn ${isFollowingU ? "following" : ""}`}
+                      onClick={() => isFollowingU ? unfollowUser(u.uid) : followUser(u.uid, u.username || u.name)}
                     >
-                      {isFollowing ? "Following" : "+ Follow"}
+                      {isFollowingU ? "✓" : "+ Follow"}
                     </button>
                   )}
                 </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* Reels tab */}
+      {!loading && searched && tab === "reels" && (
+        <div className="search-reels-grid">
+          {filteredReels.length === 0 ? (
+            <div className="search-no-results">
+              <div style={{ fontSize: "2rem" }}>🎬</div>
+              <p>No reels found for "{q}"</p>
+            </div>
+          ) : (
+            filteredReels.map(r => {
+              const videoUrl = resolveUrl(r.videoUrl);
+              const thumbUrl = resolveUrl(r.thumbnailUrl);
+              return (
+                <Link key={r.id} href={`/reels`} className="search-reel-thumb">
+                  {thumbUrl
+                    ? <img src={thumbUrl} alt={r.title} className="search-reel-img" />
+                    : videoUrl
+                      ? <video src={videoUrl} muted playsInline preload="metadata" className="search-reel-img" />
+                      : <div className="search-reel-placeholder">🦁</div>
+                  }
+                  <div className="search-reel-overlay">
+                    <div className="search-reel-title">{r.title}</div>
+                    <div className="search-reel-meta">
+                      ❤️ {fmt(r.likes || 0)} · 👁️ {fmt(r.views || 0)}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* Hashtags tab */}
+      {!loading && searched && tab === "hashtags" && (
+        <div className="search-hashtags">
+          {hashtags.length === 0 ? (
+            <div className="search-no-results">
+              <div style={{ fontSize: "2rem" }}>🏷️</div>
+              <p>No hashtags found for "{q}"</p>
+            </div>
+          ) : (
+            hashtags.map(([tag, count]) => (
+              <button
+                key={tag}
+                className="search-hashtag-row"
+                onClick={() => { setQ(tag); setTab("reels"); runSearch(tag); }}
+              >
+                <span className="search-hashtag-tag">{tag}</span>
+                <span className="search-hashtag-count">{count} reel{count !== 1 ? "s" : ""}</span>
+              </button>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
