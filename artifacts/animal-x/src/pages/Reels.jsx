@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, Link } from "wouter";
 import {
-  collection, query, orderBy, limit, onSnapshot,
-  doc, getDoc, setDoc, updateDoc, increment, serverTimestamp, addDoc, deleteDoc
+  collection, query, orderBy, limit,
+  onSnapshot, doc, getDoc, setDoc, updateDoc,
+  increment, serverTimestamp, addDoc, deleteDoc
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
@@ -19,14 +20,14 @@ function fmt(n) {
   return String(n);
 }
 
-const CATS = ["All","Mammals","Birds","Aquatic","Reptiles","Small Creatures","Trees","Mountains","Sea","Desert"];
+const CATS = ["All", "Mammals", "Birds", "Aquatic", "Reptiles", "Small Creatures", "Trees", "Mountains", "Sea", "Desert"];
 
 const WILDLIFE_KW = [
-  "lion","tiger","elephant","eagle","wolf","dolphin","whale","shark","cheetah","leopard",
-  "gorilla","panda","penguin","crocodile","jaguar","orca","falcon","bear","fox","lynx",
-  "bison","flamingo","animal","wildlife","nature","forest","jungle","bird","ocean","reptile",
-  "snake","fish","reef","coral","turtle","frog","insect","safari","savanna","arctic",
-  "mountain","desert","rainforest","conservation","wild","mammal","primate","raptor","marine",
+  "lion", "tiger", "elephant", "eagle", "wolf", "dolphin", "whale", "shark", "cheetah", "leopard",
+  "gorilla", "panda", "penguin", "crocodile", "jaguar", "orca", "falcon", "bear", "fox", "lynx",
+  "bison", "flamingo", "animal", "wildlife", "nature", "forest", "jungle", "bird", "ocean", "reptile",
+  "snake", "fish", "reef", "coral", "turtle", "frog", "insect", "safari", "savanna", "arctic",
+  "mountain", "desert", "rainforest", "conservation", "wild", "mammal", "primate", "raptor", "marine"
 ];
 
 function moderateContent(title, desc, hashtags) {
@@ -38,7 +39,7 @@ function buildFeed(liveReels, catFilter) {
   const all = [
     ...liveReels.map(r => ({ ...r, _rank: 2000 + (r.likes || 0) * 0.01 + (Date.now() - (r.createdAt?.toMillis?.() || 0)) * -0.000001 })),
     ...DEMO_REELS.map(r => ({ ...r, _rank: 800 + (r.likes || 0) * 0.005 })),
-    ...FAKE_FEED_REELS.slice(0, 80).map(r => ({ ...r, _rank: 200 + (r.likes || 0) * 0.001 })),
+    ...FAKE_FEED_REELS.slice(0, 80).map(r => ({ ...r, _rank: 200 + (r.likes || 0) * 0.001 }))
   ];
   const seen = new Set();
   const deduped = all.filter(r => { if (seen.has(r.id)) return false; seen.add(r.id); return true; });
@@ -75,38 +76,13 @@ export default function Reels() {
   const lastTapRef = useRef({});
 
   useEffect(() => {
-  const q = query(
-    collection(db, "reels"),
-    orderBy("createdAt", "desc"),
-    limit(100)
-  );
-
-  const unsub = onSnapshot(
-    q,
-    (snap) => {
-      const reels = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-        type: "live",
-      }));
-
-      console.log("REELS DATA:", reels);
-      console.log(
-        reels.map((r) => ({
-          title: r.title,
-          videoUrl: r.videoUrl,
-        }))
-      );
-
+    const q = query(collection(db, "reels"), orderBy("createdAt", "desc"), limit(100));
+    const unsub = onSnapshot(q, snap => {
+      const reels = snap.docs.map(d => ({ id: d.id, ...d.data(), type: "live" }));
       setLiveReels(reels);
-    },
-    (err) => {
-      console.error(err);
-    }
-  );
-
-  return unsub;
-}, []);
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     setFeed(buildFeed(liveReels, catFilter));
@@ -125,17 +101,10 @@ export default function Reels() {
           const reel = feed[idx];
           if (reel?.id) trackReelView(reel.id);
           Object.entries(videoRefs.current).forEach(([vi, el]) => {
-  if (!el) return;
-
-  if (Number(vi) === idx) {
-    el.muted = muted;
-    el.play().catch((err) => {
-      console.error("VIDEO PLAY ERROR:", err);
-    });
-  } else {
-    el.pause();
-  }
-});
+            if (!el) return;
+            if (Number(vi) === idx) { el.muted = muted; el.play().catch(() => {}); }
+            else { el.pause(); }
+          });
         }
       });
     }, { threshold: 0.6, root: scrollRef.current });
@@ -162,11 +131,8 @@ export default function Reels() {
     const now = Date.now();
     const last = lastTapRef.current[reel.id] || 0;
     if (now - last < 350) {
-      if (user && !likedReels[reel.id]) {
-        handleLike(reel);
-      } else if (!user) {
-        triggerHeart(reel.id);
-      }
+      if (user && !likedReels[reel.id]) handleLike(reel);
+      else if (!user) triggerHeart(reel.id);
     }
     lastTapRef.current[reel.id] = now;
   }
@@ -179,7 +145,7 @@ export default function Reels() {
   }
 
   async function handleShare(reel) {
-    const text = `${reel.title} — Animal X Wildlife\n#wildlifeapp`;
+    const text = `${reel.title} - Animal X Wildlife\n#wildlifeapp`;
     if (navigator.share) {
       try { await navigator.share({ title: reel.title, text, url: window.location.href }); return; } catch {}
     }
@@ -197,31 +163,19 @@ export default function Reels() {
     else followUser(targetUserId);
   }
 
-  const currentReel = feed[activeIdx];
-
   return (
     <div className="reels-page">
       <div className="reels-top-bar">
-        <span className="reels-top-title">🎬 Wildlife Reels</span>
+        <span className="reels-top-title">🎥 Wildlife Reels</span>
         <div className="reels-top-actions">
-          {user && (
-            <button className="reels-upload-btn" onClick={() => setUploadOpen(true)}>
-              ➕ Upload
-            </button>
-          )}
+          {user && (<button className="reels-upload-btn" onClick={() => setUploadOpen(true)}>+ Upload</button>)}
         </div>
       </div>
-
       <div className="reels-cat-bar">
         {CATS.map(c => (
-          <button
-            key={c}
-            className={`reel-cat-pill ${catFilter === c ? "active" : ""}`}
-            onClick={() => setCatFilter(c)}
-          >{c}</button>
+          <button key={c} className={`reel-cat-pill ${catFilter === c ? "active" : ""}`} onClick={() => setCatFilter(c)}>{c}</button>
         ))}
       </div>
-
       <div className="reels-scroll" ref={scrollRef}>
         {feed.length === 0 ? (
           <div className="reels-empty">
@@ -241,52 +195,38 @@ export default function Reels() {
             const isActive = idx === activeIdx;
 
             return (
-              <div
-                key={reel.id}
-                className={`reel-item ${isActive ? "active" : ""}`}
-                data-idx={idx}
-                onClick={(e) => handleDoubleTap(reel, e)}
-              >
+              <div key={reel.id} className={`reel-item ${isActive ? "active" : ""}`} data-idx={idx} onClick={(e) => handleDoubleTap(reel, e)}>
                 {reel.videoUrl ? (
-                 <video
-  ref={el => {
-    if (el) videoRefs.current[idx] = el;
-  }}
-  className="reel-video"
-  src={`/api/storage${reel.videoUrl}`}
-  poster={
-    reel.thumbnailUrl
-      ? `/api/storage${reel.thumbnailUrl}`
-      : undefined
-  }
-  preload="metadata"
-  autoPlay
-  loop
-  playsInline
-  muted={muted}
-/>
+                              <video
+              ref={el => {
+                if (el) videoRefs.current[idx] = el;
+              }}
+              className="reel-video"
+              src={`/api/storage${reel.videoUrl}`}
+              poster={
+                reel.thumbnailUrl
+                  ? `/api/storage${reel.thumbnailUrl}`
+                  : undefined
+              }
+              preload="metadata"
+              AutoPlay
+              loop
+              playsInline
+              muted={muted}
+            />
+
                 ) : (
                   <div className="reel-demo-bg" style={{ background: reel.bg || "linear-gradient(135deg,#0f4c2a,#065f46)" }}>
-                    <div className="reel-demo-emoji">{reel.emoji || "🐾"}</div>
+                    <div className="reel-demo-emoji">{reel.emoji || "🦁"}</div>
                   </div>
                 )}
-
-                {heartAnims[reel.id] && (
-                  <div className="reel-heart-burst">❤️</div>
-                )}
-
+                {heartAnims[reel.id] && (<div className="reel-heart-burst">❤️</div>)}
                 <div className="reel-gradient-overlay" />
-
-                {reel.sponsored && (
-                  <div className="reel-sponsored-tag">Sponsored</div>
-                )}
-
+                {reel.sponsored && (<div className="reel-sponsored-tag">Sponsored</div>)}
                 <div className="reel-overlay-bottom">
                   <div className="reel-creator-row">
                     <Link href={`/user/${reel.userId}`} onClick={e => e.stopPropagation()}>
-                      <div className="reel-avatar">
-                        {demoUser?.avatar || reel.userAvatar || (reel.username?.[0]?.toUpperCase() || "🐾")}
-                      </div>
+                      <div className="reel-avatar">{demoUser?.avatar || reel.userAvatar || (reel.username?.[0]?.toUpperCase() || "🦁")}</div>
                     </Link>
                     <div className="reel-creator-info">
                       <Link href={`/user/${reel.userId}`} onClick={e => e.stopPropagation()} className="reel-username-link">
@@ -295,16 +235,13 @@ export default function Reels() {
                       </Link>
                     </div>
                     {!isOwn && (
-                      <button
-                        className={`reel-follow-btn ${isFollowed ? "following" : ""}`}
-                        onClick={e => { e.stopPropagation(); handleFollowToggle(reel.userId); }}
-                      >
+                      <button className={`reel-follow-btn ${isFollowed ? "following" : ""}`} onClick={(e) => { e.stopPropagation(); handleFollowToggle(reel.userId); }}>
                         {isFollowed ? "Following" : "+ Follow"}
                       </button>
                     )}
                   </div>
                   <div className="reel-title">{reel.title}</div>
-                  {reel.desc && <div className="reel-desc">{reel.desc.length > 80 ? reel.desc.slice(0, 80) + "…" : reel.desc}</div>}
+                  {reel.desc && <div className="reel-desc">{reel.desc.length > 80 ? reel.desc.slice(0, 80) + "..." : reel.desc}</div>}
                   {reel.hashtags && (
                     <div className="reel-hashtags">
                       {String(reel.hashtags).split(/[\s,]+/).filter(Boolean).slice(0, 4).map(h => (
@@ -313,57 +250,38 @@ export default function Reels() {
                     </div>
                   )}
                   <div className="reel-meta-row">
-                    <span>👁️ {fmt(reel.views || 0)}</span>
-                    <span>🔗 {fmt(reel.shares || 0)}</span>
-                    {reel.location && <span>📍 {reel.location}</span>}
+                    <span>👁️{fmt(reel.views || 0)}</span>
+                    <span>🔗{fmt(reel.shares || 0)}</span>
+                    {reel.location && <span>📍{reel.location}</span>}
                     <span className="reel-cat-badge">{reel.category || reel.cat}</span>
                   </div>
                 </div>
-
                 <div className="reel-actions-right">
                   <div className="reel-action-col">
-                    <button
-                      className={`reel-action-btn like-btn ${liked ? "liked" : ""}`}
-                      onClick={e => { e.stopPropagation(); handleLike(reel); }}
-                    >
+                    <button className={`reel-action-btn like-btn ${liked ? "liked" : ""}`} onClick={(e) => { e.stopPropagation(); handleLike(reel); }}>
                       <span className="reel-action-icon">{liked ? "❤️" : "🤍"}</span>
                       <span className="reel-action-count">{fmt(likes)}</span>
                     </button>
-                    <button
-                      className="reel-action-btn"
-                      onClick={e => { e.stopPropagation(); setCommentsReel(reel); }}
-                    >
+                    <button className="reel-action-btn" onClick={(e) => { e.stopPropagation(); setCommentsReel(reel); }}>
                       <span className="reel-action-icon">💬</span>
                       <span className="reel-action-count">{fmt(reel.comments || 0)}</span>
                     </button>
-                    <button
-                      className="reel-action-btn"
-                      onClick={e => { e.stopPropagation(); handleShare(reel); }}
-                    >
+                    <button className="reel-action-btn" onClick={(e) => { e.stopPropagation(); handleShare(reel); }}>
                       <span className="reel-action-icon">↗️</span>
                       <span className="reel-action-count">{fmt(reel.shares || 0)}</span>
                     </button>
-                    <button
-                      className={`reel-action-btn ${saved ? "saved" : ""}`}
-                      onClick={e => { e.stopPropagation(); handleSave(reel.id); }}
-                    >
-                      <span className="reel-action-icon">{saved ? "🔖" : "📌"}</span>
+                    <button className={`reel-action-btn ${saved ? "saved" : ""}`} onClick={(e) => { e.stopPropagation(); handleSave(reel.id); }}>
+                      <span className="reel-action-icon">{saved ? "📌" : "📍"}</span>
                       <span className="reel-action-count">Save</span>
                     </button>
                     {reel.videoUrl && (
-                      <button
-                        className="reel-action-btn"
-                        onClick={e => { e.stopPropagation(); setMuted(m => !m); }}
-                      >
+                      <button className="reel-action-btn" onClick={(e) => { e.stopPropagation(); setMuted(m => !m); }}>
                         <span className="reel-action-icon">{muted ? "🔇" : "🔊"}</span>
                         <span className="reel-action-count">{muted ? "Muted" : "Sound"}</span>
                       </button>
                     )}
                     {(isOwn || isAdmin) && (
-                      <button
-                        className="reel-action-btn danger-btn"
-                        onClick={e => { e.stopPropagation(); handleDeleteReel(reel.id); }}
-                      >
+                      <button className="reel-action-btn danger-btn" onClick={(e) => { e.stopPropagation(); handleDeleteReel(reel.id); }}>
                         <span className="reel-action-icon">🗑️</span>
                         <span className="reel-action-count">Delete</span>
                       </button>
@@ -375,13 +293,6 @@ export default function Reels() {
           })
         )}
       </div>
-
-      {commentsReel && (
-        <CommentsPanel reel={commentsReel} onClose={() => setCommentsReel(null)} />
-      )}
-      {uploadOpen && (
-        <UploadReel onClose={() => setUploadOpen(false)} onUploaded={() => setUploadOpen(false)} />
-      )}
     </div>
   );
 }

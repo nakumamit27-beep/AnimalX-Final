@@ -40,3 +40,15 @@ VITE_FIREBASE_VAPID_KEY = "sJNaL0-vKU_ZSjD9GhZHGC-Irrt6aI-U_FVIZNha0kg"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-041a9cdd-60c9-43ca-8e4b-612773cc8b83"
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 23592
+externalPort = 80
