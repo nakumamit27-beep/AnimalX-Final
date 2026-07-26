@@ -147,13 +147,22 @@ export default function UploadReel({ onClose, onUploaded }) {
       let thumbnailUrl = null;
 
       setProgress(20);
-      videoUrl = await uploadToStorage(videoFile, videoFile.type);
-      setProgress(70);
 
-      if (thumbnailFile) {
-        thumbnailUrl = await uploadToStorage(thumbnailFile, thumbnailFile.type);
-        setProgress(85);
-      }
+videoUrl = await uploadToStorage(videoFile, videoFile.type);
+console.log("Video URL:", videoUrl);
+
+setProgress(70);
+
+if (thumbnailFile) {
+  thumbnailUrl = await uploadToStorage(
+    thumbnailFile,
+    thumbnailFile.type
+  );
+
+  console.log("Thumbnail URL:", thumbnailUrl);
+
+  setProgress(85);
+}
 
       const reelData = {
         title: form.title.trim(),
@@ -174,12 +183,29 @@ export default function UploadReel({ onClose, onUploaded }) {
       };
 
       await addDoc(collection(db, "reels"), reelData);
-      await setDoc(doc(db, "users", user.uid), { reels: increment(1) }, { merge: true });
-      setProgress(100);
-      onUploaded?.();
-    } catch (e) {
-      setError("Upload failed: " + e.message);
-      setUploading(false);
+
+console.log("REEL SAVED:", reelData);
+
+await setDoc(
+  doc(db, "users", user.uid),
+  { reels: increment(1) },
+  { merge: true }
+);
+
+setProgress(100);
+
+alert("Upload Successful!");
+
+onUploaded?.();
+
+} catch (e) {
+
+  console.error("UPLOAD ERROR:", e);
+
+  setError("Upload failed: " + e.message);
+
+  setUploading(false);
+
     }
   }
 

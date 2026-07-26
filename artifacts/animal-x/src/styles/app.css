@@ -5610,7 +5610,9 @@ body {
   background: rgba(0,0,0,0.6);
   z-index: 400;
   display: flex;
+  justify-content: center;
   align-items: flex-end;
+  padding-bottom: 120px;
 }
 
 .comments-panel {
@@ -5621,7 +5623,8 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: panel-slide-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  margin-bottom: 20px;
+  animation: panel-slide-up 0.3s cubic-bezier(0.34,1.56,0.64,1);
 }
 @keyframes panel-slide-up {
   from { transform: translateY(100%); }

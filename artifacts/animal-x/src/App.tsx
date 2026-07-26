@@ -10,21 +10,21 @@ import AutoTickPopup from "./components/AutoTickPopup";
 import WildlifeAI from "./components/WildlifeAI";
 
 // Lazy load every page — each becomes its own JS chunk, loaded only when visited
-const Home             = lazy(() => import("./pages/Home"));
-const Animals          = lazy(() => import("./pages/Animals"));
-const AnimalDetail     = lazy(() => import("./pages/AnimalDetail"));
-const Map              = lazy(() => import("./pages/Map"));
-const Reels            = lazy(() => import("./pages/Reels"));
-const Travel           = lazy(() => import("./pages/Travel"));
-const Chatbot          = lazy(() => import("./pages/Chatbot"));
-const HelpDesk         = lazy(() => import("./pages/HelpDesk"));
-const Auth             = lazy(() => import("./pages/Auth"));
-const Profile          = lazy(() => import("./pages/Profile"));
-const UserProfile      = lazy(() => import("./pages/UserProfile"));
-const Ads              = lazy(() => import("./pages/Ads"));
-const Search           = lazy(() => import("./pages/Search"));
-const PrivacyPolicy    = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfService   = lazy(() => import("./pages/TermsOfService"));
+const Home = lazy(() => import("./pages/Home"));
+const Animals = lazy(() => import("./pages/Animals"));
+const AnimalDetail = lazy(() => import("./pages/AnimalDetail"));
+const Map = lazy(() => import("./pages/Map"));
+const Reels = lazy(() => import("./pages/Reels"));
+const Travel = lazy(() => import("./pages/Travel"));
+const Chatbot = lazy(() => import("./pages/Chatbot"));
+const HelpDesk = lazy(() => import("./pages/HelpDesk"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Profile = lazy(() => import("./pages/Profile"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const Ads = lazy(() => import("./pages/Ads"));
+const Search = lazy(() => import("./pages/Search"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const CommunityGuidelines = lazy(() => import("./pages/CommunityGuidelines"));
 
 const queryClient = new QueryClient({
@@ -62,7 +62,7 @@ function SplashScreen() {
     <div className="splash">
       <div className="splash-inner">
         <div className="splash-icon">🐾</div>
-        <h1 className="splash-title">Animal X</h1>
+        <h1 className="slash-title">Animal X</h1>
         <p className="splash-sub">Wildlife Explorer</p>
         <div className="splash-loader">
           <div className="splash-dot" />
@@ -100,6 +100,7 @@ function Router() {
             <Route path="/privacy" component={PrivacyPolicy} />
             <Route path="/terms" component={TermsOfService} />
             <Route path="/guidelines" component={CommunityGuidelines} />
+            
             <Route component={NotFound} />
           </Switch>
         </Suspense>
