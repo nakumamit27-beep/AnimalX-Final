@@ -10,6 +10,9 @@ import {
 import { fileToDataURL } from "../utils/animalOverrides";
 import { categories } from "../data/animals";
 import BlueTick from "../components/BlueTick";
+import StoriesRow from "../components/StoriesRow";
+import UploadStory from "../components/UploadStory";
+import CreatorDashboard from "../components/CreatorDashboard";
 
 function formatCount(n) {
   if (n == null || isNaN(n)) return "0";
@@ -61,6 +64,7 @@ export default function Profile() {
   const tapTimer = useRef(null);
   const [gamesOpen, setGamesOpen] = useState(false);
   const [tab, setTab] = useState("grid");
+  const [storyUploadOpen, setStoryUploadOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [followersInput, setFollowersInput] = useState("");
   const [postsInput, setPostsInput] = useState("");
@@ -696,12 +700,20 @@ export default function Profile() {
           </div>
         </div>
       )}
+      {/* Stories row */}
+      <div className="profile-stories-section">
+        <StoriesRow />
+        <button className="profile-add-story-btn" onClick={() => setStoryUploadOpen(true)}>
+          + Add Story
+        </button>
+      </div>
+
       <div className="profile-tabs">
         <button
           className={`pt-tab ${tab === "grid" ? "active" : ""}`}
           onClick={() => setTab("grid")}
         >
-          📷 Grid
+          📷 Posts
         </button>
         <button
           className={`pt-tab ${tab === "reels" ? "active" : ""}`}
@@ -715,20 +727,21 @@ export default function Profile() {
         >
           🏷️ Tagged
         </button>
+        <button
+          className={`pt-tab ${tab === "dashboard" ? "active" : ""}`}
+          onClick={() => setTab("dashboard")}
+        >
+          📊 Dashboard
+        </button>
       </div>
       <div className="profile-tab-body">
         {tab === "grid" && (
           <div className="profile-grid-empty">
             <div style={{ fontSize: 48 }}>📷</div>
             <p>
-              You have {profile.posts} posts. Upload from the Reels page → Posts
-              tab.
+              You have {profile.posts || 0} posts. Upload from the Reels page → Posts tab.
             </p>
-            <Link
-              href="/reels"
-              className="btn-primary"
-              style={{ marginTop: 12 }}
-            >
+            <Link href="/reels" className="btn-primary" style={{ marginTop: 12 }}>
               Go to Posts
             </Link>
           </div>
@@ -736,13 +749,9 @@ export default function Profile() {
         {tab === "reels" && (
           <div className="profile-grid-empty">
             <div style={{ fontSize: 48 }}>🎬</div>
-            <p>You have {profile.reels} reels. Upload from the Reels page.</p>
-            <Link
-              href="/reels"
-              className="btn-primary"
-              style={{ marginTop: 12 }}
-            >
-              Go to Reels
+            <p>You have {profile.reels || 0} reels. Upload from the Reels page.</p>
+            <Link href="/reels" className="btn-primary" style={{ marginTop: 12 }}>
+              Upload a Reel
             </Link>
           </div>
         )}
@@ -752,7 +761,17 @@ export default function Profile() {
             <p>No one has tagged you yet.</p>
           </div>
         )}
+        {tab === "dashboard" && (
+          <CreatorDashboard />
+        )}
       </div>
+
+      {storyUploadOpen && (
+        <UploadStory
+          onClose={() => setStoryUploadOpen(false)}
+          onUploaded={() => setStoryUploadOpen(false)}
+        />
+      )}
       {adminMode && isSuperAdmin && (
         <div className="admin-panel">
           <div className="admin-header">

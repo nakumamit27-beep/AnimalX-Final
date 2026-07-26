@@ -7,3 +7,5 @@
 - [RTDB demo-reel write flood](rtdb-demo-write-flood.md) — trackReelView must guard: skip demo IDs (ff/dr/du/fu prefix) + require user?.uid or 80+ permission_denied logs flood console on every page load.
 - [moderateContent export pattern](moderation-export.md) — named exports from page files break Vite Fast Refresh; move shared logic (moderation, utils) to dedicated utils/ files.
 - [Profile photo Object Storage fallback](profile-photo-storage.md) — profile photo upload tries Object Storage presigned URL first, falls back to base64 dataURL; display with /api/storage prefix for path-based URLs.
+- [Real-only social media system](real-social-system.md) — Reels/UserProfile/Search use ONLY Firestore; demo data only survives in AdminModerationPanel (admin tool). Video autoPlay must be lowercase + muted=true for browser autoplay to work.
+- [Stories Firestore schema](stories-schema.md) — stories collection: expiresAt is a number (Date.now() + 24h ms), filter client-side; viewerIds array updated via arrayUnion; mediaUrl is objectPath served via /api/storage.
