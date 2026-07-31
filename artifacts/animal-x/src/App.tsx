@@ -27,6 +27,19 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const CommunityGuidelines = lazy(() => import("./pages/CommunityGuidelines"));
 
+// Games
+const Games = lazy(() => import("./pages/Games"));
+const AnimalPuzzleGame = lazy(() => import("./games/AnimalPuzzle"));
+const MemoryMatchGame = lazy(() => import("./games/MemoryMatch"));
+const AnimalQuizGame = lazy(() => import("./games/AnimalQuiz"));
+const GuessAnimalGame = lazy(() => import("./games/GuessAnimal"));
+const ShadowMatchGame = lazy(() => import("./games/ShadowMatch"));
+const AnimalABCGame = lazy(() => import("./games/AnimalABC"));
+const AnimalColoringGame = lazy(() => import("./games/AnimalColoring"));
+const SurvivalAdventureGame = lazy(() => import("./games/SurvivalAdventure"));
+const NumberPuzzleGame = lazy(() => import("./games/NumberPuzzle"));
+const JigsawPuzzleGame = lazy(() => import("./games/JigsawPuzzle"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -100,6 +113,18 @@ function Router() {
             <Route path="/privacy" component={PrivacyPolicy} />
             <Route path="/terms" component={TermsOfService} />
             <Route path="/guidelines" component={CommunityGuidelines} />
+            {/* Games */}
+            <Route path="/games" component={Games} />
+            <Route path="/games/puzzle" component={AnimalPuzzleGame} />
+            <Route path="/games/memory" component={MemoryMatchGame} />
+            <Route path="/games/quiz" component={AnimalQuizGame} />
+            <Route path="/games/guess" component={GuessAnimalGame} />
+            <Route path="/games/shadow" component={ShadowMatchGame} />
+            <Route path="/games/abc" component={AnimalABCGame} />
+            <Route path="/games/coloring" component={AnimalColoringGame} />
+            <Route path="/games/survival" component={SurvivalAdventureGame} />
+            <Route path="/games/numbers" component={NumberPuzzleGame} />
+            <Route path="/games/jigsaw" component={JigsawPuzzleGame} />
             
             <Route component={NotFound} />
           </Switch>
