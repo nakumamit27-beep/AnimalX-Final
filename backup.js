@@ -1,34 +1,16 @@
-const { Client } = require('@replit/object-storage');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 
-const client = new Client();
-
-async function run() {
-  try {
-    const mediaDir = path.join(__dirname, 'media');
-    if (!fs.existsSync(mediaDir)) {
-      fs.mkdirSync(mediaDir);
-    }
-
-    console.log("Bucket se files fetch ki ja rahi hain...");
-    const result = await client.list();
-    const objects = Array.isArray(result) ? result : (result.value || []);
-    
-    console.log(`Total files: ${objects.length}`);
-
-    for (const obj of objects) {
-      const name = obj.name || obj;
-      const dest = path.join(mediaDir, path.basename(name));
-      const fileData = await client.downloadAsBytes(name);
-      const buffer = Buffer.from(fileData.value || fileData);
-      fs.writeFileSync(dest, buffer);
-      console.log(`Saved: ${name}`);
-    }
-    console.log("Sabhi files successfully download ho gayi hain!");
-  } catch (e) {
-    console.error("Error:", e);
-  }
+// Replit bucket ka web API endpoint ya folder access karne ka tareeka
+const mediaDir = path.join(__dirname, 'media');
+if (!fs.existsSync(mediaDir)) {
+  fs.mkdirSync(mediaDir);
 }
 
-run();
+// Since dashboard se direct files list karne ke liye hum fetch API use kar sakte hain agar URL ho,
+// Lekin sabse aasan aur final rasta yeh hai ki hum Replit storage client ko bypass karke 
+// direct fetch karein agar port available ho. 
+// Par agar aapko saari files turant chahiye, toh aap Replit ke App Storage tab se 
+// manually bhi zip download kar sakte hain ya ek-ek karke select kar sakte hain.
+console.log("Aap Replit ke App Storage panel se direct 'Download folder' ya files select karke bhi kar sakte hain.");

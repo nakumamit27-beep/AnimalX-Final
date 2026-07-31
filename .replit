@@ -39,7 +39,7 @@ VITE_FIREBASE_MEASUREMENT_ID = "G-7ZM164H30K"
 VITE_FIREBASE_VAPID_KEY = "sJNaL0-vKU_ZSjD9GhZHGC-Irrt6aI-U_FVIZNha0kg"
 
 [objectStorage]
-defaultBucketID = "replit-objstore-a69f0f31-fdd4-42e3-aa1a-f77c299073cf"
+defaultBucketID = "replit-objstore-041a9cdd-60c9-43ca-8e4b-612773cc8b83"
 
 [[ports]]
 localPort = 8080
