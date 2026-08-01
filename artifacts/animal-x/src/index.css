@@ -1,61 +1,49 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+/* Import Animal X Design System — provides Tailwind v4, tw-animate-css, component sources, and the full token theme */
+@import "@workspace/animal-x-ds/styles.css";
 
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-
-  --font-sans: var(--app-font-sans);
-  --radius-lg: var(--radius);
-}
-
+/* ── Animal X is dark-first: override the design system's light-mode :root defaults ── */
 :root {
   --background: 222 47% 7%;
   --foreground: 210 40% 95%;
-  --border: 217 33% 20%;
-  --input: 217 33% 20%;
-  --ring: 142 72% 50%;
+  --border:     217 33% 20%;
+  --input:      217 33% 20%;
+  --ring:       142 72% 50%;
 
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 95%;
+  --card:             222 47% 11%;
+  --card-foreground:  210 40% 95%;
 
-  --primary: 142 72% 45%;
+  --popover:            222 47% 11%;
+  --popover-foreground: 210 40% 95%;
+
+  --primary:            142 72% 45%;
   --primary-foreground: 222 47% 5%;
 
-  --secondary: 217 33% 20%;
+  --secondary:            217 33% 20%;
   --secondary-foreground: 210 40% 95%;
 
-  --muted: 217 33% 15%;
+  --muted:            217 33% 15%;
   --muted-foreground: 215 20% 60%;
 
-  --accent: 142 72% 45%;
+  --accent:            142 72% 45%;
   --accent-foreground: 222 47% 5%;
 
-  --destructive: 0 84% 60%;
+  --destructive:            0 84% 60%;
   --destructive-foreground: 210 40% 95%;
+
+  --chart-1: 142 72% 45%;
+  --chart-2: 221 83% 62%;
+  --chart-3: 38 92% 50%;
+  --chart-4: 271 60% 63%;
+  --chart-5: 0 84% 60%;
+
+  --sidebar:                    222 47% 7%;
+  --sidebar-foreground:         210 40% 95%;
+  --sidebar-border:             217 33% 20%;
+  --sidebar-primary:            142 72% 45%;
+  --sidebar-primary-foreground: 222 47% 5%;
+  --sidebar-accent:             217 33% 20%;
+  --sidebar-accent-foreground:  210 40% 95%;
+  --sidebar-ring:               142 72% 50%;
 
   --app-font-sans: 'Inter', sans-serif;
   --radius: 0.75rem;
