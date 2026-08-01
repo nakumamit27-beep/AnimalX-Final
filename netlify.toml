@@ -1,2 +1,10 @@
+[build]
+  publish = "artifacts/animal-x/dist/public"
+
 [build.environment]
   BASE_PATH = "/"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
