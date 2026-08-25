@@ -1,4 +1,4 @@
-# Migrating web UI to Animal X Design System
+# Migrating web UI to WildLingo Design System
 
 Read `artifacts/animal-x-ds/docs/AGENTS.md` and
 `artifacts/animal-x-ds/docs/consuming-web.md` first. Use this guide

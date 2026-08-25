@@ -31,6 +31,7 @@ export default function MemoryMatch() {
   const [starsEarned, setStarsEarned] = useState(0);
 
   const timerRef = useRef(null);
+  const winHandledRef = useRef(false);
 
   const initGame = () => {
     // animals is already an array of {id, name, baseName, category, habitat, diet, ...}
@@ -54,6 +55,7 @@ export default function MemoryMatch() {
     setWin(false);
     setPlaying(true);
     setPaused(false);
+    winHandledRef.current = false;
   };
 
   useEffect(() => {
@@ -64,6 +66,19 @@ export default function MemoryMatch() {
     }
     return () => clearInterval(timerRef.current);
   }, [playing, paused, won]);
+
+  useEffect(() => {
+    if (
+      playing &&
+      cards.length > 0 &&
+      matched.length === cards.length &&
+      !won &&
+      !winHandledRef.current
+    ) {
+      winHandledRef.current = true;
+      handleWin(moves);
+    }
+  }, [playing, cards.length, matched.length, won, moves]);
 
   const handleCardClick = (index) => {
     if (!playing || paused || won || flipped.length >= 2 || flipped.includes(index) || matched.includes(index)) {
@@ -77,13 +92,7 @@ export default function MemoryMatch() {
       setMoves(m => m + 1);
       const [idx1, idx2] = newFlipped;
       if (cards[idx1].animal === cards[idx2].animal) {
-        setMatched(prev => {
-          const nextMatched = [...prev, idx1, idx2];
-          if (nextMatched.length === cards.length) {
-            handleWin(moves + 1);
-          }
-          return nextMatched;
-        });
+        setMatched(prev => [...prev, idx1, idx2]);
         setFlipped([]);
       } else {
         setTimeout(() => setFlipped([]), 800);

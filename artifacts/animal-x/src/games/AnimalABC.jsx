@@ -65,7 +65,7 @@ export default function AnimalABC() {
         <div className="abc-animal-name">{curr.animal}</div>
         
         <div className="abc-card">
-          <img src={getAnimalImage({name: curr.animal})} alt={curr.animal} className="abc-img" />
+          <img src={getAnimalImage(curr)} alt={curr.animal} className="abc-img" />
           <div className="abc-fact">
             <span style={{fontSize: "1.5rem", display: "block", marginBottom: "8px"}}>💡</span>
             {curr.fact}

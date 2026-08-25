@@ -62,7 +62,6 @@ export default function Profile() {
 
   const [tapCount, setTapCount] = useState(0);
   const tapTimer = useRef(null);
-  const [gamesOpen, setGamesOpen] = useState(false);
   const [tab, setTab] = useState("grid");
   const [storyUploadOpen, setStoryUploadOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -211,7 +210,7 @@ export default function Profile() {
       <div className="profile-page profile-empty">
         <div className="profile-empty-card">
           <div className="profile-empty-icon">👤</div>
-          <h2>Welcome to Animal X</h2>
+          <h2>Welcome to WildLingo</h2>
           <p>Login or sign up to create your wildlife creator profile.</p>
           <Link href="/auth" className="btn-primary">
             Login / Sign Up
@@ -341,13 +340,15 @@ export default function Profile() {
           {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
         </button>
 
-        <button className="qs-pill" onClick={() => setHelpOpen(true)}>
-          ❓ Help & Support
-        </button>
+        <div className="profile-action-pair">
+          <button className="qs-pill" onClick={() => setHelpOpen(true)}>
+            ❓ Help & Support
+          </button>
+          <Link className="qs-pill" href="/games">
+            🎮 Games
+          </Link>
+        </div>
 
-        <button className="qs-pill" onClick={() => setGamesOpen(true)}>
-          🎮 Games
-        </button>
 
         <button className="qs-pill qs-logout" onClick={logout}>
           🚪 Log out
@@ -529,7 +530,7 @@ export default function Profile() {
                       1. Data Privacy & Security
                     </h4>
                     <p className="text-[11px] text-gray-600 leading-relaxed">
-                      Animal X securely stores your personal details (Gmail,
+                      WildLingo securely stores your personal details (Gmail,
                       Profile Data) and location permissions on Firebase
                       Encrypted Servers. Your data is strictly confidential and
                       is never shared with any third-party applications.
@@ -577,66 +578,10 @@ export default function Profile() {
                   </div>
 
                   <p className="text-[10px] text-gray-400 text-center pt-2 border-t border-gray-200/50 block w-full">
-                    Last Updated: May 2026 • Animal X Team
+                    Last Updated: May 2026 • WildLingo Team
                   </p>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {gamesOpen && (
-        <div
-          className="edit-modal-backdrop"
-          onClick={() => setGamesOpen(false)}
-        >
-          <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="edit-modal-head">
-              <h3>🎮 Animal Games</h3>
-
-              <button
-                className="edit-modal-close"
-                onClick={() => setGamesOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="edit-modal-body">
-              <button
-                className="btn-primary"
-                style={{ width: "100%", marginBottom: 12 }}
-                onClick={() => {
-                  setGamesOpen(false);
-                  window.location.href = "/games/puzzle";
-                }}
-              >
-                🦁 Wildlife Puzzle
-              </button>
-
-              <button
-                className="btn-primary"
-                style={{ width: "100%", marginBottom: 12 }}
-                onClick={() => alert("🔢 Kids Numbers Coming Soon")}
-              >
-                🔢 Kids Numbers
-              </button>
-
-              <button
-                className="btn-primary"
-                style={{ width: "100%", marginBottom: 12 }}
-                onClick={() => alert("🦓 Animal Memory Coming Soon")}
-              >
-                🦓 Animal Memory
-              </button>
-
-              <button
-                className="btn-primary"
-                style={{ width: "100%" }}
-                onClick={() => alert("🦅 Animal Quiz Coming Soon")}
-              >
-                🦅 Animal Quiz
-              </button>
             </div>
           </div>
         </div>

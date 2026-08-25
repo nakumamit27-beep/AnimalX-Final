@@ -14,7 +14,7 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const { title = "Animal X", body = "You have a new notification" } = payload.notification || {};
+  const { title = "WildLingo", body = "You have a new notification" } = payload.notification || {};
   self.registration.showNotification(title, {
     body,
     icon: "/favicon.svg",

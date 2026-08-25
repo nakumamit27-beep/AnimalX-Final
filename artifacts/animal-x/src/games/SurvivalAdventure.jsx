@@ -21,7 +21,7 @@ export default function SurvivalAdventure() {
     state.current = {
       x: 400, y: 300,
       foods: Array.from({length: 10}, () => ({x: Math.random()*800, y: Math.random()*600})),
-      preds: [{x: 0, y: 0, speed: 2}],
+       preds: [{x: 0, y: 0, speed: 2, hitCooldown: 0}],
       keys: { w:false, a:false, s:false, d:false, up:false, down:false, left:false, right:false }
     };
     setHp(100);
@@ -98,23 +98,23 @@ export default function SurvivalAdventure() {
       
       // Preds
       ctx.fillStyle = '#ef4444';
-      s.preds.forEach(p => {
+       s.preds.forEach(p => {
         const dx = s.x - p.x;
         const dy = s.y - p.y;
         const len = Math.hypot(dx, dy);
-        p.x += (dx/len) * p.speed;
-        p.y += (dy/len) * p.speed;
+         if (len > 0) {
+           p.x += (dx/len) * p.speed;
+           p.y += (dy/len) * p.speed;
+         }
+         p.hitCooldown = Math.max(0, (p.hitCooldown || 0) - 1);
         
         ctx.beginPath();
         ctx.arc(p.x, p.y, 12, 0, Math.PI*2);
         ctx.fill();
         
-        if (len < 25) {
-          setHp(h => {
-            const next = h - 2;
-            if (next <= 0) { setPlaying(false); setGameOver(true); }
-            return next;
-          });
+         if (len < 25 && p.hitCooldown === 0) {
+           p.hitCooldown = 30;
+           setHp(h => Math.max(0, h - 2));
         }
       });
       
@@ -130,6 +130,13 @@ export default function SurvivalAdventure() {
     reqRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(reqRef.current);
   }, [playing]);
+
+  useEffect(() => {
+    if (playing && hp <= 0) {
+      setPlaying(false);
+      setGameOver(true);
+    }
+  }, [hp, playing]);
 
   const btnProps = (key) => ({
     onPointerDown: () => { state.current.keys[key] = true; },

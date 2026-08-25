@@ -10,8 +10,8 @@ const KB = [
   { p: /^(hi|hello|hey|helo|hii|howdy|sup|yo)\b/i, a: "👋 Hey there! I'm your **Wildlife AI** 🦁\n\nI can answer questions about any animal, app features, national parks, zoos, conservation, or wildlife science. What would you like to know?" },
 
   // App version & info
-  { p: /version|app.*version|what.*version/i, a: `ℹ️ **Animal X ${APP_VERSION}**\n\nWildlife social media platform with:\n• 1,213+ animals & natural wonders\n• TikTok-style wildlife Reels\n• 300+ zoos on interactive map\n• Live animal GPS tracking\n• 200+ wildlife creators\n• AI chatbot (that's me!)\n\nAll features are **100% FREE** — no premium required!` },
-  { p: /about.*app|what is animal x|what.*app/i, a: `🐾 **About Animal X ${APP_VERSION}**\n\nAnimal X is a professional wildlife social media app — like Instagram + TikTok, but 100% focused on wildlife.\n\n• 1,213+ animals with quizzes & abilities\n• Wildlife Reels (TikTok-style)\n• Zoo & wildlife map\n• Creator profiles & community\n• AI chatbot assistance\n\n📧 Contact: wildlifeanimalfight@gmail.com` },
+  { p: /version|app.*version|what.*version/i, a: `ℹ️ **WildLingo ${APP_VERSION}**\n\nWildlife social media platform with:\n• 1,213+ animals & natural wonders\n• TikTok-style wildlife Reels\n• 300+ zoos on interactive map\n• Live animal GPS tracking\n• 200+ wildlife creators\n• AI chatbot (that's me!)\n\nAll features are **100% FREE** — no premium required!` },
+  { p: /about.*app|what is animal x|what.*app/i, a: `🐾 **About WildLingo ${APP_VERSION}**\n\nWildLingo is a professional wildlife social media app — like Instagram + TikTok, but 100% focused on wildlife.\n\n• 1,213+ animals with quizzes & abilities\n• Wildlife Reels (TikTok-style)\n• Zoo & wildlife map\n• Creator profiles & community\n• AI chatbot assistance\n\n📧 Contact: wildlifeanimalfight@gmail.com` },
 
   // Upload Reel
   { p: /upload.*reel|reel.*upload|post.*video|how.*reel|video.*upload/i, a: "📹 **Upload a Wildlife Reel:**\n1. Tap **🎬 Reels** in the bottom nav\n2. Tap **➕ Upload** (top right)\n3. **Step 1:** Enter title, description, hashtags, category\n4. Tap **Next: Upload Video →**\n5. **Step 2:** Select your video (max 200 MB)\n6. Tap **Review →**\n7. **Step 3:** Confirm details → tap **🚀 Post Reel**\n\n🤖 AI moderation checks content — only wildlife is allowed.\n⚠️ 3 violations = 30-day upload ban." },
@@ -35,7 +35,7 @@ const KB = [
   { p: /notification|bell|alerts|badge/i, a: "🔔 **Notifications:**\n• Tap the 🔔 bell icon in the top bar\n• You get notified when someone follows you\n• Red badge shows unread count\n• Tap 'Mark all read' to clear\n• Powered by Firebase Firestore real-time updates" },
 
   // Ads
-  { p: /ad|advertise|advertisement|run.*ad/i, a: "📢 **Advertise on Animal X:**\n1. Go to ℹ️ Help → tap **Run Advertisement**\n2. Enter ad title, description, target URL\n3. Choose target categories (Mammals, Birds…)\n4. Select plan (₹149 — ₹4,999 / month)\n5. Pay via UPI: **nakumamit27-1@okicici**\n   or PayPal: paypal.me/animalx\n6. Admin reviews & activates your ad within 24h" },
+  { p: /ad|advertise|advertisement|run.*ad/i, a: "📢 **Advertise on WildLingo:**\n1. Go to ℹ️ Help → tap **Run Advertisement**\n2. Enter ad title, description, target URL\n3. Choose target categories (Mammals, Birds…)\n4. Select plan (₹149 — ₹4,999 / month)\n5. Pay via UPI: **nakumamit27-1@okicici**\n   or PayPal: paypal.me/wildlingo\n6. Admin reviews & activates your ad within 24h" },
 
   // Blue tick
   { p: /blue.*tick|verified|verification|checkmark/i, a: "🔵 **Blue Tick Verification:**\n• **Auto:** Reach 100,000 followers — blue tick granted automatically with a congratulations popup!\n• **Manual:** Admin can grant it directly from the admin panel\n• Blue tick appears on profiles, reels, and search results\n• Once granted, it's permanent unless the account violates guidelines" },
@@ -58,7 +58,7 @@ const KB = [
   { p: /privacy|data.*collect|personal.*data/i, a: "🔒 **Privacy Policy:**\nWe collect:\n• Email (for login only)\n• Content you upload\n• Like & follow data\n\nAll data stored securely on Firebase. We never sell your data to third parties.\n\nFull policy: tap 🦴 FAB → Privacy Policy" },
 
   // Terms
-  { p: /terms|terms.*service|terms.*condition/i, a: "📄 **Terms of Service:**\n• Must be 13+ to use Animal X\n• Only wildlife content allowed on platform\n• Admin retains right to remove violating content\n• Account ban possible for repeat violations\n\nFull terms: tap 🦴 FAB → Terms of Service" },
+  { p: /terms|terms.*service|terms.*condition/i, a: "📄 **Terms of Service:**\n• Must be 13+ to use WildLingo\n• Only wildlife content allowed on platform\n• Admin retains right to remove violating content\n• Account ban possible for repeat violations\n\nFull terms: tap 🦴 FAB → Terms of Service" },
 
   // Report
   { p: /report|report.*reel|flag.*content|flag.*user/i, a: "🚩 **Report Content:**\n1. Tap ⋮ (three dots) on any reel\n2. Select 'Report'\n3. Choose violation type\n4. Admin reviews within 24h\n\nFor urgent issues: wildlifeanimalfight@gmail.com" },
@@ -67,7 +67,7 @@ const KB = [
   { p: /contact|support|help.*desk|email.*us/i, a: "📞 **Contact Support:**\n📧 Email: wildlifeanimalfight@gmail.com\n📸 Instagram: @wildlifeanimalfight\n▶️ YouTube: wildlifeanimalfight\n👥 Facebook: wildlifeanimalfight\n\nOr visit ❓ Help in the app for full FAQ." },
 
   // Admin
-  { p: /admin|super.*admin|broadcast|admin.*mode/i, a: "👑 **Admin System:**\n• Login as the super admin email\n• Tap the 🦁 Animal X logo **7 times**\n• Access broadcast panel + testing panel\n• Send messages to all users\n• Grant/remove blue ticks\n• Ban users, add strikes\n• Access testing & emergency restore modes" },
+  { p: /admin|super.*admin|broadcast|admin.*mode/i, a: "👑 **Admin System:**\n• Login as the super admin email\n• Tap the 🦁 WildLingo logo **7 times**\n• Access broadcast panel + testing panel\n• Send messages to all users\n• Grant/remove blue ticks\n• Ban users, add strikes\n• Access testing & emergency restore modes" },
 
   // Chatbot / AI
   { p: /chatbot|chat|ai.*assistant|wildlife.*ai/i, a: "🦴 I'm the **Wildlife AI** assistant!\n\nI can answer questions about:\n• 1,213+ animals in the app\n• Every app feature\n• Wildlife science & conservation\n• National parks & zoos\n• Travel & safari planning\n\nTap the 🦴 bone button to access me anytime!" },
@@ -78,7 +78,7 @@ const KB = [
   { p: /smartest|most.*intelligent|intelligent.*animal/i, a: "🧠 **Most Intelligent Animals:**\n🐒 Chimpanzees — closest DNA to humans (98.7%), use tools\n🐬 Dolphins — signature whistles (names), mirror self-recognition\n🐘 Elephants — mourn dead, remember faces for decades\n🐙 Octopus — can open jars, solve puzzles, change color\n🐦 Crow — makes hooks from wire, plans for the future\n🐷 Pigs — smarter than dogs, learn complex tricks\n🦜 African Grey Parrot — vocabulary of 1,000+ words" },
   { p: /endangered|extinction|conservation|protect/i, a: "🌍 **Wildlife Conservation:**\n• 1 million+ species face extinction risk\n• Main threats: habitat loss, climate change, poaching\n\n**Critically Endangered:**\n🐆 Amur Leopard (<100 wild)\n🐬 Vaquita porpoise (~10 remaining!)\n🦏 Javan Rhino (<80 wild)\n\n**Success stories:**\n✅ Arabian Oryx — brought back from extinction\n✅ California Condor — 27 to 500+\n✅ Giant Panda — upgraded from Endangered to Vulnerable" },
   { p: /migration|migrate|seasonal.*movement/i, a: "🦋 **Wildlife Migration Highlights:**\n🦬 Wildebeest: 3,000 km Serengeti circuit\n🐦 Arctic Tern: 70,000 km pole-to-pole each year!\n🦋 Monarch Butterfly: 4,800 km across North America\n🐋 Humpback Whale: 20,000 km tropical ↔ polar\n🐟 Pacific Salmon: swims upstream to birthplace to spawn\n🦌 Caribou: 5,000 km Arctic migration\n🐝 Monarch butterflies use Earth's magnetic field to navigate\n\nSee migration routes on the Map page!" },
-  { p: /how.*many.*species|species.*count|animals.*earth|species.*earth/i, a: "🔬 **Species on Earth:**\n• Estimated total: 8.7 million species\n• Formally described: ~1.2 million\n• New discoveries: ~18,000 species/year\n• Animal X includes: 1,213+ species & natural wonders\n• Most diverse biomes: Tropical rainforests & coral reels" },
+  { p: /how.*many.*species|species.*count|animals.*earth|species.*earth/i, a: "🔬 **Species on Earth:**\n• Estimated total: 8.7 million species\n• Formally described: ~1.2 million\n• New discoveries: ~18,000 species/year\n• WildLingo includes: 1,213+ species & natural wonders\n• Most diverse biomes: Tropical rainforests & coral reels" },
 
   // ─── Specific Animals ───────────────────────────────────────────────
   { p: /lion|lions|pride/i, a: "🦁 **Lion** *(Panthera leo)*\n🏠 African savanna & Gir Forest (India)\n🍽️ Diet: Zebra, wildebeest, buffalo\n⏳ Lifespan: 12–16 years wild\n👥 Live in groups called **prides** (5–20 lions)\n⚡ Roar audible up to **8 km** away\n🎉 The only truly social big cat\n📱 Search 'Lion' in Animals page for full details!" },
@@ -111,9 +111,9 @@ const KB = [
 
   // ─── General Fallbacks ──────────────────────────────────────────────
   { p: /national park|parks|wildlife.*reserve/i, a: "🏞️ **Top Wildlife Destinations:**\n🌍 Serengeti, Tanzania — Great Migration\n🏔️ Yellowstone, USA — wolves & geysers\n🌿 Amazon Rainforest, Brazil — 40,000+ plant species\n🦁 Kruger Park, South Africa — Big Five\n🦎 Galápagos, Ecuador — evolution in action\n🐯 Ranthambore, India — Bengal tigers\n🌊 Palau, Pacific — shark sanctuary\n\nSee 300+ real zoos on the 🗺️ Map page!" },
-  { p: /zoo|zoos/i, a: "🏛️ **Zoos on Animal X:**\nThe Map page shows **300+ real zoos** worldwide:\n• Official name, city, country\n• Rating & visitor info\n• 'Open in Maps' → Google Maps navigation\n• Filter by country or search by name\n\nTop global zoos: San Diego, Singapore, Chester, Taronga, Berlin, Prague" },
+  { p: /zoo|zoos/i, a: "🏛️ **Zoos on WildLingo:**\nThe Map page shows **300+ real zoos** worldwide:\n• Official name, city, country\n• Rating & visitor info\n• 'Open in Maps' → Google Maps navigation\n• Filter by country or search by name\n\nTop global zoos: San Diego, Singapore, Chester, Taronga, Berlin, Prague" },
   { p: /reel|reels/i, a: "🎬 **Wildlife Reels:**\n• TikTok-style full-screen snap scroll\n• 1,000+ wildlife reels from 200+ creators\n• Double-tap anywhere to like ❤️\n• Right sidebar: like, comment, share, save\n• Filter by animal category\n• Upload your own wildlife video!" },
-  { p: /feature|what.*can|what.*do|capabilities/i, a: `🐾 **Animal X ${APP_VERSION} — All Features:**\n• 🐾 1,213+ animals with quizzes & special abilities\n• 🎬 TikTok-style wildlife Reels\n• 🗺️ 300+ zoo map + live animal tracking\n• 🦋 Wildlife migration routes overlay\n• 👥 200+ creators to follow & connect with\n• 📸 Posts & 24-hour Stories\n• ✈️ Safari travel booking deep-links\n• 🦴 AI chatbot (that's me!)\n• 🔵 Blue tick verification\n• 🔍 Advanced creator search\n\nAll **100% FREE** — forever!` },
+  { p: /feature|what.*can|what.*do|capabilities/i, a: `🐾 **WildLingo ${APP_VERSION} — All Features:**\n• 🐾 1,213+ animals with quizzes & special abilities\n• 🎬 TikTok-style wildlife Reels\n• 🗺️ 300+ zoo map + live animal tracking\n• 🦋 Wildlife migration routes overlay\n• 👥 200+ creators to follow & connect with\n• 📸 Posts & 24-hour Stories\n• ✈️ Safari travel booking deep-links\n• 🦴 AI chatbot (that's me!)\n• 🔵 Blue tick verification\n• 🔍 Advanced creator search\n\nAll **100% FREE** — forever!` },
 ];
 
 /* Suggested questions shown initially */

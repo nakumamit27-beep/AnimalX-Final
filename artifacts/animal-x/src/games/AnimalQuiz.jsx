@@ -133,16 +133,17 @@ export default function AnimalQuiz() {
         setTime(30);
         setSelectedAns(null);
       } else {
-        endGame();
+        const finalScore = score + (isCorrect ? 100 + (time > 20 ? 50 : 0) : 0);
+        endGame(finalScore);
       }
     }, 1500);
   };
 
-  const endGame = async () => {
+  const endGame = async (finalScore = score) => {
     setWin(true);
     setPlaying(false);
     
-    let stars = score > 1200 ? 3 : score > 800 ? 2 : 1;
+    let stars = finalScore > 1200 ? 3 : finalScore > 800 ? 2 : 1;
     let earned = 50 + (stars * 10);
     setCoinsEarned(earned);
     setStarsEarned(stars);
@@ -150,7 +151,7 @@ export default function AnimalQuiz() {
     if (user) {
       try {
         await setDoc(doc(db, "gameScores", "quiz_" + user.uid), {
-          gameId: "quiz", userId: user.uid, score, stars, coins: earned, timestamp: serverTimestamp()
+          gameId: "quiz", userId: user.uid, score: finalScore, stars, coins: earned, timestamp: serverTimestamp()
         }, { merge: true });
         
         await setDoc(doc(db, "userGameCoins", user.uid), { 

@@ -75,7 +75,7 @@ function SplashScreen() {
     <div className="splash">
       <div className="splash-inner">
         <div className="splash-icon">🐾</div>
-        <h1 className="slash-title">Animal X</h1>
+        <h1 className="slash-title">WildLingo</h1>
         <p className="splash-sub">Wildlife Explorer</p>
         <div className="splash-loader">
           <div className="splash-dot" />

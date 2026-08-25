@@ -1,38 +1,35 @@
 /**
- * Animal overrides — Replit Object Storage (images) + Firestore (metadata) + localStorage cache.
+ * Animal overrides — Firebase Storage (images) + Firestore (metadata) + localStorage cache.
  *
  * Image upload flow (admin only):
  *   1. Compress image to WebP / JPEG ≤ 300 KB via canvas
- *   2. Request presigned URL from POST /api/storage/uploads/request-url
- *   3. PUT file bytes directly to GCS (presigned URL)
- *   4. Store objectPath + text fields in Firestore (animals/{animalId})
+ *   2. Upload directly to Firebase Storage under animal-images/{timestamp}-{uuid}.webp
+ *   3. Get public download URL from Firebase Storage
+ *   4. Store image URL + text fields in Firestore (animals/{animalId})
  *   5. Cache in localStorage for instant repeat reads
  *   6. Dispatch "ax-overrides-changed" so React re-renders everywhere
  *
- * Image serve URL: /api/storage/objects/{objectPath trimmed of leading /objects/}
- *
- * NOTE: Firebase Storage is no longer used. Auth/Firestore/RTDB remain unchanged.
+ * Legacy Replit Object Storage paths (imageObjectPath starting with /objects/) are
+ * served via /api/storage/objects/… for backward compatibility with existing records.
  */
 
-import { db } from "./firebase";
-import {
-  collection, doc, setDoc, deleteField, onSnapshot,
-} from "firebase/firestore";
+import { db, storage } from "./firebase";
+import { collection, doc, setDoc, onSnapshot } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const CACHE_KEY = "ax_overrides_cache_v3";
 
 // ─── Storage URL helpers ──────────────────────────────────────────────────────
 
 /**
- * Convert an objectPath returned by the API into a full serving URL.
- * objectPath looks like "/objects/uploads/some-uuid"
- * Serving URL:           /api/storage/objects/uploads/some-uuid
+ * Convert a legacy Replit objectPath into a serving URL.
+ * New uploads return full HTTPS Firebase Storage URLs directly.
+ * This function is kept for backward-compatibility with existing stored records.
  */
 export function objectPathToUrl(objectPath) {
   if (!objectPath) return null;
-  // Already a full URL
   if (objectPath.startsWith("http")) return objectPath;
-  // Remove leading /objects/ then prepend /api/storage/objects/
+  // Legacy Replit path: /objects/uploads/uuid → /api/storage/objects/uploads/uuid
   const clean = objectPath.replace(/^\/objects\//, "");
   return `/api/storage/objects/${clean}`;
 }
@@ -48,7 +45,6 @@ function writeCache(map) {
   const safe = {};
   for (const id in map) {
     const entry = map[id] || {};
-    // Only keep image if it's a URL string (not raw base64)
     if (entry.image && entry.image.startsWith("data:")) {
       const { image, ...rest } = entry;
       if (Object.keys(rest).length) safe[id] = rest;
@@ -97,38 +93,25 @@ export function listenOverrides() {
   return _unsubscribe;
 }
 
-// ─── Object Storage upload ────────────────────────────────────────────────────
+// ─── Firebase Storage upload ──────────────────────────────────────────────────
 
 /**
- * Upload a Blob/File to Replit Object Storage via presigned URL.
- * Returns the objectPath string (e.g. "/objects/uploads/uuid").
+ * Upload a Blob/File to Firebase Storage.
+ * Returns the public download URL.
  */
-async function uploadToObjectStorage(blob, contentType = "image/webp") {
-  // Step 1: request presigned URL
-  const urlRes = await fetch("/api/storage/uploads/request-url", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: `animal-image-${Date.now()}.webp`, size: blob.size, contentType }),
-  });
-  if (!urlRes.ok) throw new Error(`Presigned URL request failed: ${urlRes.status}`);
-  const { uploadURL, objectPath } = await urlRes.json();
-
-  // Step 2: upload directly to GCS
-  const uploadRes = await fetch(uploadURL, {
-    method: "PUT",
-    headers: { "Content-Type": contentType },
-    body: blob,
-  });
-  if (!uploadRes.ok) throw new Error(`GCS upload failed: ${uploadRes.status}`);
-
-  return objectPath;
+async function uploadToFirebaseStorage(blob, contentType = "image/webp") {
+  const ext = contentType === "image/webp" ? "webp" : "jpg";
+  const fileName = `animal-images/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const storageRef = ref(storage, fileName);
+  await uploadBytes(storageRef, blob, { contentType });
+  return await getDownloadURL(storageRef);
 }
 
 // ─── Write (admin only) ───────────────────────────────────────────────────────
 
 /**
  * Save a patch for one animal to Firestore.
- * If patch.image is a raw data URL, compress + upload to Object Storage first.
+ * If patch.image is a raw data URL, compress + upload to Firebase Storage first.
  */
 export async function setOverride(animalId, patch) {
   const id = String(animalId);
@@ -136,9 +119,9 @@ export async function setOverride(animalId, patch) {
 
   if (data.image && data.image.startsWith("data:")) {
     const blob = dataURLToBlob(data.image);
-    const objectPath = await uploadToObjectStorage(blob, "image/webp");
-    data.image = objectPathToUrl(objectPath);
-    data.imageObjectPath = objectPath;
+    const downloadURL = await uploadToFirebaseStorage(blob, "image/webp");
+    data.image = downloadURL;
+    data.imageObjectPath = null;
   }
 
   await setDoc(doc(db, "animals", id), data, { merge: true });
@@ -194,7 +177,6 @@ export function compressImageFile(file, { maxEdge = 1080, maxBytes = 300_000 } =
           if (!ctx) throw new Error("No 2D canvas context");
           ctx.drawImage(img, 0, 0, w, h);
 
-          // Try WebP first; fall back to JPEG
           let quality = 0.85;
           let dataUrl = canvas.toDataURL("image/webp", quality);
           if (!dataUrl.startsWith("data:image/webp")) {

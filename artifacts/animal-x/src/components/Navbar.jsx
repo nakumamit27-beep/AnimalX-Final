@@ -10,7 +10,7 @@ const bottomItems = [
   { href: "/", label: "Home", icon: "🏠" },
   { href: "/animals", label: "Animals", icon: "🐾" },
   { href: "/reels", label: "Reels", icon: "🎬" },
-  { href: "/games", label: "Games", icon: "🎮" },
+  { href: "/travel", label: "Travel", icon: "✈️" },
   { href: "/map", label: "Map", icon: "🗺️" },
   { href: "/profile", label: "Profile", icon: "👤" },
 ];
@@ -75,10 +75,10 @@ export default function Navbar() {
           className="brand-link"
           onClick={handleLogoTap}
           style={{ background: "none", border: "none", cursor: "pointer" }}
-          title="Animal X (tap 7x for admin)"
+          title="WildLingo (tap 7x for admin)"
         >
           <span className="brand-icon">🦁</span>
-          <span className="brand-name">Animal X</span>
+          <span className="brand-name">WildLingo</span>
         </button>
 
         <form className="topbar-search" onSubmit={submitSearch} role="search">
@@ -144,7 +144,7 @@ export default function Navbar() {
 
             {panelTab === "broadcast" && (
               <div className="admin-panel-body">
-                <p className="admin-panel-hint">Send a message to all Animal X users instantly.</p>
+                <p className="admin-panel-hint">Send a message to all WildLingo users instantly.</p>
                 <textarea
                   className="broadcast-input"
                   rows={3}

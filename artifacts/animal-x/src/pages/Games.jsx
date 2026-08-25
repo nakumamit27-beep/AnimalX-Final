@@ -59,14 +59,9 @@ export default function Games() {
       <div className="game-cards-grid">
         {GAMES.map(game => {
           // Find the representative animal
-          let animalObj = null;
-          for (const cat in animals) {
-             const list = animals[cat];
-             const found = list?.find && list.find(a => a.name === game.animal) || { name: game.animal };
-             animalObj = found;
-             break;
-          }
-          if(!animalObj) animalObj = { name: game.animal };
+          const animalObj = animals.find(
+            a => a.name === game.animal || a.baseName === game.animal,
+          ) || { name: game.animal };
 
           const diffClass = game.difficulty === "Easy" ? "diff-easy" : game.difficulty === "Medium" ? "diff-medium" : "diff-hard";
 

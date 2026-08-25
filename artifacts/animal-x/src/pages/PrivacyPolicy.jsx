@@ -8,7 +8,7 @@ export default function PrivacyPolicy() {
         <button className="policy-back" onClick={() => navigate(-1)}>← Back</button>
         <div className="policy-header-icon">🔒</div>
         <h1 className="policy-title">Privacy Policy</h1>
-        <p className="policy-subtitle">Last updated: June 2026 · Animal X v2.5</p>
+        <p className="policy-subtitle">Last updated: June 2026 · WildLingo v2.5</p>
       </div>
 
       <div className="policy-body">
@@ -16,9 +16,9 @@ export default function PrivacyPolicy() {
         <div className="policy-section">
           <h2>1. Introduction</h2>
           <p>
-            Welcome to <strong>Animal X</strong> ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, store, and share information when you use our wildlife social media application.
+            Welcome to <strong>WildLingo</strong> ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, store, and share information when you use our wildlife social media application.
           </p>
-          <p>By using Animal X, you agree to the collection and use of information in accordance with this policy.</p>
+          <p>By using WildLingo, you agree to the collection and use of information in accordance with this policy.</p>
         </div>
 
         <div className="policy-section">
@@ -46,7 +46,7 @@ export default function PrivacyPolicy() {
         <div className="policy-section">
           <h2>3. How We Use Your Information</h2>
           <ul className="policy-list">
-            <li>🦁 To provide, operate, and improve Animal X services</li>
+            <li>🦁 To provide, operate, and improve WildLingo services</li>
             <li>🔐 To authenticate your account and keep it secure</li>
             <li>🔔 To send notifications about follows, likes, and platform updates</li>
             <li>🤖 To power AI content moderation ensuring only wildlife content is posted</li>
@@ -102,7 +102,7 @@ export default function PrivacyPolicy() {
 
         <div className="policy-section">
           <h2>7. Children's Privacy</h2>
-          <p>Animal X is not intended for children under the age of <strong>13</strong>. We do not knowingly collect personal data from children under 13. If you believe a child under 13 has provided us with personal information, please contact us immediately.</p>
+          <p>WildLingo is not intended for children under the age of <strong>13</strong>. We do not knowingly collect personal data from children under 13. If you believe a child under 13 has provided us with personal information, please contact us immediately.</p>
         </div>
 
         <div className="policy-section">
@@ -118,7 +118,7 @@ export default function PrivacyPolicy() {
 
         <div className="policy-section">
           <h2>9. Changes to This Policy</h2>
-          <p>We may update this Privacy Policy periodically. We will notify you of significant changes via an in-app broadcast or notification. Continued use of Animal X after changes constitutes acceptance of the updated policy.</p>
+          <p>We may update this Privacy Policy periodically. We will notify you of significant changes via an in-app broadcast or notification. Continued use of WildLingo after changes constitutes acceptance of the updated policy.</p>
         </div>
 
         <div className="policy-section">
@@ -131,7 +131,7 @@ export default function PrivacyPolicy() {
         </div>
 
         <div className="policy-footer-note">
-          © 2026 Animal X · All rights reserved · <a href="mailto:wildlifeanimalfight@gmail.com" className="policy-link">Contact Us</a>
+          © 2026 WildLingo · All rights reserved · <a href="mailto:wildlifeanimalfight@gmail.com" className="policy-link">Contact Us</a>
         </div>
       </div>
     </div>

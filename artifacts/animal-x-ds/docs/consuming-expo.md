@@ -1,4 +1,4 @@
-# Consuming Animal X Design System in Expo apps
+# Consuming WildLingo Design System in Expo apps
 
 Read `artifacts/animal-x-ds/docs/AGENTS.md` first. React Native does
 not consume the web CSS or DOM components. It imports portable tokens, native

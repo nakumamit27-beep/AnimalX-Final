@@ -64,7 +64,7 @@ export default function JigsawPuzzle() {
     }
   };
 
-  const imgUrl = animal ? getAnimalImage({name: animal}) : "";
+  const imgUrl = animal ? getAnimalImage(animal) : "";
 
   return (
     <GameShell title="Jigsaw Puzzle" score={moves} onRestart={startGame}>

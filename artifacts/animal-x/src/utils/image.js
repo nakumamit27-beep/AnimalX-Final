@@ -26,6 +26,9 @@ export function getImage(name, id) {
 // Use this everywhere (cards, banners, details) so they stay in sync.
 export function getAnimalImage(animal) {
   if (!animal) return getImage("wildlife", null);
+  // Prefer a photo already stored on the animal record. This keeps custom
+  // Firebase/Firestore media working in every game without re-uploading it.
+  if (animal.imageUrl) return animal.imageUrl;
   // Custom-added animals have a direct image (data URL)
   if (animal.isCustom && animal.image) return animal.image;
   // Override OR default image

@@ -2364,6 +2364,7 @@ a { text-decoration: none; color: inherit; }
 .stat-lbl { font-size: 0.75rem; color: #94a3b8; }
 
 .profile-quick-stats { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.profile-action-pair { display: flex; gap: 8px; flex-wrap: wrap; }
 .qs-pill {
   padding: 8px 14px;
   background: #1e293b;
@@ -2376,6 +2377,10 @@ a { text-decoration: none; color: inherit; }
   cursor: pointer;
 }
 .qs-pill:hover { background: #22c55e; color: #000; border-color: #22c55e; }
+@media (max-width: 420px) {
+  .profile-action-pair { width: 100%; }
+  .profile-action-pair .qs-pill { flex: 1 1 140px; text-align: center; }
+}
 .qs-logout { color: #ef4444; border-color: #ef4444; }
 
 .profile-tabs {

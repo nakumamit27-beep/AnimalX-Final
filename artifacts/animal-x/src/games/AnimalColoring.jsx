@@ -33,33 +33,44 @@ export default function AnimalColoring() {
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
   };
 
   const startDraw = (e) => {
+    e.preventDefault();
     setDrawing(true);
-    draw(e);
+    draw(e, true);
   };
 
-  const stopDraw = () => {
+  const stopDraw = (e) => {
+    e?.preventDefault();
     setDrawing(false);
     const canvas = canvasRef.current;
     if (canvas) canvas.getContext("2d").beginPath();
   };
 
-  const draw = (e) => {
-    if (!drawing) return;
+  const draw = (e, isStarting = false) => {
+    e.preventDefault();
+    if (!drawing && !isStarting) return;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX || e.touches?.[0].clientX) - rect.left;
-    const y = (e.clientY || e.touches?.[0].clientY) - rect.top;
+    const point = e.touches?.[0] || e;
+    const x = (point.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (point.clientY - rect.top) * (canvas.height / rect.height);
 
     ctx.lineWidth = size;
     ctx.lineCap = "round";
     ctx.strokeStyle = tool === "erase" ? "#ffffff" : color;
 
-    ctx.lineTo(x, y);
+    if (isStarting) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -86,6 +97,7 @@ export default function AnimalColoring() {
             onMouseUp={stopDraw}
             onMouseOut={stopDraw}
             onMouseMove={draw}
+             onContextMenu={(e) => e.preventDefault()}
             onTouchStart={startDraw}
             onTouchEnd={stopDraw}
             onTouchMove={draw}

@@ -13,9 +13,10 @@ export default function NumberPuzzle() {
   const [playing, setPlaying] = useState(false);
   const [won, setWin] = useState(false);
 
-  const startGame = () => {
-    setSlots(Array.from({length: level}, (_, i) => ({ val: i + 1, filled: false })));
-    setTiles(shuffle(Array.from({length: level}, (_, i) => i + 1)));
+  const startGame = (selectedLevel = level) => {
+    setLevel(selectedLevel);
+    setSlots(Array.from({length: selectedLevel}, (_, i) => ({ val: i + 1, filled: false })));
+    setTiles(shuffle(Array.from({length: selectedLevel}, (_, i) => i + 1)));
     setPlaying(true);
     setWin(false);
   };
@@ -44,8 +45,8 @@ export default function NumberPuzzle() {
       <div className="number-puzzle-container">
         
         <div style={{display: "flex", gap: "12px", justifyContent: "center", marginBottom: "32px"}}>
-          <button className="game-btn-secondary" onClick={() => {setLevel(5); startGame();}}>1 to 5</button>
-          <button className="game-btn-secondary" onClick={() => {setLevel(10); startGame();}}>1 to 10</button>
+          <button className="game-btn-secondary" onClick={() => startGame(5)}>1 to 5</button>
+          <button className="game-btn-secondary" onClick={() => startGame(10)}>1 to 10</button>
         </div>
 
         {!playing && !won ? (

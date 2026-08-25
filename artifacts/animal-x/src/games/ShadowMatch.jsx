@@ -47,7 +47,7 @@ export default function ShadowMatch() {
 
   const handleAnswer = (ans) => {
     setSelectedAns(ans);
-    const isCorrect = ans === questions[currIdx].correct;
+    const isCorrect = ans.id === questions[currIdx].correct.id;
     
     if (isCorrect) {
       setScore(s => s + 100);
@@ -58,16 +58,16 @@ export default function ShadowMatch() {
         setCurrIdx(c => c + 1);
         setSelectedAns(null);
       } else {
-        endGame();
+        endGame(score + (isCorrect ? 100 : 0));
       }
     }, 1200);
   };
 
-  const endGame = async () => {
+  const endGame = async (finalScore = score) => {
     setWin(true);
     setPlaying(false);
     
-    let stars = score >= 900 ? 3 : score >= 600 ? 2 : 1;
+    let stars = finalScore >= 900 ? 3 : finalScore >= 600 ? 2 : 1;
     let earned = 75 + (stars * 10);
     setCoinsEarned(earned);
     setStarsEarned(stars);
@@ -75,7 +75,7 @@ export default function ShadowMatch() {
     if (user) {
       try {
         await setDoc(doc(db, "gameScores", "shadow_" + user.uid), {
-          gameId: "shadow", userId: user.uid, score, stars, coins: earned, timestamp: serverTimestamp()
+          gameId: "shadow", userId: user.uid, score: finalScore, stars, coins: earned, timestamp: serverTimestamp()
         }, { merge: true });
         
         await setDoc(doc(db, "userGameCoins", user.uid), { 
@@ -120,15 +120,15 @@ export default function ShadowMatch() {
             <div style={{fontWeight: "bold", marginBottom: "16px"}}>Question {currIdx + 1}/10</div>
             
             <div className="shadow-target-wrap">
-              <img src={getAnimalImage({name: questions[currIdx].correct})} alt="Shadow" className="shadow-target" />
+               <img src={getAnimalImage(questions[currIdx].correct)} alt="Shadow" className="shadow-target" />
             </div>
             
             <div className="shadow-options">
               {questions[currIdx].options.map((opt, i) => {
                 let btnClass = "shadow-option";
                 if (selectedAns) {
-                  if (opt === questions[currIdx].correct) btnClass += " correct";
-                  else if (opt === selectedAns) btnClass += " wrong";
+                   if (opt.id === questions[currIdx].correct.id) btnClass += " correct";
+                   else if (opt.id === selectedAns.id) btnClass += " wrong";
                 }
                 return (
                   <button 
@@ -137,8 +137,8 @@ export default function ShadowMatch() {
                     onClick={() => handleAnswer(opt)}
                     disabled={!!selectedAns}
                   >
-                    <img src={getAnimalImage({name: opt})} alt={opt} />
-                    <div style={{fontWeight: "600", fontSize: "0.9rem"}}>{opt}</div>
+                     <img src={getAnimalImage(opt)} alt={opt.name} />
+                     <div style={{fontWeight: "600", fontSize: "0.9rem"}}>{opt.name}</div>
                   </button>
                 );
               })}

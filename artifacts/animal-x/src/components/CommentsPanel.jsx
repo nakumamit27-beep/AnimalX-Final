@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   collection, query, orderBy, limit, onSnapshot,
-  addDoc, serverTimestamp, deleteDoc, doc
+  addDoc, serverTimestamp, deleteDoc, doc, updateDoc, increment,
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
@@ -15,71 +15,98 @@ function fmt(n) {
 
 export default function CommentsPanel({ reel, onClose }) {
   const { user, profile, isSuperAdmin, adminMode } = useAuth();
-  const [comments, setComments] = useState([]);
-  const [text, setText] = useState("");
+  const [comments, setComments]   = useState([]);
+  const [text, setText]           = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const panelRef = useRef(null);
-  const inputRef = useRef(null);
+  const panelRef  = useRef(null);
+  const inputRef  = useRef(null);
+  const bottomRef = useRef(null);
 
+  // Live comments subscription
   useEffect(() => {
     if (!reel?.id) return;
     const q = query(
       collection(db, "reels", reel.id, "comments"),
       orderBy("createdAt", "asc"),
-      limit(100)
+      limit(100),
     );
-    const unsub = onSnapshot(q, snap => {
-      setComments(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    }, () => setComments([]));
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setComments(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 80);
+      },
+      () => setComments([]),
+    );
     return unsub;
   }, [reel?.id]);
 
+  // Escape key to close
   useEffect(() => {
     function onKey(e) { if (e.key === "Escape") onClose(); }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // Auto-focus input
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 150);
+  }, []);
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (!user) { alert("Please login to comment."); return; }
     const t = text.trim();
-    if (!t) return;
+    if (!t || submitting) return;
     setSubmitting(true);
     try {
+      // Add comment to subcollection
       await addDoc(collection(db, "reels", reel.id, "comments"), {
         text: t,
-        userId: user.uid,
-        username: profile?.username || user.name || user.email?.split("@")[0],
+        userId:       user.uid,
+        username:     profile?.username || user.name || user.email?.split("@")[0],
         userVerified: profile?.manualVerified || false,
-        createdAt: serverTimestamp(),
+        createdAt:    serverTimestamp(),
       });
+      // Increment the reel's comment counter
+      await updateDoc(doc(db, "reels", reel.id), { comments: increment(1) }).catch(() => {});
       setText("");
-    } catch {}
+    } catch (err) {
+      console.warn("Comment post failed:", err.message);
+    }
     setSubmitting(false);
   }
 
   async function handleDelete(commentId) {
-    try { await deleteDoc(doc(db, "reels", reel.id, "comments", commentId)); } catch {}
+    try {
+      await deleteDoc(doc(db, "reels", reel.id, "comments", commentId));
+      await updateDoc(doc(db, "reels", reel.id), { comments: increment(-1) }).catch(() => {});
+    } catch {}
   }
 
   function timeAgo(ts) {
-    if (!ts?.toDate) return "";
+    if (!ts?.toDate) return "just now"; // serverTimestamp pending
     const diff = (Date.now() - ts.toDate().getTime()) / 1000;
-    if (diff < 60) return "just now";
-    if (diff < 3600) return Math.floor(diff / 60) + "m";
+    if (diff < 10)    return "just now";
+    if (diff < 60)    return Math.floor(diff) + "s";
+    if (diff < 3600)  return Math.floor(diff / 60) + "m";
     if (diff < 86400) return Math.floor(diff / 3600) + "h";
     return Math.floor(diff / 86400) + "d";
   }
 
   return (
-    <div className="comments-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      className="comments-backdrop"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div className="comments-panel" ref={panelRef}>
+        {/* Header */}
         <div className="comments-header">
           <span className="comments-title">💬 Comments ({comments.length})</span>
           <button className="comments-close" onClick={onClose}>✕</button>
         </div>
 
+        {/* Reel preview */}
         <div className="comments-reel-preview">
           <div className="crp-emoji">{reel.emoji || "🐾"}</div>
           <div className="crp-info">
@@ -88,6 +115,7 @@ export default function CommentsPanel({ reel, onClose }) {
           </div>
         </div>
 
+        {/* Comments list */}
         <div className="comments-list">
           {comments.length === 0 ? (
             <div className="comments-empty">
@@ -95,7 +123,7 @@ export default function CommentsPanel({ reel, onClose }) {
               <p>No comments yet. Be the first!</p>
             </div>
           ) : (
-            comments.map(c => (
+            comments.map((c) => (
               <div key={c.id} className="comment-item">
                 <div className="comment-avatar">
                   {c.username?.[0]?.toUpperCase() || "🐾"}
@@ -109,23 +137,29 @@ export default function CommentsPanel({ reel, onClose }) {
                   <div className="comment-text">{c.text}</div>
                 </div>
                 {(user?.uid === c.userId || (isSuperAdmin && adminMode)) && (
-                  <button className="comment-delete" onClick={() => handleDelete(c.id)}>🗑️</button>
+                  <button
+                    className="comment-delete"
+                    onClick={() => handleDelete(c.id)}
+                    title="Delete comment"
+                  >🗑️</button>
                 )}
               </div>
             ))
           )}
+          <div ref={bottomRef} />
         </div>
 
+        {/* Input */}
         <form className="comment-input-row" onSubmit={handleSubmit}>
           <input
             ref={inputRef}
             className="comment-input"
             value={text}
-            onChange={e => setText(e.target.value)}
+            onChange={(e) => setText(e.target.value)}
             placeholder={user ? "Add a comment…" : "Login to comment…"}
             maxLength={300}
             disabled={!user || submitting}
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           />
           <button
             className="comment-submit"

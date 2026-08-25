@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Animal X"
+title = "WildLingo"
 version = "1.0.0"
 id = "artifacts/animal-x"
 router = "path"

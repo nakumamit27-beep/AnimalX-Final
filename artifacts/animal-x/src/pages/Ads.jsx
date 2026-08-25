@@ -45,7 +45,7 @@ export default function Ads() {
       <div className="ads-page">
         <div className="ads-login-prompt">
           <div style={{ fontSize: 64 }}>📢</div>
-          <h2>Advertise on Animal X</h2>
+          <h2>Advertise on WildLingo</h2>
           <p>Reach millions of wildlife lovers. Login to create your first ad.</p>
           <Link href="/auth" className="auth-btn" style={{ textDecoration:"none", display:"inline-block", marginTop:16 }}>
             🔑 Login to Continue
@@ -111,7 +111,7 @@ export default function Ads() {
   return (
     <div className="ads-page">
       <div className="ads-header">
-        <h1 className="page-title">📢 Advertise on Animal X</h1>
+        <h1 className="page-title">📢 Advertise on WildLingo</h1>
         <p className="page-subtitle">Reach {(2000000).toLocaleString()}+ wildlife enthusiasts worldwide</p>
       </div>
 

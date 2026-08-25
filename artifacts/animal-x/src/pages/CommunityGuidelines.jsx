@@ -8,7 +8,7 @@ export default function CommunityGuidelines() {
         <button className="policy-back" onClick={() => navigate(-1)}>← Back</button>
         <div className="policy-header-icon">📋</div>
         <h1 className="policy-title">Community Guidelines</h1>
-        <p className="policy-subtitle">Last updated: June 2026 · Animal X v2.5</p>
+        <p className="policy-subtitle">Last updated: June 2026 · WildLingo v2.5</p>
       </div>
 
       <div className="policy-body">
@@ -16,7 +16,7 @@ export default function CommunityGuidelines() {
         <div className="policy-section">
           <div className="policy-intro-card">
             <div style={{ fontSize: "2.5rem" }}>🦁</div>
-            <p>Animal X is a community built around <strong>wildlife, nature, and conservation</strong>. Our guidelines exist to protect animals, creators, and the environment we all love. Every user has a responsibility to uphold these standards.</p>
+            <p>WildLingo is a community built around <strong>wildlife, nature, and conservation</strong>. Our guidelines exist to protect animals, creators, and the environment we all love. Every user has a responsibility to uphold these standards.</p>
           </div>
         </div>
 
@@ -154,13 +154,13 @@ export default function CommunityGuidelines() {
         <div className="policy-section">
           <h2>🌍 Our Mission</h2>
           <div className="policy-intro-card">
-            <p>Animal X exists to build the world's most passionate wildlife community — where every post celebrates life on Earth, educates future conservationists, and protects the species we share our planet with.</p>
+            <p>WildLingo exists to build the world's most passionate wildlife community — where every post celebrates life on Earth, educates future conservationists, and protects the species we share our planet with.</p>
             <p style={{ marginTop: 10 }}><strong>Together, we make a difference.</strong> 🌿</p>
           </div>
         </div>
 
         <div className="policy-footer-note">
-          © 2026 Animal X · <a href="mailto:wildlifeanimalfight@gmail.com" className="policy-link">wildlifeanimalfight@gmail.com</a>
+          © 2026 WildLingo · <a href="mailto:wildlifeanimalfight@gmail.com" className="policy-link">wildlifeanimalfight@gmail.com</a>
         </div>
       </div>
     </div>

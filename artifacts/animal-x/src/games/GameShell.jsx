@@ -47,7 +47,13 @@ export default function GameShell({
           <button className="game-icon-btn" onClick={() => setDrawerOpen(true)} title="Settings">
             ⚙️
           </button>
-          <button className="game-icon-btn" onClick={onPause} title="Pause">
+          <button
+            className="game-icon-btn"
+            onClick={onPause}
+            title={onPause ? "Pause" : "Pause unavailable for this game"}
+            disabled={!onPause}
+            aria-disabled={!onPause}
+          >
             ⏸️
           </button>
         </div>

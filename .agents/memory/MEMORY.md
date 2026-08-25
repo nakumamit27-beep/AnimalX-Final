@@ -11,3 +11,4 @@
 - [Profile photo Object Storage fallback](profile-photo-storage.md) — profile photo upload tries Object Storage presigned URL first, falls back to base64 dataURL; display with /api/storage prefix for path-based URLs.
 - [Real-only social media system](real-social-system.md) — Reels/UserProfile/Search use ONLY Firestore; demo data only survives in AdminModerationPanel (admin tool). Video autoPlay must be lowercase + muted=true for browser autoplay to work.
 - [Stories Firestore schema](stories-schema.md) — stories collection: expiresAt is a number (Date.now() + 24h ms), filter client-side; viewerIds array updated via arrayUnion; mediaUrl is objectPath served via /api/storage.
+- [Games interaction safety](games-interaction-safety.md) — keep win side effects outside state updaters; canvas drawing must handle the initial pointer event; guard zero-distance movement.

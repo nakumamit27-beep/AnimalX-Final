@@ -21,42 +21,25 @@ function openDeepLink(deepUrl, fallbackUrl) {
 }
 
 const RIDE_BOOKING = [
-  { name: "Uber",  icon: "🚗", deep: "uber://",                url: "https://m.uber.com",       countries: "70+ countries worldwide", color: "#000000" },
-  { name: "Lyft",  icon: "🚙", deep: "lyft://",                url: "https://www.lyft.com",     countries: "USA, Canada",            color: "#ff00bf" },
-  { name: "Grab",  icon: "🛵", deep: "grab://open",            url: "https://www.grab.com",     countries: "Southeast Asia",         color: "#00b14f" },
-  { name: "Ola",   icon: "🚕", deep: "olacabs://app/launch",   url: "https://book.olacabs.com", countries: "India, UK, Australia, NZ", color: "#f97316" },
-  { name: "Bolt",  icon: "⚡", deep: "bolt://",                url: "https://bolt.eu",          countries: "Europe, Africa",         color: "#22c55e" },
+  { name: "Get Rent A Car", icon: "🚗", deep: "https://getrentacar.tpx.lt/ePAm675D", url: "https://getrentacar.tpx.lt/ePAm675D", countries: "Global car rentals", color: "#000000" },
+  { name: "Get Transfer", icon: "🚕", deep: "https://gettransfer.tpx.lt/OtVn4OQA", url: "https://gettransfer.tpx.lt/OtVn4OQA", countries: "Global transfers & private rides", color: "#00b14f" },
+  { name: "EconomyBookings", icon: "🚙", deep: "https://economybookings.tpx.lt/Ib2teILz", url: "https://economybookings.tpx.lt/Ib2teILz", countries: "Worldwide budget rentals", color: "#f97316" }
 ];
 
 const WILDLIFE_BOOKING = [
-  { name: "SafariBookings",            icon: "🦁", deep: "https://www.safaribookings.com",       url: "https://www.safaribookings.com",       countries: "Africa-wide safaris",                 color: "#d97706" },
-  { name: "G Adventures",              icon: "🐘", deep: "https://www.gadventures.com",          url: "https://www.gadventures.com",          countries: "Worldwide small-group tours",         color: "#7c3aed" },
-  { name: "Intrepid Travel",           icon: "🐆", deep: "https://www.intrepidtravel.com",       url: "https://www.intrepidtravel.com",       countries: "100+ countries, eco-friendly",        color: "#0891b2" },
-  { name: "Natural Habitat Adventures",icon: "🐻", deep: "https://www.nathab.com",               url: "https://www.nathab.com",               countries: "Worldwide nature & wildlife",         color: "#16a34a" },
-  { name: "Wildlife Worldwide",        icon: "🐅", deep: "https://www.wildlifeworldwide.com",    url: "https://www.wildlifeworldwide.com",    countries: "All seven continents",                color: "#9333ea" },
+  { name: "Klook", icon: "🦁", deep: "https://klook.tpx.lt/CxX7xkG7", url: "https://klook.tpx.lt/CxX7xkG7", countries: "Nature & wildlife tours", color: "#d97706" },
+  { name: "Tiqets", icon: "🎟️", deep: "https://tiqets.tpx.lt/Cyr9F1LU", url: "https://tiqets.tpx.lt/Cyr9F1LU", countries: "Zoos & nature reserves", color: "#7c3aed" }
 ];
 
 const FLIGHT_BOOKING = [
-  { name: "Google Flights", icon: "🔍", deep: "https://www.google.com/travel/flights", url: "https://www.google.com/travel/flights", countries: "Global price tracking",   color: "#4285f4" },
-  { name: "Skyscanner",     icon: "✈️", deep: "skyscanner://",                          url: "https://www.skyscanner.com",            countries: "1,200+ airlines worldwide", color: "#0770e3" },
-  { name: "Kayak",          icon: "🌐", deep: "kayak://",                               url: "https://www.kayak.com",                 countries: "100s of sites compared",  color: "#ff690f" },
-  { name: "Trip.com",       icon: "🧳", deep: "ctrip://",                               url: "https://www.trip.com",                  countries: "Global, strong in Asia",  color: "#287dfa" },
-  { name: "Expedia",        icon: "🏨", deep: "expda://",                               url: "https://www.expedia.com",               countries: "Worldwide flights & hotels", color: "#ffc439" },
-  { name: "Hopper",         icon: "🐰", deep: "hopper://",                              url: "https://www.hopper.com",                countries: "USA, Canada price predictions", color: "#a855f7" },
-  { name: "Wego",           icon: "🌍", deep: "wego://",                                url: "https://www.wego.com",                  countries: "Middle East, Asia & global", color: "#16a34a" },
-  { name: "Agoda",          icon: "🏝️", deep: "agoda://",                              url: "https://www.agoda.com",                 countries: "Asia-Pacific & worldwide", color: "#ed3325" },
+  { name: "Aviasales", icon: "✈️", deep: "https://aviasales.tpx.lt/AAcj6Sau", url: "https://aviasales.tpx.lt/AAcj6Sau", countries: "Global cheap flights", color: "#4285f4" },
+  { name: "Compensair", icon: "💼", deep: "https://compensair.tpx.lt/xckzWwDX", url: "https://compensair.tpx.lt/xckzWwDX", countries: "Flight delay claims", color: "#0770e3" }
 ];
 
 const PRIVATE_JET = [
-  { name: "VistaJet",            icon: "🛩️", deep: "https://www.vistajet.com",         url: "https://www.vistajet.com",         countries: "Flies to 187 countries",       color: "#c0392b" },
-  { name: "NetJets",             icon: "🛫", deep: "https://www.netjets.com",          url: "https://www.netjets.com",          countries: "World's largest private fleet",color: "#0c2a4d" },
-  { name: "XO",                  icon: "✈️", deep: "https://www.flyxo.com",            url: "https://www.flyxo.com",            countries: "On-demand jets, USA & Europe", color: "#f59e0b" },
-  { name: "Flexjet",             icon: "🛬", deep: "https://www.flexjet.com",          url: "https://www.flexjet.com",          countries: "Fractional jet ownership",     color: "#1e3a8a" },
-  { name: "Jetex",               icon: "🛩️", deep: "https://www.jetex.com",            url: "https://www.jetex.com",            countries: "Premium FBOs in 90+ countries",color: "#7c3aed" },
-  { name: "PrivateFly",          icon: "🛪", deep: "https://www.privatefly.com",       url: "https://www.privatefly.com",       countries: "Charter to 8,000+ airports",   color: "#0891b2" },
-  { name: "Wheels Up",           icon: "🚀", deep: "https://wheelsup.com",             url: "https://wheelsup.com",             countries: "USA membership-based jets",    color: "#fbbf24" },
-  { name: "Air Charter Service", icon: "🛫", deep: "https://www.aircharterservice.com", url: "https://www.aircharterservice.com", countries: "Global on-demand charters",    color: "#dc2626" },
+  { name: "Get Transfer VIP", icon: "🚁", deep: "https://gettransfer.tpx.lt/OtVn4OQA", url: "https://gettransfer.tpx.lt/OtVn4OQA", countries: "Luxury VIP transfers", color: "#1e293b" }
 ];
+
 
 function ServiceCard({ service }) {
   return (

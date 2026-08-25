@@ -263,6 +263,7 @@ async function signObjectURL({
     );
   }
 
+ // @ts-ignore
   const { signed_url: signedURL } = await response.json();
   return signedURL;
 }

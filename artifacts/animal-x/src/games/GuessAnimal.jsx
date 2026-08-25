@@ -85,7 +85,7 @@ export default function GuessAnimal() {
           setLevel(l => l + 1);
           initRound();
         } else {
-          endGame();
+          endGame(score + roundScore + 100);
         }
       }, 2000);
     } else {
@@ -98,17 +98,17 @@ export default function GuessAnimal() {
     }
   };
 
-  const endGame = async () => {
+  const endGame = async (finalScore = score) => {
     setPlaying(false);
     setWin(true);
     setBlur(0);
     
-    let coins = Math.floor(score / 10);
+    let coins = Math.floor(finalScore / 10);
     
     if (user) {
       try {
         await setDoc(doc(db, "gameScores", "guess_" + user.uid), {
-          gameId: "guess", userId: user.uid, score, level, coins, timestamp: serverTimestamp()
+          gameId: "guess", userId: user.uid, score: finalScore, level, coins, timestamp: serverTimestamp()
         }, { merge: true });
         
         await setDoc(doc(db, "userGameCoins", user.uid), { 
@@ -154,7 +154,7 @@ export default function GuessAnimal() {
             
             <div className="guess-image-wrap">
               <img 
-                src={getAnimalImage({name: animal})} 
+                src={getAnimalImage(animal)} 
                 alt="Guess me" 
                 className="guess-image" 
                 style={{ filter: `blur(${blur}px)` }} 
@@ -163,7 +163,7 @@ export default function GuessAnimal() {
             
             {!playing ? (
               <div style={{fontSize: "1.5rem", fontWeight: "bold", color: "var(--accent)", animation: "letterBounce 0.5s"}}>
-                Correct! It's a {animal}!
+                 Correct! It's a {animal.name}!
               </div>
             ) : (
               <div className="guess-input-wrap">
