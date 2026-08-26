@@ -79,6 +79,9 @@ export default function Profile() {
   const [newImage, setNewImage] = useState(null);
   const [newHabits, setNewHabits] = useState("");
   const [newLifespan, setNewLifespan] = useState("");
+  const [newSpeed, setNewSpeed] = useState("");
+  const [newWeight, setNewWeight] = useState("");
+  const [newLength, setNewLength] = useState("");
   const [newCountry, setNewCountry] = useState("");
   const [customAnimals, setCustomAnimalsState] = useState(() =>
     getCustomAnimals(),
@@ -791,6 +794,8 @@ export default function Profile() {
                 onChange={(e) => setNewLifespan(e.target.value)}
               />
             </div>
+
+        
             <div className="aef-row">
               <label>Country / Region</label>
               <input
