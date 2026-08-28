@@ -39,13 +39,16 @@ export default function Ads() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+    const [adVideo, setAdVideo] = useState(null);
+  const [adVideoPreview, setAdVideoPreview] = useState("");
+
 
   if (!user) {
     return (
       <div className="ads-page">
         <div className="ads-login-prompt">
           <div style={{ fontSize: 64 }}>📢</div>
-          <h2>Advertise on WildLingo</h2>
+          <h2>Advertise on WildSphere</h2>
           <p>Reach millions of wildlife lovers. Login to create your first ad.</p>
           <Link href="/auth" className="auth-btn" style={{ textDecoration:"none", display:"inline-block", marginTop:16 }}>
             🔑 Login to Continue
@@ -111,7 +114,7 @@ export default function Ads() {
   return (
     <div className="ads-page">
       <div className="ads-header">
-        <h1 className="page-title">📢 Advertise on WildLingo</h1>
+        <h1 className="page-title">📢 Advertise on WildSphere</h1>
         <p className="page-subtitle">Reach {(2000000).toLocaleString()}+ wildlife enthusiasts worldwide</p>
       </div>
 
@@ -168,6 +171,28 @@ export default function Ads() {
               </>
             )}
           </div>
+
+            <div className="ad-field" style={{ marginTop: '12px', marginBottom: '12px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: '#9ca3af', marginBottom: '6px' }}>Ad Video *</label>
+              <input 
+                type="file" 
+                accept="video/*" 
+                style={{ width: '100%', padding: '8px', background: '#1f2937', color: '#fff', borderRadius: '8px', border: '1px solid #374151' }}
+                onChange={e => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    setAdVideo(file);
+                    setAdVideoPreview(URL.createObjectURL(file));
+                  }
+                }} 
+              />
+              {adVideoPreview && (
+                <div style={{ marginTop: '10px' }}>
+                  <video src={adVideoPreview} controls style={{ width: '100%', maxHeight: '180px', borderRadius: '8px', background: '#000' }} />
+                </div>
+              )}
+            </div>
+    
           <button className="auth-btn" style={{ marginTop: 16 }}
             disabled={!form.title.trim() || !form.description.trim()}
             onClick={() => setStep(2)}>

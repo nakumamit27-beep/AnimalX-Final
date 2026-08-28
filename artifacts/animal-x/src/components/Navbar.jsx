@@ -75,10 +75,10 @@ export default function Navbar() {
           className="brand-link"
           onClick={handleLogoTap}
           style={{ background: "none", border: "none", cursor: "pointer" }}
-          title="WildLingo (tap 7x for admin)"
+          title="WildSphere (tap 7x for admin)"
         >
           <span className="brand-icon">🦁</span>
-          <span className="brand-name">WildLingo</span>
+          <span className="brand-name">WildSphere</span>
         </button>
 
         <form className="topbar-search" onSubmit={submitSearch} role="search">
@@ -144,7 +144,7 @@ export default function Navbar() {
 
             {panelTab === "broadcast" && (
               <div className="admin-panel-body">
-                <p className="admin-panel-hint">Send a message to all WildLingo users instantly.</p>
+                <p className="admin-panel-hint">Send a message to all WildSphere users instantly.</p>
                 <textarea
                   className="broadcast-input"
                   rows={3}

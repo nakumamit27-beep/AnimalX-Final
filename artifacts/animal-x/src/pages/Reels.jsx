@@ -133,7 +133,7 @@ export default function Reels() {
   }
 
   async function handleShare(reel) {
-    const text = `${reel.title} WildLingo Wildlife\n#wildlifeapp`;
+    const text = `${reel.title} WildSphere Wildlife\n#wildlifeapp`;
     if (navigator.share) {
       try { await navigator.share({ title: reel.title, text, url: window.location.href }); return; } catch {}
     }
@@ -145,7 +145,12 @@ export default function Reels() {
 
   async function handleDeleteReel(reelId) {
     if (!window.confirm("Delete this reel?")) return;
-    try { await deleteDoc(doc(db, "reels", reelId)); } catch (e) { alert(e.message); }
+    try { await deleteDoc(doc(db, "reels", reelId));
+    try {
+      if (user?.uid) {
+        await updateDoc(doc(db, "users", user.uid), { reelsCount: increment(-1), postsCount: increment(-1) });
+      }
+    } catch (e) { console.error("Error decrementing count:", e); } } catch (e) { alert(e.message); }
   }
 
   function handleFollowToggle(targetUserId) {

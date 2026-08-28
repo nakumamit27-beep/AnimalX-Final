@@ -1,7 +1,7 @@
-/* Import WildLingo Design System — provides Tailwind v4, tw-animate-css, component sources, and the full token theme */
+/* Import WildSphere Design System — provides Tailwind v4, tw-animate-css, component sources, and the full token theme */
 @import "@workspace/animal-x-ds/styles.css";
 
-/* ── WildLingo is dark-first: override the design system's light-mode :root defaults ── */
+/* ── WildSphere is dark-first: override the design system's light-mode :root defaults ── */
 :root {
   --background: 222 47% 7%;
   --foreground: 210 40% 95%;

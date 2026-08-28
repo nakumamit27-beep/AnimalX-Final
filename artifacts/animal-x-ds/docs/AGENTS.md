@@ -1,4 +1,4 @@
-# WildLingo Design System design system
+# WildSphere Design System design system
 
 This package defines the visual language for the project. Use it whenever you
 build or restyle UI so every surface looks like the same product. It is a real

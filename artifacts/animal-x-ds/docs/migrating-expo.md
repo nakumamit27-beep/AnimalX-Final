@@ -1,4 +1,4 @@
-# Migrating Expo UI to WildLingo Design System
+# Migrating Expo UI to WildSphere Design System
 
 Read `artifacts/animal-x-ds/docs/AGENTS.md` and
 `artifacts/animal-x-ds/docs/consuming-expo.md` first. Use this guide

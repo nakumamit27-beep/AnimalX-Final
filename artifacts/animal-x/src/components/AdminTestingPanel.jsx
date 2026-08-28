@@ -120,7 +120,7 @@ export default function AdminTestingPanel({ open, onClose }) {
         savedReels: JSON.parse(localStorage.getItem("ax_saved_reels") || "{}"),
       }
     };
-    downloadJSON(backupData, `wildlingo-backup-${new Date().toISOString().slice(0,10)}.json`);
+    downloadJSON(backupData, `wildsphere-backup-${new Date().toISOString().slice(0,10)}.json`);
     showToast("📦 Backup downloaded!");
   }
 
@@ -188,7 +188,7 @@ export default function AdminTestingPanel({ open, onClose }) {
           <div className="atp-header-icon">🧪</div>
           <div>
             <div className="atp-header-title">Admin Testing Panel</div>
-            <div className="atp-header-sub">Super Admin · WildLingo v2.5</div>
+            <div className="atp-header-sub">Super Admin · WildSphere v2.5</div>
           </div>
           <button className="atp-close" onClick={onClose}>✕</button>
         </div>

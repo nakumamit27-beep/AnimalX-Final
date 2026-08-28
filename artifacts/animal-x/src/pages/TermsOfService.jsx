@@ -8,14 +8,14 @@ export default function TermsOfService() {
         <button className="policy-back" onClick={() => navigate(-1)}>← Back</button>
         <div className="policy-header-icon">📄</div>
         <h1 className="policy-title">Terms of Service</h1>
-        <p className="policy-subtitle">Last updated: June 2026 · WildLingo v2.5</p>
+        <p className="policy-subtitle">Last updated: June 2026 · WildSphere v2.5</p>
       </div>
 
       <div className="policy-body">
 
         <div className="policy-section">
           <h2>1. Acceptance of Terms</h2>
-          <p>By accessing or using <strong>WildLingo</strong>, you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not use the app. These Terms apply to all users, visitors, and contributors of WildLingo.</p>
+          <p>By accessing or using <strong>WildSphere</strong>, you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not use the app. These Terms apply to all users, visitors, and contributors of WildSphere.</p>
           <div className="policy-card blue">
             <p><strong>Age requirement:</strong> You must be at least <strong>13 years old</strong> to create an account. Users under 18 require parental consent.</p>
           </div>
@@ -75,16 +75,16 @@ export default function TermsOfService() {
               <li><strong>Severe violation:</strong> Immediate permanent account ban</li>
             </ul>
           </div>
-          <p>WildLingo reserves the right to remove any content and suspend or terminate any account at our discretion, with or without prior notice, for violations of these Terms.</p>
+          <p>WildSphere reserves the right to remove any content and suspend or terminate any account at our discretion, with or without prior notice, for violations of these Terms.</p>
         </div>
 
         <div className="policy-section">
           <h2>6. Content Ownership & Licence</h2>
           <ul className="policy-list">
-            <li>You retain ownership of content you upload to WildLingo</li>
-            <li>By uploading content, you grant WildLingo a worldwide, non-exclusive, royalty-free licence to display and distribute your content on the platform</li>
+            <li>You retain ownership of content you upload to WildSphere</li>
+            <li>By uploading content, you grant WildSphere a worldwide, non-exclusive, royalty-free licence to display and distribute your content on the platform</li>
             <li>You confirm you have the right to upload all content you post (no copyright infringement)</li>
-            <li>WildLingo's own content, design, and branding remain our intellectual property</li>
+            <li>WildSphere's own content, design, and branding remain our intellectual property</li>
           </ul>
         </div>
 
@@ -93,20 +93,20 @@ export default function TermsOfService() {
           <ul className="policy-list">
             <li>Advertisements must be wildlife-related and comply with all content guidelines</li>
             <li>Payments are non-refundable once an ad campaign is activated</li>
-            <li>WildLingo reserves the right to reject any advertisement that violates our policies</li>
-            <li>Ad placement and timing are at WildLingo's discretion</li>
+            <li>WildSphere reserves the right to reject any advertisement that violates our policies</li>
+            <li>Ad placement and timing are at WildSphere's discretion</li>
           </ul>
         </div>
 
         <div className="policy-section">
           <h2>8. Disclaimers & Limitation of Liability</h2>
-          <p>WildLingo is provided "as is" without warranty of any kind. We do not guarantee:</p>
+          <p>WildSphere is provided "as is" without warranty of any kind. We do not guarantee:</p>
           <ul className="policy-list">
             <li>Uninterrupted or error-free service</li>
             <li>The accuracy of all wildlife information presented</li>
             <li>The availability of any specific feature at any time</li>
           </ul>
-          <p>To the maximum extent permitted by law, WildLingo shall not be liable for any indirect, incidental, or consequential damages arising from your use of the app.</p>
+          <p>To the maximum extent permitted by law, WildSphere shall not be liable for any indirect, incidental, or consequential damages arising from your use of the app.</p>
         </div>
 
         <div className="policy-section">
@@ -116,7 +116,7 @@ export default function TermsOfService() {
 
         <div className="policy-section">
           <h2>10. Changes to Terms</h2>
-          <p>We reserve the right to modify these Terms at any time. We will notify users of material changes via in-app notifications. Continued use of WildLingo after changes constitutes acceptance.</p>
+          <p>We reserve the right to modify these Terms at any time. We will notify users of material changes via in-app notifications. Continued use of WildSphere after changes constitutes acceptance.</p>
         </div>
 
         <div className="policy-section">
@@ -128,7 +128,7 @@ export default function TermsOfService() {
         </div>
 
         <div className="policy-footer-note">
-          © 2026 WildLingo · All rights reserved
+          © 2026 WildSphere · All rights reserved
         </div>
       </div>
     </div>

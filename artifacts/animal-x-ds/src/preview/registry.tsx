@@ -75,15 +75,15 @@ export type NavGroup = {
 };
 
 export const DESIGN_SYSTEM = {
-  title: 'WildLingo Design System',
+  title: 'WildSphere Design System',
   description:
-    'The visual language of WildLingo — dark deep-navy surfaces, vivid wildlife-green accents, Inter typography, and card-based layouts built for immersive wildlife exploration.',
+    'The visual language of WildSphere — dark deep-navy surfaces, vivid wildlife-green accents, Inter typography, and card-based layouts built for immersive wildlife exploration.',
 } as const;
 
 export const OVERVIEW_ENTRY: PreviewEntry = {
   id: 'overview',
   name: 'Overview',
-  description: 'The visual foundations and principles that shape WildLingo.',
+  description: 'The visual foundations and principles that shape WildSphere.',
   Page: OverviewPage,
 };
 

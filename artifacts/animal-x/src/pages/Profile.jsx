@@ -213,7 +213,7 @@ export default function Profile() {
       <div className="profile-page profile-empty">
         <div className="profile-empty-card">
           <div className="profile-empty-icon">👤</div>
-          <h2>Welcome to WildLingo</h2>
+          <h2>Welcome to WildSphere</h2>
           <p>Login or sign up to create your wildlife creator profile.</p>
           <Link href="/auth" className="btn-primary">
             Login / Sign Up
@@ -533,7 +533,7 @@ export default function Profile() {
                       1. Data Privacy & Security
                     </h4>
                     <p className="text-[11px] text-gray-600 leading-relaxed">
-                      WildLingo securely stores your personal details (Gmail,
+                      WildSphere securely stores your personal details (Gmail,
                       Profile Data) and location permissions on Firebase
                       Encrypted Servers. Your data is strictly confidential and
                       is never shared with any third-party applications.
@@ -581,7 +581,7 @@ export default function Profile() {
                   </div>
 
                   <p className="text-[10px] text-gray-400 text-center pt-2 border-t border-gray-200/50 block w-full">
-                    Last Updated: May 2026 • WildLingo Team
+                    Last Updated: May 2026 • WildSphere Team
                   </p>
                 </div>
               </div>

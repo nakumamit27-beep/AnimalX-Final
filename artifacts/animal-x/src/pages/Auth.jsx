@@ -74,7 +74,7 @@ export default function Auth() {
         <div className="auth-avatar-circle">🦁</div>
         <h2 className="auth-title">{mode === "login" ? "Sign In" : "Create Account"}</h2>
         <p className="auth-subtitle">
-          {mode === "login" ? "Welcome back to WildLingo" : "Join the wildlife community"}
+          {mode === "login" ? "Welcome back to WildSphere" : "Join the wildlife community"}
         </p>
 
         <div className="auth-tabs">

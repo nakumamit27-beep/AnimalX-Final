@@ -1,4 +1,4 @@
-# Consuming WildLingo Design System in web apps
+# Consuming WildSphere Design System in web apps
 
 Read `artifacts/animal-x-ds/docs/AGENTS.md` first. This guide covers
 React/Vite and other shadcn/Tailwind web consumers. If the app already contains

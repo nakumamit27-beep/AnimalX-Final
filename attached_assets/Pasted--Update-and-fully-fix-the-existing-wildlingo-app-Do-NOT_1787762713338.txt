@@ -1,0 +1,327 @@
+
+Update and fully fix the existing wildlingo app. Do NOT create a new app or duplicate existing systems. Inspect the current code, Firebase collections, components, routes and handlers first, then fix the existing implementation.
+1. RUN ADVERTISEMENT — VIDEO UPLOAD + PAYMENT + ADMIN APPROVAL
+The current "Run Advertisement" system is incomplete.
+Creator / Business Advertisement Form
+When a Creator or Business creates an advertisement:
+• Add a clearly visible Video Upload option in the Advertisement Details section.
+• Allow uploading an advertisement video from mobile.
+• Show video preview before submission.
+• Store the uploaded video using the existing Firebase/storage system.
+• Do NOT require duplicate uploads.
+• Keep existing image/link fields working.
+• Validate video format and reasonable file size.
+• Show upload progress.
+• Do not allow Submit until required advertisement information and payment requirements are complete.
+Payment workflow
+After the advertiser completes payment:
+Create/maintain an advertisement record containing:
+• advertiser user ID
+• advertiser name
+• advertiser type: Creator / Business
+• ad title
+• description
+• website/link
+• uploaded video URL/storage reference
+• payment method
+• payment/transaction ID
+• payment amount
+• payment status
+• submitted date
+• approval status
+• admin review status
+The advertiser should see a clear status such as:
+Payment Submitted → Waiting for Admin Approval → Approved / Rejected
+Do not mark an advertisement as approved automatically just because the user submitted payment details.
+
+───
+
+2. ADMIN ADVERTISEMENT APPROVAL
+Fix the Admin Dashboard.
+When someone pays and submits an advertisement, the complete advertisement data must appear in the Admin Dashboard.
+Admin must be able to see:
+• Advertiser name
+• Creator/Business type
+• Email/user ID
+• Ad title
+• Description
+• Advertisement video preview
+• Website/link
+• Payment method
+• Transaction ID
+• Payment amount
+• Payment screenshot if available
+• Submission date
+• Current payment status
+• Current approval status
+Add working buttons:
+✅ Approve Advertisement
+❌ Reject Advertisement
+Admin approval must actually update Firebase.
+When approved:
+• Advertisement status becomes approved
+• Advertiser receives an approved status
+• The uploaded advertisement video becomes eligible to appear in the advertisement system
+• Keep all payment and approval records
+• Do not duplicate advertisements
+When rejected:
+• Save rejection status
+• Keep the submission history
+• Do not display the rejected advertisement in the public feed
+Make sure the Admin Dashboard refreshes correctly and newly submitted paid advertisements appear without requiring a manual app restart.
+
+───
+
+3. REELS — REMOVE BLACK/EMPTY SCREENS
+There is currently a black/blank screen appearing between Reels.
+Fix the Reels feed completely.
+• Never show a black blank Reel between real Reels.
+• Never show an empty advertisement slot as a black screen.
+• If there is no approved advertisement available, simply continue to the next Reel.
+• Only display advertisements that are actually approved by Admin and have a valid video.
+• Do not create fake/placeholder ads.
+• Do not insert broken video elements.
+• Fix Reel loading/unloading logic.
+• Fix video autoplay/pause behavior.
+• Make vertical swipe transitions smooth.
+• Preload the next Reel when possible.
+• Show a proper loading indicator while a real Reel is loading.
+• If a video fails to load, automatically skip it instead of showing a permanent black screen.
+• Keep normal Reel videos working exactly as before.
+The Reels feed must contain only:
+Valid Reel → optional approved advertisement → Valid Reel
+Never:
+Reel → black screen → Reel
+
+───
+
+4. BLUE TICK / VERIFIED BADGE
+The Admin profile screenshot shows:
+Give Blue Tick
+but the button is currently not working.
+Fix it.
+When Admin clicks Give Blue Tick:
+• Update the selected user's Firebase profile.
+• Set the user's verification/blue-tick field correctly.
+• Save it permanently.
+• Immediately update the profile UI.
+• Show the blue verification badge beside the username everywhere appropriate.
+• The badge must remain after logout/login and app restart.
+Also make Remove Blue Tick work.
+Do not create a second verification system. Reuse the existing Firebase user/profile structure.
+
+───
+
+5. REEL COUNT BUG AFTER DELETION
+There is a bug where a user uploads Reels, deletes a Reel, but the Reel count on their profile does not decrease.
+Fix this completely.
+When a Reel is deleted:
+• Delete/mark the Reel correctly in Firebase.
+• Remove it from the user's Reel list/count.
+• Recalculate the user's Reel count from the actual existing Reel records.
+• Update the profile immediately.
+• Update followers/profile pages if the deleted Reel was visible there.
+• Update dashboard analytics.
+• Do not leave deleted Reel IDs counted anywhere.
+• Make sure deleting multiple Reels works correctly.
+The displayed count must always equal the actual number of active Reels belonging to that user.
+
+───
+
+6. INSTAGRAM-LIKE STORIES
+The current Story upload is not working. Fix the existing Story system.
+Users should be able to:
+• Upload a photo Story.
+• Upload a video Story.
+• Add Story from Profile.
+• Add Story from the appropriate existing Reel/Profile interface if already supported.
+• Preview the Story before publishing.
+• Upload using the existing Firebase/storage system.
+• Save Story metadata in Firebase.
+• Show Stories at the top of the appropriate feed/profile area.
+Stories should work similar to Instagram:
+• Circular profile image with Story ring.
+• Unseen Story ring.
+• Seen Story ring.
+• Tap a user's Story to open it.
+• Automatically advance to the next Story.
+• Previous/next navigation.
+• Pause/resume.
+• Video playback.
+• Story progress bars.
+• Close button.
+• Show username/profile.
+• Expire Stories automatically after 24 hours.
+• Do not show expired Stories.
+• Allow the owner to delete their Story.
+• Save Story views.
+Story views
+When another user opens a Story:
+• Record the viewer ID.
+• Record view timestamp.
+• Prevent duplicate view counts from repeatedly increasing incorrectly.
+• Story owner should be able to see Story viewers, similar to Instagram.
+Make Story upload and viewing fully functional on mobile.
+
+───
+
+7. DASHBOARD — FAST AND ACCURATE ANALYTICS
+The dashboard must work reliably and load quickly.
+Display real Firebase data, not fake/demo numbers.
+At minimum show:
+• Total users
+• Total Reels
+• Total Stories
+• Total views
+• Total likes
+• Total comments
+• Total followers
+• Advertisement submissions
+• Paid advertisements
+• Pending advertisements
+• Approved advertisements
+• Rejected advertisements
+• Advertisement revenue/payment records where applicable
+• Blue-tick/verified users
+• Active creators
+• Business advertisers
+Content analytics
+For each Reel/content item show:
+• Views
+• Likes
+• Comments
+• Shares if available
+• Saves if available
+• Upload date
+• Creator
+• Category
+Make dashboard numbers update correctly when:
+• Reel is uploaded
+• Reel is deleted
+• Story is uploaded
+• Story expires
+• Views increase
+• Likes increase
+• Comments increase
+• Advertisement is submitted
+• Payment is submitted
+• Advertisement is approved/rejected
+Do not calculate everything repeatedly on every render if it causes slow performance.
+Use efficient Firebase queries and existing indexes where appropriate.
+
+───
+
+8. REAL-TIME / FAST UPDATES
+The app should feel fast.
+Use the existing Firebase setup and optimize:
+• loading states
+• caching
+• pagination
+• lazy loading
+• Firebase listeners only where necessary
+• cleanup of listeners
+• image/video loading
+• Reel preloading
+• dashboard queries
+Avoid unnecessary Firebase reads.
+Do not create duplicate Firebase configurations or duplicate collections.
+
+───
+
+9. IMPORTANT DATA SAFETY
+Do NOT delete existing user data.
+Do NOT delete existing Reels.
+Do NOT delete existing payments.
+Do NOT delete existing followers.
+Do NOT delete existing Stories unless they are intentionally expired/deleted.
+Do NOT replace the current Firebase database.
+Reuse the existing:
+• Firebase configuration
+• authentication
+• users
+• Reels
+• Stories
+• advertisements
+• payments
+• profiles
+• followers
+• analytics
+Only add missing fields/indexes/collections if genuinely required.
+Use backward-compatible defaults for old records that do not have the new fields.
+
+───
+
+10. MOBILE UI
+All fixes must work on mobile screens.
+Test responsive layouts around:
+• 360px
+• 375px
+• 390px
+• 412px
+• 430px
+Fix:
+• buttons going off-screen
+• overlapping buttons
+• text overflow
+• video overflow
+• bottom navigation overlap
+• admin controls
+• advertisement forms
+• Story viewer
+• Story upload
+• dashboard cards
+• profile statistics
+Keep the existing Likely Animal design system.
+
+───
+
+11. NAVIGATION — KEEP CURRENT STRUCTURE
+IMPORTANT:
+The bottom navigation must remain:
+Home | Animals | Reels | Travel | Map | Profile
+Do NOT put Games back into bottom navigation.
+Games must remain accessible from:
+Profile → Games
+and Games should stay beside:
+Help & Support
+Do NOT remove Travel.
+Do NOT change the functionality of:
+• Home
+• Animals
+• Reels
+• Travel
+• Map
+• Profile
+
+───
+
+12. FINAL TESTING
+Before finishing:
+1. Inspect all existing advertisement code.
+2. Inspect Firebase advertisement/payment records.
+3. Inspect Admin Dashboard.
+4. Inspect Reels feed.
+5. Inspect Reel deletion/count logic.
+6. Inspect Blue Tick logic.
+7. Inspect Story upload/view/delete/expiry logic.
+8. Inspect Dashboard analytics.
+9. Fix all broken handlers.
+10. Fix React errors.
+11. Fix TypeScript errors.
+12. Fix Firebase errors.
+13. Fix Vite/build errors.
+Then test these complete flows:
+Advertisement
+Create Ad → Upload Video → Submit → Payment → Firebase record → Admin sees complete record → Admin Approves → Ad becomes eligible → Ad plays correctly in approved ad placement.
+Reel
+Upload Reel → Reel appears → Views count → Delete Reel → Reel disappears → Profile Reel count decreases correctly → Dashboard updates.
+Blue Tick
+Admin → User Profile → Give Blue Tick → Firebase updates → Badge appears → Logout/Login → Badge remains.
+Story
+Upload Story → Firebase upload → Story appears → Other user opens Story → View recorded → Story progresses → Story expires after 24 hours.
+Dashboard
+Open Dashboard → Real data loads quickly → Upload/delete/view/approve actions update the correct statistics.
+Reels
+Swipe through many Reels continuously and confirm there are NO black, empty, broken or placeholder screens.
+Finally run the complete project build and fix ALL React, TypeScript, Firebase, Vite and runtime errors.
+Do not finish by saying something is complete if it is only UI. Every feature above must actually work end-to-end with the existing Firebase backend.

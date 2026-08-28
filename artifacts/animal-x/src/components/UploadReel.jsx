@@ -132,7 +132,7 @@ export default function UploadReel({ onClose, onUploaded }) {
 
       const isWildlife = checkModeration(form.title, form.description, form.hashtags);
       if (!isWildlife) {
-        setWarning("⚠️ Your title and description don't contain recognisable wildlife content. WildLingo only allows wildlife, nature, and animal-related reels.");
+        setWarning("⚠️ Your title and description don't contain recognisable wildlife content. WildSphere only allows wildlife, nature, and animal-related reels.");
         return;
       }
       setWarning(null);
