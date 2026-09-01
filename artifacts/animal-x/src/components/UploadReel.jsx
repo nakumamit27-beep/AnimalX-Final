@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { collection, addDoc, serverTimestamp, doc, setDoc, increment } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
+import { uploadToCloudinary } from "../utils/cloudinary";
 
 const CATEGORIES = ["Mammals", "Birds", "Aquatic", "Reptiles", "Small Creatures", "Trees", "Mountains", "Sea", "Desert"];
 
@@ -102,23 +103,6 @@ export default function UploadReel({ onClose, onUploaded }) {
     setError(null);
   }
 
-  async function uploadToStorage(file, contentType) {
-    const res = await fetch("/api/storage/uploads/request-url", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: file.name, size: file.size, contentType }),
-    });
-    if (!res.ok) throw new Error("Failed to get upload URL");
-    const { uploadURL, objectPath } = await res.json();
-    const uploadRes = await fetch(uploadURL, {
-      method: "PUT",
-      headers: { "Content-Type": contentType },
-      body: file,
-    });
-    if (!uploadRes.ok) throw new Error("Upload failed");
-    return objectPath;
-  }
-
   async function goNext() {
     setError(null);
     if (step === 1) {
@@ -160,60 +144,79 @@ export default function UploadReel({ onClose, onUploaded }) {
   }
 
   async function handleSubmit() {
-    if (!user) { alert("Please login first."); return; }
-    setUploading(true);
-    setError(null);
-    setProgress(10);
-    try {
-      const strikeInfo = await getStrikeInfo(user.uid);
-      if (strikeInfo.banned && strikeInfo.banExpiry > Date.now()) {
-        const days = Math.ceil((strikeInfo.banExpiry - Date.now()) / 86400000);
-        setBanned(true);
-        setError(`Upload access is banned for ${days} more day(s).`);
-        setUploading(false);
-        return;
-      }
-
-      let videoUrl = null;
-      let thumbnailUrl = null;
-
-      setProgress(20);
-      videoUrl = await uploadToStorage(videoFile, videoFile.type);
-      setProgress(70);
-
-      if (thumbnailFile) {
-        thumbnailUrl = await uploadToStorage(thumbnailFile, thumbnailFile.type);
-        setProgress(85);
-      }
-
-      const reelData = {
-        title: form.title.trim(),
-        desc: form.description.trim(),
-        hashtags: form.hashtags.trim(),
-        category: form.category,
-        location: form.location.trim() || null,
-        videoUrl,
-        thumbnailUrl: thumbnailUrl || null,
-        userId: user.uid,
-        username: profile?.username || user.name || user.email?.split("@")[0],
-        userVerified: profile?.manualVerified || false,
-        userAvatar: profile?.avatar || null,
-        likes: 0, views: 0, comments: 0, shares: 0,
-        createdAt: serverTimestamp(),
-        type: "live",
-        moderated: true,
-        copyrightProtected: true,
-      };
-
-      await addDoc(collection(db, "reels"), reelData);
-      await setDoc(doc(db, "users", user.uid), { reels: increment(1) }, { merge: true });
-      setProgress(100);
-      onUploaded?.();
-    } catch (e) {
-      setError("Upload failed: " + e.message);
-      setUploading(false);
-    }
+  if (!user) {
+    alert("Please login first.");
+    return;
   }
+
+  setUploading(true);
+  setError(null);
+  setProgress(10);
+
+  try {
+        let videoUrl = null;
+    let thumbnailUrl = null;
+    let publicId = null;
+     let thumbnailPublicId = null;
+
+     // 1. Cloudinary Direct Upload
+     const uploadRes = await uploadToCloudinary(videoFile, {
+       onProgress: (value) => setProgress(10 + Math.round(value * 0.6)),
+     });
+     videoUrl = uploadRes.url;
+     publicId = uploadRes.publicId;
+     setProgress(70);
+
+    if (thumbnailFile) {
+       const thumbRes = await uploadToCloudinary(thumbnailFile, {
+         onProgress: (value) => setProgress(70 + Math.round(value * 0.2)),
+       });
+       thumbnailUrl = thumbRes.url;
+       // Keep the thumbnail public id separately; deleting a reel must not
+       // accidentally delete the video with the image id.
+       thumbnailPublicId = thumbRes.publicId;
+      setProgress(85);
+    }
+
+    // 2. Direct Firestore Entry
+    const reelData = {
+      title: form.title.trim(),
+      desc: form.description.trim(),
+      hashtags: form.hashtags.trim(),
+      category: form.category,
+      location: form.location.trim() || null,
+      videoUrl,
+      publicId,
+      thumbnailPublicId: thumbnailPublicId || null,
+      thumbnailUrl: thumbnailUrl || null,
+      userId: user.uid,
+      username: profile?.username || profile?.name || user?.displayName || user?.name || user?.email?.split('@')[0] || "User",
+       userVerified: !!(profile?.manualVerified || profile?.verified || profile?.isVerified || (profile?.followers || 0) >= 100000),
+       userAvatar: profile?.photo || profile?.avatar || null,
+      likes: 0,
+      views: 0,
+      comments: 0,
+      shares: 0,
+      createdAt: serverTimestamp(),
+      type: "live",
+      moderated: true,
+      copyrightProtected: true,
+    };
+
+
+    await addDoc(collection(db, "reels"), reelData);
+
+    setProgress(100);
+    setUploading(false);
+    if (onUploaded) onUploaded();
+    if (onClose) onClose();
+
+  } catch (e) {
+    console.error("Upload error:", e);
+    setError("Upload failed: " + e.message);
+    setUploading(false);
+  }
+}
 
   return (
     <div className="upload-backdrop" style={{ display: "flex", alignItems: "center", justifyContents: "center", padding: "12px", zIndex: 9999 }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>

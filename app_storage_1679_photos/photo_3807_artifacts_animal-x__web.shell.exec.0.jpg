@@ -1,0 +1,1143 @@
+
+> @workspace/animal-x@0.0.0 dev /home/runner/workspace/artifacts/animal-x
+> vite --config vite.config.ts --host 0.0.0.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J
+  [32m[1mVITE[22m v7.3.1[39m  [2mready in [0m[1m1705[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m23592[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.24.0.2:[1m23592[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:39:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:39:11 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x2)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:39:14 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x3)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:39:17 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x4)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:39:20 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x5)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:39:22 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x6)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:39:24 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x7)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:39:29 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x8)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:42:05 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x9)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:42:08 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x10)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:42:11 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x11)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:42:13 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x12)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:42:14 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x13)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:42:17 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x14)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:55:51 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x15)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:55:55 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x16)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:55:57 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x17)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:56:00 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x18)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:56:09 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x19)[39m
+[replit-cartographer] Error processing /home/runner/workspace/artifacts/animal-x/src/components/AnimalCard.jsx: SyntaxError: Unexpected reserved word 'await'. (90:16)
+    at constructor (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:365:19)
+    at TypeScriptParserMixin.raise (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:6599:19)
+    at TypeScriptParserMixin.checkReservedWord (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12231:12)
+    at TypeScriptParserMixin.checkReservedWord (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9310:13)
+    at TypeScriptParserMixin.parseIdentifierName (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12211:12)
+    at TypeScriptParserMixin.parseIdentifier (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12181:23)
+    at TypeScriptParserMixin.parseExprAtom (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:11416:27)
+    at TypeScriptParserMixin.parseExprAtom (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:4764:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:11081:23)
+    at TypeScriptParserMixin.parseUpdate (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:11066:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:11046:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9837:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10899:61)
+    at TypeScriptParserMixin.parseExprOps (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10904:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10881:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10831:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9786:20)
+    at /home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10800:39
+    at TypeScriptParserMixin.allowInAnd (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12421:16)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10800:17)
+    at TypeScriptParserMixin.parseVar (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13384:91)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13230:10)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9408:31)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12851:23)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13297:10)
+    at TypeScriptParserMixin.parseFunctionBody (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12100:24)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12086:10)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9172:18)
+    at /home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13445:12
+    at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12403:14)
+    at TypeScriptParserMixin.parseFunction (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13444:10)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13907:19)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9402:18)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13828:25)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9385:20)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12878:27)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12612:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:14488:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10126:18) {
+  code: [32m'BABEL_PARSER_SYNTAX_ERROR'[39m,
+  reasonCode: [32m'UnexpectedReservedWord'[39m,
+  loc: Position { line: [33m90[39m, column: [33m16[39m, index: [33m2882[39m },
+  pos: [33m2882[39m,
+  syntaxPlugin: [90mundefined[39m
+}
+[2m9:56:30 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: /home/runner/workspace/artifacts/animal-x/src/components/AnimalCard.jsx: Unexpected reserved word 'await'. (90:16)
+
+[0m [90m 88 |[39m   }
+ [90m 89 |[39m
+[31m[1m>[22m[39m[90m 90 |[39m     [36mconst[39m res [33m=[39m [36mawait[39m fetch([32m'https://api.cloudinary.com/v1_1/x1ekanir/image/upload'[39m[33m,[39m {
+ [90m    |[39m                 [31m[1m^[22m[39m
+ [90m 91 |[39m       method[33m:[39m [32m'POST'[39m[33m,[39m
+ [90m 92 |[39m       body[33m:[39m formData
+ [90m 93 |[39m     })[33m;[39m[0m
+  Plugin: [35mvite:react-babel[39m
+  File: [36m/home/runner/workspace/artifacts/animal-x/src/components/AnimalCard.jsx[39m:90:16
+[33m  88 |    }
+  89 |  
+  90 |      const res = await fetch('https://api.cloudinary.com/v1_1/x1ekanir/image/upload', {
+     |                  ^
+  91 |        method: 'POST',
+  92 |        body: formData[39m
+[replit-cartographer] Error processing /home/runner/workspace/artifacts/animal-x/src/components/AnimalCard.jsx: SyntaxError: Unexpected reserved word 'await'. (90:16)
+    at constructor (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:365:19)
+    at TypeScriptParserMixin.raise (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:6599:19)
+    at TypeScriptParserMixin.checkReservedWord (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12231:12)
+    at TypeScriptParserMixin.checkReservedWord (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9310:13)
+    at TypeScriptParserMixin.parseIdentifierName (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12211:12)
+    at TypeScriptParserMixin.parseIdentifier (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12181:23)
+    at TypeScriptParserMixin.parseExprAtom (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:11416:27)
+    at TypeScriptParserMixin.parseExprAtom (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:4764:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:11081:23)
+    at TypeScriptParserMixin.parseUpdate (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:11066:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:11046:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9837:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10899:61)
+    at TypeScriptParserMixin.parseExprOps (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10904:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10881:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10831:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9786:20)
+    at /home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10800:39
+    at TypeScriptParserMixin.allowInAnd (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12421:16)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10800:17)
+    at TypeScriptParserMixin.parseVar (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13384:91)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13230:10)
+    at TypeScriptParserMixin.parseVarStatement (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9408:31)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12851:23)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseStatementListItem (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12747:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13316:61)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseBlock (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13297:10)
+    at TypeScriptParserMixin.parseFunctionBody (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12100:24)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12086:10)
+    at TypeScriptParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9172:18)
+    at /home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13445:12
+    at TypeScriptParserMixin.withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12403:14)
+    at TypeScriptParserMixin.parseFunction (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13444:10)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13907:19)
+    at TypeScriptParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9402:18)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13828:25)
+    at TypeScriptParserMixin.parseExport (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9385:20)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12878:27)
+    at TypeScriptParserMixin.parseStatementContent (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:9508:18)
+    at TypeScriptParserMixin.parseStatementLike (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12767:17)
+    at TypeScriptParserMixin.parseModuleItem (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12744:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13316:36)
+    at TypeScriptParserMixin.parseBlockBody (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:13309:10)
+    at TypeScriptParserMixin.parseProgram (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12622:10)
+    at TypeScriptParserMixin.parseTopLevel (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:12612:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:14488:25)
+    at TypeScriptParserMixin.parse (/home/runner/workspace/node_modules/[4m.pnpm[24m/@babel+parser@7.29.0/node_modules/[4m@babel/parser[24m/lib/index.js:10126:18) {
+  code: [32m'BABEL_PARSER_SYNTAX_ERROR'[39m,
+  reasonCode: [32m'UnexpectedReservedWord'[39m,
+  loc: Position { line: [33m90[39m, column: [33m16[39m, index: [33m2882[39m },
+  pos: [33m2882[39m,
+  syntaxPlugin: [90mundefined[39m
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:56:30 AM[22m [31m[1m[vite][22m[39m [31mInternal server error: /home/runner/workspace/artifacts/animal-x/src/components/AnimalCard.jsx: Unexpected reserved word 'await'. (90:16)
+
+[0m [90m 88 |[31m   }
+ [90m 89 |[31m
+[31m[1m>[22m[31m[90m 90 |[31m     [36mconst[31m res [33m=[31m [36mawait[31m fetch([32m'https://api.cloudinary.com/v1_1/x1ekanir/image/upload'[31m[33m,[31m {
+ [90m    |[31m                 [31m[1m^[22m[31m
+ [90m 91 |[31m       method[33m:[31m [32m'POST'[31m[33m,[31m
+ [90m 92 |[31m       body[33m:[31m formData
+ [90m 93 |[31m     })[33m;[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36m/home/runner/workspace/artifacts/animal-x/src/components/AnimalCard.jsx[39m:90:16
+[33m  88 |    }
+  89 |  
+  90 |      const res = await fetch('https://api.cloudinary.com/v1_1/x1ekanir/image/upload', {
+     |                  ^
+  91 |        method: 'POST',
+  92 |        body: formData[39m
+      at constructor (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:365:19)
+      at JSXParserMixin.raise (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:6599:19)
+      at JSXParserMixin.checkReservedWord (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12231:12)
+      at JSXParserMixin.parseIdentifierName (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12211:12)
+      at JSXParserMixin.parseIdentifier (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12181:23)
+      at JSXParserMixin.parseExprAtom (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:11416:27)
+      at JSXParserMixin.parseExprAtom (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:11081:23)
+      at JSXParserMixin.parseUpdate (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:10899:61)
+      at JSXParserMixin.parseExprOps (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:10831:21)
+      at /home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:10800:39
+      at JSXParserMixin.allowInAnd (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12421:16)
+      at JSXParserMixin.parseMaybeAssignAllowIn (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:10800:17)
+      at JSXParserMixin.parseVar (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:13384:91)
+      at JSXParserMixin.parseVarStatement (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:13230:10)
+      at JSXParserMixin.parseStatementContent (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12851:23)
+      at JSXParserMixin.parseStatementLike (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12767:17)
+      at JSXParserMixin.parseStatementListItem (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12747:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:13316:61)
+      at JSXParserMixin.parseBlockBody (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:13309:10)
+      at JSXParserMixin.parseBlock (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:13297:10)
+      at JSXParserMixin.parseFunctionBody (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12100:24)
+      at JSXParserMixin.parseFunctionBodyAndFinish (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12086:10)
+      at /home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:13445:12
+      at JSXParserMixin.withSmartMixTopicForbiddingContext (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12403:14)
+      at JSXParserMixin.parseFunction (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:13444:10)
+      at JSXParserMixin.parseExportDefaultExpression (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:13907:19)
+      at JSXParserMixin.parseExport (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:13828:25)
+      at JSXParserMixin.parseStatementContent (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12878:27)
+      at JSXParserMixin.parseStatementLike (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12767:17)
+      at JSXParserMixin.parseModuleItem (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12744:17)
+      at JSXParserMixin.parseBlockOrModuleBlockBody (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:13316:36)
+      at JSXParserMixin.parseBlockBody (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:13309:10)
+      at JSXParserMixin.parseProgram (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12622:10)
+      at JSXParserMixin.parseTopLevel (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:12612:25)
+      at JSXParserMixin.parse (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:14488:25)
+      at parse (/home/runner/workspace/node_modules/.pnpm/@babel+parser@7.29.0/node_modules/@babel/parser/lib/index.js:14522:38)
+      at parser (/home/runner/workspace/node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/lib/parser/index.js:41:34)
+      at parser.next (<anonymous>)
+      at normalizeFile (/home/runner/workspace/node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+      at normalizeFile.next (<anonymous>)
+      at run (/home/runner/workspace/node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/lib/transformation/index.js:22:50)
+      at run.next (<anonymous>)
+      at transform (/home/runner/workspace/node_modules/.pnpm/@babel+core@7.29.0/node_modules/@babel/core/lib/transform.js:22:33)
+      at transform.next (<anonymous>)
+      at step (/home/runner/workspace/node_modules/.pnpm/gensync@1.0.0-beta.2/node_modules/gensync/index.js:261:32)
+[RUNTIME_ERROR]{"type":"runtime-error","timestamp":1788083791250,"name":"Error","message":"Failed to fetch dynamically imported module: https://63328590-7f8f-49cc-8901-5f5ee2f4f50a-00-14lsa885vtmb9.worf.replit.dev/src/pages/Animals.jsx?t=1788082937401","stack":"    at file:///home/runner/workspace/node_modules/.pnpm/@replit+vite-plugin-runtime-error-modal@0.0.6/node_modules/@replit/vite-plugin-runtime-error-modal/dist/index.mjs:60:37\n    at emitCustomEvent (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:20443:39)\n    at WebSocket$2.<anonymous> (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:20453:4)\n    at WebSocket$2.emit (node:events:508:28)\n    at Receiver$2.receiverOnMessage (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:19601:22)\n    at Receiver$2.emit (node:events:508:28)\n    at Receiver$2.dataMessage (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:17812:11)\n    at Receiver$2.getData (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:17747:9)\n    at Receiver$2.startLoop (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:17572:12)\n    at Receiver$2._write (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:17519:9)\n    at writeOrBuffer (node:internal/streams/writable:570:12)\n    at _write (node:internal/streams/writable:499:10)\n    at Writable.write (node:internal/streams/writable:508:10)\n    at Socket.socketOnData (file:///home/runner/workspace/node_modules/.pnpm/vite@7.3.1_@types+node@25.3.5_jiti@2.6.1_lightningcss@1.31.1_tsx@4.21.0_yaml@2.8.2/node_modules/vite/dist/node/chunks/config.js:19689:37)\n    at Socket.emit (node:events:508:28)\n    at addChunk (node:internal/streams/readable:559:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)\n    at Readable.push (node:internal/streams/readable:390:5)\n    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:59:01 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:59:04 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x2)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:59:07 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x3)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:59:10 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x4)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:59:12 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x5)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:59:15 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x6)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:59:19 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x7)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:59:22 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x8)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:59:24 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x9)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:59:27 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x10)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m9:59:33 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x11)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m10:01:25 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x12)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m10:01:28 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x13)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m10:01:31 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x14)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m10:01:34 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x15)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m10:01:36 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x16)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m10:01:38 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x17)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m10:01:40 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/AnimalCard.jsx[22m [33m(x18)[39m

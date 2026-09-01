@@ -1,5 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
+import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import {
@@ -13,6 +15,8 @@ import BlueTick from "../components/BlueTick";
 import StoriesRow from "../components/StoriesRow";
 import UploadStory from "../components/UploadStory";
 import CreatorDashboard from "../components/CreatorDashboard";
+import { uploadToCloudinary } from "../utils/cloudinary";
+import { resolveMediaUrl } from "../utils/firebaseUpload";
 
 function formatCount(n) {
   if (n == null || isNaN(n)) return "0";
@@ -65,13 +69,118 @@ export default function Profile() {
   const [tab, setTab] = useState("grid");
   const [storyUploadOpen, setStoryUploadOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [followersInput, setFollowersInput] = useState("");
-  const [postsInput, setPostsInput] = useState("");
-  const [reelsInput, setReelsInput] = useState("");
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [nameInput, setNameInput] = useState(user?.name || "");
   const photoFileRef = useRef(null);
+    // 📍 Live Real-time Counters Hook
+  const [realStats, setRealStats] = useState({
+    postsCount: 0,
+    reelsCount: 0,
+    followersCount: 0,
+    followingCount: 0
+  });
+
+    useEffect(() => {
+    const targetUid = user?.uid || profile?.uid || profile?.id;
+    if (!targetUid) return;
+    let canonicalFollowerIds = new Set();
+    let legacyFollowerIds = new Set();
+    let canonicalFollowingIds = new Set();
+    let legacyFollowingIds = new Set();
+    const refreshRelationshipCounts = () => {
+      setRealStats((prev) => ({
+        ...prev,
+        followersCount: new Set([...canonicalFollowerIds, ...legacyFollowerIds]).size,
+        followingCount: new Set([...canonicalFollowingIds, ...legacyFollowingIds]).size,
+      }));
+    };
+
+    const reelsQuery = query(collection(db, "reels"), where("userId", "==", targetUid));
+    const unsubReels = onSnapshot(reelsQuery, (snap) => {
+      setRealStats((prev) => ({ ...prev, reelsCount: snap.size }));
+    }, () => {});
+
+    const postsQuery = query(collection(db, "posts"), where("userId", "==", targetUid));
+    const unsubPosts = onSnapshot(postsQuery, (snap) => {
+      setRealStats((prev) => ({ ...prev, postsCount: snap.size }));
+    }, () => {});
+
+    const followersQuery = query(collection(db, "followers"), where("targetUserId", "==", targetUid));
+    const unsubFollowers = onSnapshot(followersQuery, (snap) => {
+      canonicalFollowerIds = new Set(snap.docs.map((item) => item.data()?.followerUserId || item.data()?.followerId || item.id));
+      refreshRelationshipCounts();
+    }, () => {});
+
+    const followingQuery = query(collection(db, "followers"), where("followerUserId", "==", targetUid));
+    const unsubFollowing = onSnapshot(followingQuery, (snap) => {
+      canonicalFollowingIds = new Set(snap.docs.map((item) => item.data()?.targetUserId || item.data()?.followingId || item.id));
+      refreshRelationshipCounts();
+    }, () => {});
+
+    const unsubLegacyFollowers = onSnapshot(doc(db, "userFollowers", targetUid), (snap) => {
+      legacyFollowerIds = new Set(Object.keys(snap.data()?.followers || {}));
+      refreshRelationshipCounts();
+    }, () => {});
+    const unsubLegacyFollowing = onSnapshot(doc(db, "userFollowing", targetUid), (snap) => {
+      legacyFollowingIds = new Set(Object.keys(snap.data()?.following || {}));
+      refreshRelationshipCounts();
+    }, () => {});
+
+    return () => {
+      unsubReels();
+      unsubPosts();
+      unsubFollowers();
+      unsubFollowing();
+      unsubLegacyFollowers();
+      unsubLegacyFollowing();
+    };
+  }, [user?.uid, profile?.uid, profile?.id]);
+    // --- Pending Ads Admin Setup ---
+  const [pendingAds, setPendingAds] = useState([]);
+
+  useEffect(() => {
+    if (!adminMode) return;
+    const q = query(
+      collection(db, "advertisements"),
+      where("status", "==", "pending")
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const ads = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setPendingAds(ads);
+    });
+    return () => unsubscribe();
+  }, [adminMode]);
+
+  const handleApproveAd = async (adId) => {
+    try {
+      await updateDoc(doc(db, "advertisements", adId), {
+        status: "approved",
+        approved: true,
+        approvedAt: new Date(),
+      });
+      alert("✅ Ad Approved! Ab yeh Reels Feed me Live dikhega.");
+    } catch (e) {
+      console.error(e);
+      alert("Approval fail hua!");
+    }
+  };
+
+  const handleRejectAd = async (adId) => {
+    if (window.confirm("Reject this advertisement? Its payment and review history will be kept.")) {
+      try {
+        await updateDoc(doc(db, "advertisements", adId), {
+          status: "rejected",
+          approved: false,
+          rejectedAt: serverTimestamp(),
+          rejectionReason: "Rejected during admin review",
+        });
+        alert("Advertisement rejected.");
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
 
   // Add new animal form state
   const [newName, setNewName] = useState("");
@@ -110,60 +219,26 @@ export default function Profile() {
     }
   }
 
-  async function handleProfilePhoto(e) {
+  async function handleProfileImage(e, field) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      alert("Profile images must be under 15 MB.");
+      return;
+    }
     try {
-      const res = await fetch("/api/storage/uploads/request-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: `profile_${user.uid}_${Date.now()}`,
-          size: file.size,
-          contentType: file.type,
-        }),
+      const uploaded = await uploadToCloudinary(file);
+      await updateProfile({
+        [field]: uploaded.url,
+        [`${field}PublicId`]: uploaded.publicId,
       });
-      if (res.ok) {
-        const { uploadURL, objectPath } = await res.json();
-        await fetch(uploadURL, {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file,
-        });
-        updateProfile({ photo: objectPath });
-        return;
-      }
-    } catch {}
-    const dataUrl = await fileToDataURL(file);
-    updateProfile({ photo: dataUrl });
-  }
-
-  async function handleCoverPhoto(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const res = await fetch("/api/storage/uploads/request-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: `cover_${user.uid}_${Date.now()}`,
-          size: file.size,
-          contentType: file.type,
-        }),
-      });
-      if (res.ok) {
-        const { uploadURL, objectPath } = await res.json();
-        await fetch(uploadURL, {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file,
-        });
-        updateProfile({ cover: objectPath });
-        return;
-      }
-    } catch {}
-    const dataUrl = await fileToDataURL(file);
-    updateProfile({ cover: dataUrl });
+    } catch (error) {
+      alert(error.message || "Image upload failed.");
+    }
   }
 
   function saveProfileEdits() {
@@ -234,25 +309,6 @@ export default function Profile() {
     );
   });
 
-  function applyFollowers() {
-    const n = parseCount(followersInput);
-    updateProfile({ followers: n });
-    setFollowersInput("");
-  }
-  function applyPosts() {
-    const n = parseInt(postsInput, 10);
-    if (!isNaN(n)) {
-      updateProfile({ posts: n });
-      setPostsInput("");
-    }
-  }
-  function applyReels() {
-    const n = parseInt(reelsInput, 10);
-    if (!isNaN(n)) {
-      updateProfile({ reels: n });
-      setReelsInput("");
-    }
-  }
   function copyText(text) {
     navigator.clipboard?.writeText(text).then(
       () => alert(`Copied: ${text}`),
@@ -263,14 +319,9 @@ export default function Profile() {
   const displayName = profile.name || user.name || user.email;
   const initial = (displayName || "U")[0].toUpperCase();
 
-  function resolveUrl(path) {
-    if (!path) return null;
-    if (path.startsWith("data:") || path.startsWith("http")) return path;
-    return `/api/storage${path}`;
-  }
-
-  const photoUrl = resolveUrl(profile.photo);
-  const coverUrl = resolveUrl(profile.cover);
+  const photoUrl = resolveMediaUrl(profile.photo);
+  const coverUrl = resolveMediaUrl(profile.cover);
+  const liveVerified = isVerified || realStats.followersCount >= 100000;
 
   return (
     <div className="profile-page">
@@ -287,7 +338,7 @@ export default function Profile() {
             type="file"
             accept="image/*"
             style={{ display: "none" }}
-            onChange={handleCoverPhoto}
+            onChange={(e) => handleProfileImage(e, "cover")}
           />
         </label>
       </div>
@@ -312,25 +363,31 @@ export default function Profile() {
         <div className="profile-id">
           <h1 className="profile-name">
             {displayName}
-            {isVerified && <BlueTick />}
+            {liveVerified && <BlueTick />}
           </h1>
-          <p className="profile-email">{user.email}</p>
+                    {/* Sirf logged in profile owner ko hi apna email dikhega */}
+          {(user?.uid === profile?.uid || user?.uid === profile?.id) && (
+            <p className="profile-email" style={{ color: '#9ca3af', fontSize: '13px', marginTop: '4px' }}>
+              🔒 {user?.email}
+            </p>
+          )}
         </div>
       </div>
-      <div className="profile-stats">
-        <div className="stat-block">
-          <div className="stat-num">{formatCount(profile.posts)}</div>
-          <div className="stat-lbl">Posts</div>
-        </div>
-        <div className="stat-block">
-          <div className="stat-num">{formatCount(profile.followers)}</div>
-          <div className="stat-lbl">Followers</div>
-        </div>
-        <div className="stat-block">
-          <div className="stat-num">{formatCount(profile.following)}</div>
-          <div className="stat-lbl">Following</div>
-        </div>
-      </div>
+                <div className="profile-stats">
+            <div className="stat-block">
+              <div className="stat-num">{formatCount(realStats.postsCount)}</div>
+              <div className="stat-lbl">Posts</div>
+            </div>
+            <div className="stat-block">
+              <div className="stat-num">{formatCount(realStats.followersCount)}</div>
+              <div className="stat-lbl">Followers</div>
+            </div>
+            <div className="stat-block">
+              <div className="stat-num">{formatCount(realStats.followingCount)}</div>
+              <div className="stat-lbl">Following</div>
+            </div>
+          </div>
+
       <div className="profile-quick-stats">
         <button
           className="qs-pill qs-edit"
@@ -612,7 +669,7 @@ export default function Profile() {
                   type="file"
                   accept="image/*"
                   style={{ display: "none" }}
-                  onChange={handleProfilePhoto}
+                  onChange={(e) => handleProfileImage(e, "photo")}
                 />
               </label>
               {profile.photo && (
@@ -648,12 +705,9 @@ export default function Profile() {
           </div>
         </div>
       )}
-      {/* Stories row */}
+{/* Stories row */}
       <div className="profile-stories-section">
         <StoriesRow />
-        <button className="profile-add-story-btn" onClick={() => setStoryUploadOpen(true)}>
-          + Add Story
-        </button>
       </div>
 
       <div className="profile-tabs">
@@ -687,7 +741,7 @@ export default function Profile() {
           <div className="profile-grid-empty">
             <div style={{ fontSize: 48 }}>📷</div>
             <p>
-              You have {profile.posts || 0} posts. Upload from the Reels page → Posts tab.
+              You have {realStats.postsCount} posts. Upload from the Reels page → Posts tab.
             </p>
             <Link href="/reels" className="btn-primary" style={{ marginTop: 12 }}>
               Go to Posts
@@ -697,7 +751,7 @@ export default function Profile() {
         {tab === "reels" && (
           <div className="profile-grid-empty">
             <div style={{ fontSize: 48 }}>🎬</div>
-            <p>You have {profile.reels || 0} reels. Upload from the Reels page.</p>
+            <p>You have {realStats.reelsCount} reels. Upload from the Reels page.</p>
             <Link href="/reels" className="btn-primary" style={{ marginTop: 12 }}>
               Upload a Reel
             </Link>
@@ -727,6 +781,55 @@ export default function Profile() {
             <button className="qs-pill" onClick={lockAdminMode}>
               Lock Admin Mode
             </button>
+          </div>
+                    {/* --- Pending Ads Queue Section --- */}
+          <div className="admin-section" style={{ border: "1px solid rgba(245, 158, 11, 0.4)", background: "rgba(17, 24, 39, 0.8)", padding: "12px", borderRadius: "10px", marginBottom: "16px" }}>
+            <h3 style={{ color: "#f59e0b", margin: 0, fontWeight: "bold" }}>📢 Pending Advertisements ({pendingAds.length})</h3>
+            {pendingAds.length === 0 ? (
+              <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "6px" }}>Koi pending ad review ke liye nahi hai.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px" }}>
+                {pendingAds.map((ad) => (
+                  <div key={ad.id} style={{ padding: "10px", borderRadius: "8px", border: "1px solid #374151", background: "#1f2937", fontSize: "12px", color: "#e5e7eb" }}>
+                    <div><strong>User:</strong> {ad.username || ad.userId}</div>
+                    <div><strong>Title:</strong> {ad.title || "No Title"}</div>
+                    <div><strong>Plan:</strong> {ad.plan} ({ad.views || 2000} Views - ₹{ad.price})</div>
+                    <div><strong>Txn ID:</strong> <span style={{ color: "#f59e0b", fontFamily: "monospace" }}>{ad.txnId}</span></div>
+
+                    {ad.screenshotPath && (
+                      <div style={{ marginTop: "6px" }}>
+                        <span style={{ color: "#9ca3af", display: "block" }}>Payment Proof:</span>
+                        <a href={ad.screenshotPath} target="_blank" rel="noreferrer">
+                          <img src={ad.screenshotPath} alt="Proof" style={{ width: "90px", height: "90px", objectFit: "cover", borderRadius: "6px", border: "1px solid #4b5563" }} />
+                        </a>
+                      </div>
+                    )}
+
+                    {ad.adVideoUrl && (
+                      <div style={{ marginTop: "6px" }}>
+                        <span style={{ color: "#9ca3af", display: "block" }}>Ad Video Preview:</span>
+                        <video src={ad.adVideoUrl} controls style={{ width: "160px", height: "100px", borderRadius: "6px", background: "#000" }} />
+                      </div>
+                    )}
+
+                    <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+                      <button
+                        onClick={() => handleApproveAd(ad.id)}
+                        style={{ padding: "6px 12px", background: "#16a34a", color: "#fff", fontWeight: "bold", borderRadius: "6px", border: "none", cursor: "pointer" }}
+                      >
+                        ✅ Approve Ad
+                      </button>
+                      <button
+                        onClick={() => handleRejectAd(ad.id)}
+                        style={{ padding: "6px 12px", background: "#dc2626", color: "#fff", fontWeight: "bold", borderRadius: "6px", border: "none", cursor: "pointer" }}
+                      >
+                        ❌ Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="admin-section">
@@ -841,74 +944,6 @@ export default function Profile() {
           </div>
 
           <div className="admin-section">
-            <h3>📈 Follower Booster</h3>
-            <div className="admin-row">
-              <input
-                type="text"
-                placeholder="e.g. 50k, 1M, 250000"
-                value={followersInput}
-                onChange={(e) => setFollowersInput(e.target.value)}
-                className="admin-input"
-              />
-              <button className="btn-primary" onClick={applyFollowers}>
-                Set Followers
-              </button>
-            </div>
-            <p className="admin-hint">
-              Current: <b>{formatCount(profile.followers)}</b> · Auto-verifies
-              at 100K.
-            </p>
-
-            <label className="admin-toggle">
-              <input
-                type="checkbox"
-                checked={!!profile.autoGrow}
-                onChange={(e) => updateProfile({ autoGrow: e.target.checked })}
-              />
-              <span>Auto-grow followers (+5–10 per app start)</span>
-            </label>
-
-            <label className="admin-toggle">
-              <input
-                type="checkbox"
-                checked={!!profile.manualVerified}
-                onChange={(e) =>
-                  updateProfile({ manualVerified: e.target.checked })
-                }
-              />
-              <span>🔵 Manual Blue Tick (override)</span>
-            </label>
-          </div>
-
-          <div className="admin-section">
-            <h3>📊 Manual Stats</h3>
-            <div className="admin-row">
-              <input
-                type="number"
-                placeholder="Posts count"
-                value={postsInput}
-                onChange={(e) => setPostsInput(e.target.value)}
-                className="admin-input"
-              />
-              <button className="btn-primary" onClick={applyPosts}>
-                Set Posts
-              </button>
-            </div>
-            <div className="admin-row">
-              <input
-                type="number"
-                placeholder="Reels count"
-                value={reelsInput}
-                onChange={(e) => setReelsInput(e.target.value)}
-                className="admin-input"
-              />
-              <button className="btn-primary" onClick={applyReels}>
-                Set Reels
-              </button>
-            </div>
-          </div>
-
-          <div className="admin-section">
             <h3>👥 User Management</h3>
             <input
               type="search"
@@ -929,13 +964,13 @@ export default function Profile() {
                     <div className="adm-avatar">
                       {(u.name || u.email || "?")[0].toUpperCase()}
                     </div>
-                    <div className="adm-info">
-                      <div className="adm-name">
-                        {u.name || "(no name)"}
-                        {verified && <BlueTick />}
-                      </div>
-                      <div className="adm-email">{u.email}</div>
-                      <div className="adm-uid">UID: {u.uid || "—"}</div>
+                                    <div className="adm-info">
+                  <div className="adm-name">
+                    @{u.username || u.name || u.displayName || "User"}
+                    {verified && <BlueTick />}
+                  </div>
+                  <div className="adm-email">{u.email || "No Email"}</div>
+                  <div className="adm-uid">UID: {u.uid || u.id}</div>
                     </div>
                     <div className="adm-actions">
                       <button
@@ -992,15 +1027,13 @@ function AdminBanPanel() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleBan(action) {
+    async function handleBan(action) {
     if (!uid.trim()) {
       alert("Enter a user UID to " + action);
       return;
     }
     setLoading(true);
     try {
-      const { doc, setDoc, getDoc } = await import("firebase/firestore");
-      const { db } = await import("../utils/firebase");
       if (action === "ban") {
         await setDoc(
           doc(db, "userStrikes", uid.trim()),
@@ -1010,24 +1043,24 @@ function AdminBanPanel() {
             bannedAt: Date.now(),
             strikes: 3,
           },
-          { merge: true },
+          { merge: true }
         );
         await setDoc(
           doc(db, "users", uid.trim()),
           { banned: true },
-          { merge: true },
+          { merge: true }
         );
         setResult({ ok: true, msg: `✅ User ${uid.trim()} banned.` });
       } else if (action === "unban") {
         await setDoc(
           doc(db, "userStrikes", uid.trim()),
           { banned: false, strikes: 0, bannedAt: null },
-          { merge: true },
+          { merge: true }
         );
         await setDoc(
           doc(db, "users", uid.trim()),
           { banned: false },
-          { merge: true },
+          { merge: true }
         );
         setResult({ ok: true, msg: `✅ User ${uid.trim()} unbanned.` });
       } else if (action === "strike") {
@@ -1042,7 +1075,7 @@ function AdminBanPanel() {
             lastStrikeAt: Date.now(),
             lastReason: reason || "Content violation",
           },
-          { merge: true },
+          { merge: true }
         );
         setResult({
           ok: true,
@@ -1050,9 +1083,11 @@ function AdminBanPanel() {
         });
       }
     } catch (e) {
+      console.error("Ban/Strike error:", e);
       setResult({ ok: false, msg: "Error: " + e.message });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (

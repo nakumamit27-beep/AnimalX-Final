@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
+import { uploadToCloudinary } from "../utils/cloudinary";
 
 export default function UploadStory({ onClose, onUploaded }) {
   const { user, profile } = useAuth();
@@ -17,6 +18,11 @@ export default function UploadStory({ onClose, onUploaded }) {
     const f = e.target.files?.[0];
     if (!f) return;
     if (f.size > 100 * 1024 * 1024) { setError("File must be under 100 MB."); return; }
+    if (!f.type.startsWith("image/") && !f.type.startsWith("video/")) {
+      setError("Please select an image or video.");
+      return;
+    }
+    if (preview) URL.revokeObjectURL(preview);
     setFile(f);
     setPreview(URL.createObjectURL(f));
     setError(null);
@@ -25,51 +31,52 @@ export default function UploadStory({ onClose, onUploaded }) {
   const isVideo = file?.type.startsWith("video/");
   const isImage = file?.type.startsWith("image/");
 
-  async function handlePost() {
-    if (!user) { alert("Please login first."); return; }
-    if (!file) { setError("Please select a photo or video."); return; }
-    setUploading(true);
-    setError(null);
+async function handlePost() {
+  if (!user) { alert("Please login first."); return; }
+  if (!file) { setError("Please select a photo or video."); return; }
+
+  setUploading(true);
+  setError(null);
+  setProgress(10);
+
+  try {
     setProgress(10);
+    const uploadRes = await uploadToCloudinary(file, {
+      onProgress: (value) => setProgress(Math.max(10, Math.round(value * 0.8))),
+    });
+    const mediaUrl = uploadRes.url;
+    const publicId = uploadRes.publicId;
+    setProgress(90);
 
-    try {
-      // Upload to Object Storage
-      const res = await fetch("/api/storage/uploads/request-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: `story_${user.uid}_${Date.now()}`, size: file.size, contentType: file.type }),
-      });
-      if (!res.ok) throw new Error("Could not get upload URL");
-      const { uploadURL, objectPath } = await res.json();
-      setProgress(30);
+    const displayName = profile?.name || profile?.username || user.name || user.email?.split("@")[0] || "user";
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
-      await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-      setProgress(80);
+    await addDoc(collection(db, "stories"), {
+  userId: user.uid,
+  username: displayName,
+  userVerified: !!(profile?.manualVerified || profile?.verified || profile?.isVerified || (profile?.followers || 0) >= 100000),
+  userPhoto: profile?.photo || null,
+  userPhotoPublicId: profile?.photoPublicId || null,
+  mediaUrl: mediaUrl,
+  publicId: publicId, // <- Line 76 ke bilkul niche jud gaya
+  mediaType: isVideo ? "video" : "image",
+  caption: caption.trim() || null,
+  createdAt: serverTimestamp(),
+  expiresAt,
+  viewerIds: [],
+  viewCount: 0,
+});
 
-      const displayName = profile?.name || profile?.username || user.name || user.email?.split("@")[0] || "user";
-      const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-
-      await addDoc(collection(db, "stories"), {
-        userId: user.uid,
-        username: displayName,
-        userVerified: profile?.manualVerified || false,
-        userPhoto: profile?.photo || null,
-        mediaUrl: objectPath,
-        mediaType: isVideo ? "video" : "image",
-        caption: caption.trim() || null,
-        createdAt: serverTimestamp(),
-        expiresAt,
-        viewerIds: [],
-        viewCount: 0,
-      });
-
-      setProgress(100);
-      onUploaded?.();
-    } catch (e) {
-      setError("Upload failed: " + e.message);
-      setUploading(false);
-    }
+    setProgress(100);
+    setUploading(false);
+    if (onUploaded) onUploaded();
+    if (onClose) onClose();
+  } catch (e) {
+    console.error("Story Upload Error:", e);
+    setError("Upload failed: " + e.message);
+    setUploading(false);
   }
+}
 
   return (
     <div className="upload-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -117,7 +124,7 @@ export default function UploadStory({ onClose, onUploaded }) {
           {file && (
             <div className="upload-file-chip">
               ✅ {file.name}
-              <button className="upload-file-remove" onClick={() => { setFile(null); setPreview(null); }}>✕</button>
+               <button className="upload-file-remove" onClick={() => { if (preview) URL.revokeObjectURL(preview); setFile(null); setPreview(null); }} disabled={uploading}>✕</button>
             </div>
           )}
 

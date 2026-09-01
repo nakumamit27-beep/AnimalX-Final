@@ -2,13 +2,14 @@ import { useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useSocial } from "../context/SocialContext";
 import { Link } from "wouter";
+import { uploadToCloudinary } from "../utils/cloudinary";
 
 const PLANS = [
-  { id: "starter",  name: "Starter",  price: 149,  usd: 2,   views: "2,000 Views",   color: "#22c55e", desc: "Great for local wildlife pages" },
-  { id: "basic",    name: "Basic",    price: 299,  usd: 4,   views: "5,000 Views",   color: "#3b82f6", desc: "Small creators & communities" },
-  { id: "growth",   name: "Growth",   price: 599,  usd: 7,   views: "15,000 Views",  color: "#a855f7", desc: "Most popular for mid-tier creators", popular: true },
-  { id: "business", name: "Business", price: 1499, usd: 18,  views: "50,000 Views",  color: "#f59e0b", desc: "Wildlife brands & NGOs" },
-  { id: "premium",  name: "Premium",  price: 4999, usd: 60,  views: "250,000 Views", color: "#ef4444", desc: "Maximum reach globally" },
+  { id: "starter",  name: "Starter",  price: 149,  usd: 2,   targetViews: 2000, views: "2,000 Views",   color: "#22c55e", desc: "Great for local wildlife pages" },
+  { id: "basic",    name: "Basic",    price: 299,  usd: 4,   targetViews: 5000, views: "5,000 Views",   color: "#3b82f6", desc: "Small creators & communities" },
+  { id: "growth",   name: "Growth",   price: 599,  usd: 7,   targetViews: 15000, views: "15,000 Views",  color: "#a855f7", desc: "Most popular for mid-tier creators", popular: true },
+  { id: "business", name: "Business", price: 1499, usd: 18, targetViews: 50000, views: "50,000 Views",  color: "#f59e0b", desc: "Wildlife brands & NGOs" },
+  { id: "premium",  name: "Premium",  price: 4999, usd: 60, targetViews: 250000, views: "250,000 Views", color: "#ef4444", desc: "Maximum reach globally" },
 ];
 
 const CATEGORIES = [
@@ -41,6 +42,7 @@ export default function Ads() {
   const [copied, setCopied] = useState(false);
     const [adVideo, setAdVideo] = useState(null);
   const [adVideoPreview, setAdVideoPreview] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
 
 
   if (!user) {
@@ -84,28 +86,61 @@ export default function Ads() {
   const stepLabels = ["Details", "Target", "Plan", "Payment"];
 
   async function handleSubmit() {
+    if (!selectedPlan) { alert("Please select an advertising plan."); return; }
+    if (!adVideo) { alert("Please attach an advertisement video."); setStep(1); return; }
     if (!txnId.trim()) { alert("Please enter your transaction/payment reference."); return; }
     setSubmitting(true);
+    setUploadProgress(0);
     let screenshotPath = null;
-    if (screenshot) {
-      try {
-        const res = await fetch("/api/storage/uploads/request-url", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: screenshot.name, size: screenshot.size, contentType: screenshot.type }),
+    let screenshotPublicId = null;
+    let adVideoUrl = null;
+    let adVideoPublicId = null;
+
+    try {
+      if (screenshot) {
+        const res = await uploadToCloudinary(screenshot, {
+          onProgress: (value) => setUploadProgress(Math.round(value * 0.25)),
         });
-        const { uploadURL, objectPath } = await res.json();
-        await fetch(uploadURL, { method: "PUT", headers: { "Content-Type": screenshot.type }, body: screenshot });
-        screenshotPath = objectPath;
-      } catch {}
+        screenshotPath = res.url;
+        screenshotPublicId = res.publicId;
+      }
+      const res = await uploadToCloudinary(adVideo, {
+        onProgress: (value) => setUploadProgress((screenshot ? 25 : 0) + Math.round(value * (screenshot ? 75 : 100))),
+      });
+      adVideoUrl = res.url;
+      adVideoPublicId = res.publicId;
+      setUploadProgress(100);
+    } catch (e) {
+      console.error("Upload error:", e);
+      setSubmitting(false);
+      alert(e.message || "Cloudinary upload failed.");
+      return;
     }
+
     const ok = await submitAd({
-      ...form, plan: selectedPlan?.id, price: selectedPlan?.price,
-      priceUsd: selectedPlan?.usd, payMethod, txnId: txnId.trim(),
-      screenshotPath, accountType,
-      views: selectedPlan?.views, username: profile?.username || user.name,
-      userId: user.uid,
-    });
+            ...form,
+            // Target Website Link Exact Mapping
+            websiteUrl: form.websiteUrl || "",
+            targetUrl: form.websiteUrl || "",
+            link: form.websiteUrl || "",
+            website: form.websiteUrl || "",
+
+            plan: selectedPlan?.id || "starter",
+            price: selectedPlan?.price || 149,
+             targetViews: selectedPlan?.targetViews || 2000,
+             viewsCount: 0,
+             clicksCount: 0,
+            accountType,
+             txnId: txnId.trim(),
+            screenshotPath,
+             screenshotPublicId,
+            adVideoUrl,
+             adVideoPublicId,
+            status: "pending",
+            approved: false,
+            username: profile?.username || user?.displayName || user?.name || user?.email?.split('@')[0] || "User",
+            userId: user?.uid,
+           });
     setSubmitting(false);
     if (ok) setSubmitted(true);
     else alert("Submission failed. Please try again or email wildlifeanimalfight@gmail.com");
@@ -194,7 +229,7 @@ export default function Ads() {
             </div>
     
           <button className="auth-btn" style={{ marginTop: 16 }}
-            disabled={!form.title.trim() || !form.description.trim()}
+             disabled={!form.title.trim() || !form.description.trim() || !adVideo}
             onClick={() => setStep(2)}>
             Next: Target Audience →
           </button>
@@ -333,7 +368,7 @@ export default function Ads() {
           <div style={{ display:"flex", gap:12, marginTop:24 }}>
             <button className="ads-back-btn" onClick={() => setStep(3)}>← Back</button>
             <button className="auth-btn" onClick={handleSubmit} disabled={submitting || !txnId.trim()}>
-              {submitting ? "Submitting…" : "🚀 Submit Ad"}
+               {submitting ? `Uploading… ${uploadProgress}%` : "🚀 Submit Ad"}
             </button>
           </div>
         </div>

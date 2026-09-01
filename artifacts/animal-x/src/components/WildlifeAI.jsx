@@ -41,7 +41,7 @@ const KB = [
   { p: /blue.*tick|verified|verification|checkmark/i, a: "🔵 **Blue Tick Verification:**\n• **Auto:** Reach 100,000 followers — blue tick granted automatically with a congratulations popup!\n• **Manual:** Admin can grant it directly from the admin panel\n• Blue tick appears on profiles, reels, and search results\n• Once granted, it's permanent unless the account violates guidelines" },
 
   // Profile
-  { p: /profile|edit.*profile|my.*profile|account/i, a: "👤 **Your Profile:**\n1. Tap 👤 **Profile** in the bottom nav\n2. View your posts, reels, followers, following\n3. Tap ✏️ **Edit Profile** to change your name or photo\n4. Tap 📷 cover photo area to update your cover image\n5. Upload profile/cover via Object Storage (cloud) or local fallback" },
+  { p: /profile|edit.*profile|my.*profile|account/i, a: "👤 **Your Profile:**\n1. Tap 👤 **Profile** in the bottom nav\n2. View your posts, reels, followers, following\n3. Tap ✏️ **Edit Profile** to change your name or photo\n4. Tap 📷 cover photo area to update your cover image\n5. Profile and cover images upload directly to Cloudinary and save their permanent secure URL" },
 
   // Stories
   { p: /story|stories|24.*hour/i, a: "🔴 **Stories:**\n• Auto-expire after 24 hours\n• Go to 🎬 Reels → Stories tab\n• Tap ➕ Add Story\n• Choose a photo or short video\n• Viewers can see who viewed your story" },

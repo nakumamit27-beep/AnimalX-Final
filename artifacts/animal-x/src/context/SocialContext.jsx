@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import {
   doc, setDoc, getDoc, collection,
   query, where, onSnapshot, orderBy, limit,
-  serverTimestamp, updateDoc, increment, addDoc,
+  serverTimestamp, updateDoc, increment, addDoc, getDocs,
 } from "firebase/firestore";
 import { ref, onValue, set as rtdbSet, onDisconnect } from "firebase/database";
 import { db, rtdb } from "../utils/firebase";
@@ -225,8 +225,16 @@ export function SocialProvider({ children }) {
   async function submitAd(adData) {
     if (!user?.uid) return false;
     try {
+      const txn = String(adData.txnId || "").trim();
+      if (!txn) return false;
+      const duplicate = await getDocs(query(
+        collection(db, "advertisements"),
+        where("txnId", "==", txn),
+        limit(1),
+      ));
+      if (!duplicate.empty) return false;
       await addDoc(collection(db, "advertisements"), {
-        ...adData, userId: user.uid, userName: user.name || user.email,
+        ...adData, txnId: txn, userId: user.uid, userName: user.name || user.email,
         status: "pending", viewsCount: 0, createdAt: serverTimestamp(),
       });
       return true;

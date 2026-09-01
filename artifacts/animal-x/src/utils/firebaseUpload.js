@@ -98,5 +98,6 @@ export function resolveMediaUrl(path, fallback = null) {
   // Legacy Replit object path
   if (path.startsWith("/objects/")) return `/api/storage/objects/${path.slice("/objects/".length)}`;
   if (path.startsWith("/api/storage")) return path;
+  if (path.startsWith("/")) return `/api/storage${path}`;
   return fallback;
 }

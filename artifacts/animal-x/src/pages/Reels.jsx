@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, Link } from "wouter";
 import {
-  collection, query, orderBy, limit,
-  onSnapshot, doc, getDoc, setDoc, updateDoc, increment, serverTimestamp, addDoc,
-  deleteDoc
+  collection, query, orderBy, limit, where,
+  onSnapshot, doc, updateDoc, increment, deleteDoc
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
@@ -11,6 +10,7 @@ import { useSocial } from "../context/SocialContext";
 import BlueTick from "../components/BlueTick";
 import CommentsPanel from "../components/CommentsPanel";
 import UploadReel from "../components/UploadReel";
+import { resolveMediaUrl } from "../utils/firebaseUpload";
 
 function fmt(n) {
   if (!n) return "0";
@@ -38,7 +38,7 @@ export default function Reels() {
   const [feed, setFeed] = useState([]);
   const [catFilter, setCatFilter] = useState("All");
   const [activeIdx, setActiveIdx] = useState(0);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [commentsReel, setCommentsReel] = useState(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [heartAnims, setHeartAnims] = useState({});
@@ -47,25 +47,80 @@ export default function Reels() {
   });
 
   const [liveLikes, setLiveLikes] = useState({});
+  const [authorProfiles, setAuthorProfiles] = useState({});
+  const [failedMedia, setFailedMedia] = useState({});
   const scrollRef = useRef(null);
   const videoRefs = useRef({});
   const observerRef = useRef(null);
   const lastTapRef = useRef({});
+  const viewedAdsRef = useRef(new Set());
 
   useEffect(() => {
     const q = query(collection(db, "reels"), orderBy("createdAt", "desc"), limit(100));
-    const unsub = onSnapshot(q, snap => {
-      const reels = snap.docs.map(d => ({ id: d.id, ...d.data(), type: "live" }));
-      setLiveReels(reels);
-    }, () => {});
-    return unsub;
+    const adsQ = query(
+      collection(db, "advertisements"),
+      where("status", "in", ["active", "approved"])
+    );
+
+    let reels = [];
+    let ads = [];
+    const merge = () => {
+      const usableAds = ads.filter((ad) => /^https?:\/\//.test(resolveMediaUrl(ad.adVideoUrl || ad.videoUrl) || ""));
+      const merged = [];
+      let adIdx = 0;
+      reels.forEach((reel, index) => {
+        merged.push(reel);
+        if ((index + 1) % 3 === 0 && usableAds[adIdx]) {
+          merged.push(usableAds[adIdx]);
+          adIdx = (adIdx + 1) % usableAds.length;
+        }
+      });
+      setLiveReels(merged.length > 0 ? merged : usableAds);
+    };
+    const unsubReels = onSnapshot(q, (snap) => {
+      reels = snap.docs
+        .map((d) => ({ id: d.id, ...d.data(), type: "live" }))
+        .filter((reel) => /^https?:\/\//.test(resolveMediaUrl(reel.videoUrl) || ""));
+      merge();
+    }, () => setLiveReels([]));
+    const unsubAds = onSnapshot(adsQ, (snap) => {
+      ads = snap.docs.map((d) => ({ id: d.id, ...d.data(), isAd: true, type: "ad" }));
+      merge();
+    }, () => merge());
+
+    return () => {
+      unsubReels();
+      unsubAds();
+    };
   }, []);
 
   useEffect(() => {
-    setFeed(buildFeed(liveReels, catFilter));
+    const userIds = [...new Set(liveReels.map((reel) => reel.userId).filter(Boolean))];
+    const unsubscribers = userIds.map((uid) => onSnapshot(
+      doc(db, "users", uid),
+      (snap) => {
+        if (!snap.exists()) return;
+        setAuthorProfiles((prev) => ({ ...prev, [uid]: snap.data() }));
+      },
+      () => {},
+    ));
+    return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
+  }, [liveReels]);
+
+  useEffect(() => {
+    setFeed(buildFeed(liveReels, catFilter).map((reel) => {
+      const author = authorProfiles[reel.userId];
+      if (!author) return reel;
+      return {
+        ...reel,
+        username: author.username || author.name || reel.username,
+        userAvatar: author.photo || author.avatar || reel.userAvatar,
+        userVerified: !!(author.manualVerified || author.verified || author.isVerified),
+      };
+    }));
     setActiveIdx(0);
     if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: "instant" });
-  }, [liveReels, catFilter]);
+  }, [liveReels, catFilter, authorProfiles]);
 
   useEffect(() => {
     if (!scrollRef.current || feed.length === 0) return;
@@ -77,7 +132,15 @@ export default function Reels() {
           const idx = Number(entry.target.dataset.idx);
           setActiveIdx(idx);
           const reel = feed[idx];
-          if (reel?.id) trackReelView(reel.id);
+                  if (reel?.id) {
+          trackReelView(reel.id);
+
+          // Agar Ad reel hai, toh Real View +1 karega
+          if ((reel.isAd || reel.type === "ad") && !viewedAdsRef.current.has(reel.id)) {
+            viewedAdsRef.current.add(reel.id);
+            handleRealAdView(reel.id);
+          }
+        }
 
           Object.entries(videoRefs.current).forEach(([vi, el]) => {
             if (!el) return;
@@ -103,6 +166,30 @@ export default function Reels() {
     setHeartAnims(h => ({ ...h, [id]: true }));
     setTimeout(() => setHeartAnims(h => ({ ...h, [id]: false })), 800);
   }, []);
+  // Ad Link Click Counter Function
+const handleAdClick = async (adId) => {
+  if (!adId) return;
+  try {
+    const adRef = doc(db, "advertisements", adId);
+    await updateDoc(adRef, {
+      clicksCount: increment(1)
+    });
+  } catch (err) {
+    console.error("Ad click error:", err);
+  }
+};
+  // Real User View Track Handler
+const handleRealAdView = async (adId) => {
+  if (!adId) return;
+  try {
+    const adRef = doc(db, "advertisements", adId);
+    await updateDoc(adRef, {
+      viewsCount: increment(1)
+    });
+  } catch (err) {
+    console.error("Ad view update error:", err);
+  }
+};
 
   async function handleLike(reel) {
     if (!user) { navigate("/auth"); return; }
@@ -143,14 +230,34 @@ export default function Reels() {
     } catch {}
   }
 
-  async function handleDeleteReel(reelId) {
-    if (!window.confirm("Delete this reel?")) return;
-    try { await deleteDoc(doc(db, "reels", reelId));
+  function handleMediaError(reelId, idx) {
+    setFailedMedia((prev) => ({ ...prev, [reelId]: true }));
+    window.setTimeout(() => {
+      const next = scrollRef.current?.querySelector(`[data-idx="${idx + 1}"]`);
+      next?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  }
+
+    async function handleDeleteReel(reelItem) {
+    const reelId = typeof reelItem === "object" ? reelItem.id : reelItem;
+    const isAd = typeof reelItem === "object" && (reelItem.isAd || reelItem.type === "ad");
+
+    if (!window.confirm(isAd ? "Kya aap is Ad ko permanent delete karna chahte hain?" : "Delete this reel?")) return;
+
     try {
-      if (user?.uid) {
-        await updateDoc(doc(db, "users", user.uid), { reelsCount: increment(-1), postsCount: increment(-1) });
+      if (isAd) {
+        // Ads collection se delete karega
+        await deleteDoc(doc(db, "advertisements", reelId));
+        alert("❌ Ad deleted successfully!");
+      } else {
+        // Normal reels collection se delete karega
+        await deleteDoc(doc(db, "reels", reelId));
+        alert("Reel deleted!");
       }
-    } catch (e) { console.error("Error decrementing count:", e); } } catch (e) { alert(e.message); }
+    } catch (e) {
+      console.error("Delete error:", e);
+      alert("Delete failed: " + e.message);
+    }
   }
 
   function handleFollowToggle(targetUserId) {
@@ -200,6 +307,7 @@ export default function Reels() {
             const isAdmin = isSuperAdmin && adminMode;
             const isFollowed = !!following[reel.userId];
             const isActive = idx === activeIdx;
+            const avatarUrl = resolveMediaUrl(reel.userAvatar);
 
             return (
               <div
@@ -210,38 +318,102 @@ export default function Reels() {
                 style={{ height: "100%", width: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
                 <div style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}>
-                  {reel.videoUrl ? (
+                  {(() => {
+                    const mediaUrl = resolveMediaUrl(reel.isAd ? (reel.adVideoUrl || reel.videoUrl) : reel.videoUrl);
+                    const playable = mediaUrl && !failedMedia[reel.id];
+                    return playable ? (
                     <video
                       ref={el => { if (el) videoRefs.current[idx] = el; }}
                       className="reel-video"
-                      src={reel.videoUrl.startsWith('http') ? reel.videoUrl : `/api/storage${reel.videoUrl}`}
+                      src={mediaUrl}
                       loop
                       playsInline
+                      autoPlay={isActive}
                       muted={muted}
+                      preload={isActive ? "auto" : "metadata"}
+                      onError={() => handleMediaError(reel.id, idx)}
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      poster={reel.thumbnailUrl ? (reel.thumbnailUrl.startsWith('http') ? reel.thumbnailUrl : `/api/storage${reel.thumbnailUrl}`) : undefined}
+                      poster={resolveMediaUrl(reel.thumbnailUrl)}
                     />
-                  ) : (
-                    <div className="reel-demo-bg" style={{ width: "100%", height: "100%", background: reel.bg || "linear-gradient(135deg, #0f4c2a, #065f46)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <div className="reel-demo-emoji" style={{ fontSize: "5rem" }}>{reel.emoji || "🦁"}</div>
-                    </div>
-                  )}
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", background: "#111827", color: "#cbd5e1", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 24 }}>
+                        <div>{failedMedia[reel.id] ? "This video is unavailable." : "Video unavailable."}</div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {heartAnims[reel.id] && <div className="reel-heart-burst">❤️</div>}
-                <div className="reel-gradient-overlay" />
-                {reel.sponsored && <div className="reel-sponsored-tag">Sponsored</div>}
+                                  <div className="reel-gradient-overlay" />
+
+                        {/* Target Views Pura Hone Tak Hi #AD Tag Aur Button Dikhega */}
+      {reel.isAd && (reel.viewsCount || reel.views || 0) < (reel.targetViews || 2000) && (
+        <>
+          {/* Top #AD Badge */}
+          <div style={{
+            position: "absolute",
+            top: "60px",
+            left: "12px",
+            background: "#f59e0b",
+            color: "#000000",
+            padding: "4px 10px",
+            borderRadius: "6px",
+            fontWeight: "bold",
+            fontSize: "12px",
+            zIndex: 20
+          }}>
+            📣 #AD
+          </div>
+
+          {/* Bottom Visit Website Button */}
+          <div style={{
+            position: "absolute",
+            bottom: "75px",
+            left: "12px",
+            right: "70px",
+            zIndex: 30
+          }}>
+            <a
+              href={reel.targetUrl || reel.link || reel.website || reel.siteUrl || "https://google.com"}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAdClick(reel.id || reel.adId);
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justify: "space-between",
+                background: "#16a34a",
+                color: "#ffffff",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                fontWeight: "bold",
+                fontSize: "13px",
+                textDecoration: "none",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.6)"
+              }}
+            >
+              <span>🔗 Visit Website / Learn More</span>
+              <span>➔</span>
+            </a>
+          </div>
+        </>
+      )}
 
                 <div className="reel-overlay-bottom">
                   <div className="reel-creator-row">
                     <Link href={`/user/${reel.userId}`} onClick={e => e.stopPropagation()}>
                       <div className="reel-avatar">
-                        {reel.userAvatar || (reel.username?.[0]?.toUpperCase() || "W")}
+                        {avatarUrl
+                          ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} />
+                          : (reel.username?.[0]?.toUpperCase() || "W")}
                       </div>
                     </Link>
                     <div className="reel-creator-info">
                       <Link href={`/user/${reel.userId}`} onClick={e => e.stopPropagation()} className="reel-username-link">
-                        @{reel.username || "wildlifeuser"}
+                        @{reel.username || reel.userDisplayName || user?.displayName || "wildlifeuser"}
                         {reel.userVerified && <BlueTick size={14} />}
                       </Link>
                     </div>
@@ -302,7 +474,7 @@ export default function Reels() {
                       <span className="reel-action-count">Save</span>
                     </button>
 
-                    {reel.videoUrl && (
+                    {resolveMediaUrl(reel.isAd ? (reel.adVideoUrl || reel.videoUrl) : reel.videoUrl) && (
                       <button className="reel-action-btn" onClick={e => { e.stopPropagation(); setMuted(m => !m); }}>
                         <span className="reel-action-icon">{muted ? "🔇" : "🔊"}</span>
                         <span className="reel-action-count">{muted ? "Muted" : "Sound"}</span>
@@ -310,7 +482,7 @@ export default function Reels() {
                     )}
 
                     {(isOwn || isAdmin) && (
-                      <button className="reel-action-btn danger-btn" onClick={e => { e.stopPropagation(); handleDeleteReel(reel.id); }}>
+                      <button className="reel-action-btn danger-btn" onClick={e => { e.stopPropagation(); handleDeleteReel(reel); }}>
                         <span className="reel-action-icon">🗑️</span>
                         <span className="reel-action-count">Delete</span>
                       </button>

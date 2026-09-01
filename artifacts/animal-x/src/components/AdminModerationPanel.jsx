@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, collection, query, where, onSnapshot, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import {
   adminLoadAllModerations, adminRemoveWarning, adminRemoveBan,
@@ -11,6 +11,50 @@ export default function AdminModerationPanel() {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState(null);
+    // --- Pending Ads Admin Setup ---
+  const [pendingAds, setPendingAds] = useState([]);
+
+  useEffect(() => {
+    const q = query(
+      collection(db, "advertisements"),
+      where("status", "==", "pending")
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const ads = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setPendingAds(ads);
+    });
+    return () => unsubscribe();
+  }, []);
+
+    const handleApproveAd = async (adId) => {
+    try {
+      await updateDoc(doc(db, "advertisements", adId), {
+        status: "approved",
+        approved: true,
+        approvedAt: serverTimestamp(),
+      });
+      alert("✅ Ad Approved! Ab yeh Reels Feed me Live dikhega.");
+    } catch (e) {
+      console.error("Approve error:", e);
+      alert("Approval fail hua: " + (e.message || e));
+    }
+  };
+
+  const handleRejectAd = async (adId) => {
+      if (window.confirm("Reject this advertisement? Its payment and review history will be kept.")) {
+      try {
+        await updateDoc(doc(db, "advertisements", adId), {
+          status: "rejected",
+          approved: false,
+          rejectedAt: serverTimestamp(),
+          rejectionReason: "Rejected during admin review",
+        });
+        alert("Advertisement rejected.");
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
 
   /* Blue tick admin */
   const [tickSearch, setTickSearch] = useState("");
@@ -65,6 +109,52 @@ export default function AdminModerationPanel() {
         <button className="mod-refresh" onClick={loadData} disabled={loading}>
           {loading ? "⏳" : "🔄"} Refresh
         </button>
+      </div>
+            {/* --- Pending Ads Approval Queue --- */}
+      <div className="mod-tick-section" style={{ marginTop: "16px", marginBottom: "16px" }}>
+        <div className="mod-tick-title">📢 Pending Advertisements ({pendingAds.length})</div>
+        {pendingAds.length === 0 ? (
+          <div style={{ fontSize: "0.85rem", color: "#6b7280", marginTop: "6px" }}>
+            Koi pending ad review ke liye nahi hai.
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px" }}>
+            {pendingAds.map((ad) => (
+              <div key={ad.id} className="mod-tick-card" style={{ flexDirection: "column", alignItems: "flex-start", gap: "8px" }}>
+                <div><strong>User:</strong> {ad.username || ad.userId}</div>
+                <div><strong>Title:</strong> {ad.title || "No Title"}</div>
+                <div><strong>Plan:</strong> {ad.plan} ({ad.views} Views - ₹{ad.price})</div>
+                <div><strong>Txn ID:</strong> <span style={{ color: "#f59e0b" }}>{ad.txnId}</span></div>
+                <div><strong>Target Link:</strong> <span style={{ color: "#3b82f6" }}>{ad.websiteUrl || ad.targetUrl || ad.link || ad.website || "No Link Attached"}</span></div>
+
+                {ad.screenshotPath && (
+                  <div style={{ marginTop: "4px" }}>
+                    <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>Payment Proof Screenshot:</div>
+                    <a href={ad.screenshotPath} target="_blank" rel="noreferrer">
+                      <img src={ad.screenshotPath} alt="Proof" style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "6px", border: "1px solid #374151" }} />
+                    </a>
+                  </div>
+                )}
+
+                {ad.adVideoUrl && (
+                  <div style={{ marginTop: "4px" }}>
+                    <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>Ad Video Preview:</div>
+                    <video src={ad.adVideoUrl} controls style={{ width: "180px", height: "100px", borderRadius: "6px", background: "#000" }} />
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: "8px", marginTop: "6px" }}>
+                  <button onClick={() => handleApproveAd(ad.id)} className="mod-btn green">
+                    ✅ Approve Ad
+                  </button>
+                  <button onClick={() => handleRejectAd(ad.id)} className="mod-btn red">
+                    ❌ Reject & Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Blue Tick Admin ── */}

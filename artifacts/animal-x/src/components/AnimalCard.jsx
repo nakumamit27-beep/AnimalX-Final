@@ -59,15 +59,31 @@ export default function AnimalCard({ animal }) {
     setEditOpen(false);
   }
 
-  async function handleFile(e) {
+      async function handleFile(e) {
     e.stopPropagation();
     const file = e.target.files?.[0];
     if (!file) return;
     try {
+      setSaving(true);
       const dataUrl = await compressImageFile(file, { maxEdge: 800, quality: 0.82 });
       setFImage(dataUrl);
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'ml_default');
+
+      const res = await fetch('https://api.cloudinary.com/v1_1/x1ekanir/image/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        setFImage(data.secure_url);
+      }
     } catch (err) {
-      alert("Could not process that image. Please try a different photo.");
+      console.error(err);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -113,7 +129,7 @@ export default function AnimalCard({ animal }) {
             <div className="emoji">{emoji}</div>
                   ) : (
           <img 
-            src={animal.imageUrl || imgSrc} 
+            src={fImage || override?.image || animal.image || animal.imageUrl || animal.photoUrl || `https://res.cloudinary.com/x1ekanir/image/upload/${(animal.name || 'animal').toLowerCase().replace(/\s+/g, '_')}.jpg`}
             alt={displayName}
             loading="lazy"
             onError={() => setImgError(true)}

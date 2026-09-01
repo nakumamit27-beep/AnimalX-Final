@@ -3,14 +3,9 @@ import { doc, updateDoc, arrayUnion, increment } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
 import BlueTick from "./BlueTick";
+import { resolveMediaUrl } from "../utils/firebaseUpload";
 
 const STORY_DURATION = 5000; // 5 seconds per story
-
-function resolveUrl(path) {
-  if (!path) return null;
-  if (path.startsWith("data:") || path.startsWith("http")) return path;
-  return `/api/storage${path}`;
-}
 
 function timeAgo(ts) {
   if (!ts) return "";
@@ -36,6 +31,8 @@ export default function StoriesViewer({ storyUsers, myUserId, startUserId, onClo
   const [storyIdx, setStoryIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [mediaError, setMediaError] = useState(false);
 
   const timerRef = useRef(null);
   const startTimeRef = useRef(null);
@@ -62,17 +59,22 @@ export default function StoriesViewer({ storyUsers, myUserId, startUserId, onClo
   const startTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     startTimeRef.current = Date.now() - elapsedRef.current;
+    const duration = currentStory?.mediaType === "video" && videoDuration > 0
+      ? videoDuration * 1000
+      : STORY_DURATION;
     timerRef.current = setInterval(() => {
       const elapsed = Date.now() - startTimeRef.current;
-      const pct = Math.min((elapsed / STORY_DURATION) * 100, 100);
+      const pct = Math.min((elapsed / duration) * 100, 100);
       setProgress(pct);
       if (pct >= 100) goNext();
     }, 50);
-  }, [userIdx, storyIdx]);
+  }, [userIdx, storyIdx, currentStory?.mediaType, videoDuration]);
 
   useEffect(() => {
     elapsedRef.current = 0;
     setProgress(0);
+    setVideoDuration(0);
+    setMediaError(false);
     if (!paused) startTimer();
     return () => clearInterval(timerRef.current);
   }, [userIdx, storyIdx]);
@@ -84,7 +86,7 @@ export default function StoriesViewer({ storyUsers, myUserId, startUserId, onClo
     } else {
       startTimer();
     }
-  }, [paused]);
+  }, [paused, startTimer]);
 
   function goNext() {
     clearInterval(timerRef.current);
@@ -122,9 +124,9 @@ export default function StoriesViewer({ storyUsers, myUserId, startUserId, onClo
     return () => document.removeEventListener("keydown", onKey);
   }, [storyIdx, userIdx]);
 
-  if (!currentStory) { onClose(); return null; }
+  if (!currentStory) return null;
 
-  const mediaUrl = resolveUrl(currentStory.mediaUrl);
+  const mediaUrl = resolveMediaUrl(currentStory.mediaUrl);
   const isVideo = currentStory.mediaType === "video";
   const photoUrl = resolveUrl(currentUserData?.userPhoto || null);
 
@@ -174,7 +176,7 @@ export default function StoriesViewer({ storyUsers, myUserId, startUserId, onClo
 
         {/* Media */}
         <div className="sv-media-wrap">
-          {isVideo && mediaUrl ? (
+          {isVideo && mediaUrl && !mediaError ? (
             <video
               ref={videoRef}
               key={currentStory.id}
@@ -183,7 +185,13 @@ export default function StoriesViewer({ storyUsers, myUserId, startUserId, onClo
               autoPlay
               playsInline
               loop={false}
-              muted={false}
+               muted
+               preload="metadata"
+               onLoadedMetadata={(event) => {
+                 const duration = event.currentTarget.duration;
+                 if (Number.isFinite(duration) && duration > 0) setVideoDuration(duration);
+               }}
+               onError={() => setMediaError(true)}
               onEnded={goNext}
             />
           ) : mediaUrl ? (

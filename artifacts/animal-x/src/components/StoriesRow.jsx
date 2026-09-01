@@ -6,12 +6,7 @@ import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
 import StoriesViewer from "./StoriesViewer";
 import UploadStory from "./UploadStory";
-
-function resolveUrl(path) {
-  if (!path) return null;
-  if (path.startsWith("data:") || path.startsWith("http")) return path;
-  return `/api/storage${path}`;
-}
+import { resolveMediaUrl } from "../utils/firebaseUpload";
 
 export default function StoriesRow() {
   const { user, profile } = useAuth();
@@ -67,7 +62,7 @@ export default function StoriesRow() {
             <div className={`story-bubble ${hasMyStory ? "has-story" : "add-story"}`}>
               {hasMyStory ? (
                 (() => {
-                  const photoUrl = resolveUrl(profile?.photo || null);
+                   const photoUrl = resolveMediaUrl(profile?.photo || null);
                   return photoUrl
                     ? <img src={photoUrl} alt="My story" className="story-bubble-img" />
                     : <div className="story-bubble-initial">{(profile?.name || user.email || "U")[0].toUpperCase()}</div>;
@@ -86,7 +81,7 @@ export default function StoriesRow() {
         {storyUserList
           .filter(su => !user || su.userId !== user.uid)
           .map(su => {
-            const photoUrl = resolveUrl(su.userPhoto || null);
+             const photoUrl = resolveMediaUrl(su.userPhoto || null);
             const viewed = su.stories.every(s => s.viewerIds?.includes(user?.uid));
             return (
               <div key={su.userId} className="story-bubble-wrap" onClick={() => openViewer(su.userId)}>
