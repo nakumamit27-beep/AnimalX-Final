@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, Link } from "wouter";
 import {
   collection, query, orderBy, limit, where,
-  onSnapshot, doc, updateDoc, increment, deleteDoc
+  onSnapshot, doc, updateDoc, increment, deleteDoc,
+  addDoc, serverTimestamp,getDoc
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
@@ -31,7 +32,7 @@ function buildFeed(liveReels, catFilter) {
 
 export default function Reels() {
   const [, navigate] = useLocation();
-  const { user, adminMode, isSuperAdmin } = useAuth();
+  const { user, profile, adminMode, isSuperAdmin } = useAuth();
   const { likedReels, likeReel, following, followUser, unfollowUser, trackReelView } = useSocial();
 
   const [liveReels, setLiveReels] = useState([]);
@@ -54,6 +55,26 @@ export default function Reels() {
   const observerRef = useRef(null);
   const lastTapRef = useRef({});
   const viewedAdsRef = useRef(new Set());
+    useEffect(() => {
+    const handleJump = (e) => {
+      const targetId = e.detail;
+      if (!targetId || !feed.length) return;
+      const idx = feed.findIndex((r) => (r.id || r._id) === targetId);
+      if (idx !== -1) {
+        setActiveIdx(idx);
+        const container = scrollRef.current;
+        if (container) {
+          container.scrollTo({
+            top: idx * window.innerHeight,
+            behavior: "smooth",
+          });
+        }
+      }
+    };
+
+    window.addEventListener("jump-reel", handleJump);
+    return () => window.removeEventListener("jump-reel", handleJump);
+  }, [feed]);
 
   useEffect(() => {
     const q = query(collection(db, "reels"), orderBy("createdAt", "desc"), limit(100));
@@ -70,7 +91,7 @@ export default function Reels() {
       let adIdx = 0;
       reels.forEach((reel, index) => {
         merged.push(reel);
-        if ((index + 1) % 3 === 0 && usableAds[adIdx]) {
+        if ((index + 1) % 15 === 0 && usableAds[adIdx]) {
           merged.push(usableAds[adIdx]);
           adIdx = (adIdx + 1) % usableAds.length;
         }
@@ -118,8 +139,7 @@ export default function Reels() {
         userVerified: !!(author.manualVerified || author.verified || author.isVerified),
       };
     }));
-    setActiveIdx(0);
-    if (scrollRef.current) scrollRef.current.scrollTo({ top: 0, behavior: "instant" });
+        // Like ya liveReels update hone par scroll top reset nahi hoga
   }, [liveReels, catFilter, authorProfiles]);
 
   useEffect(() => {
@@ -191,12 +211,75 @@ const handleRealAdView = async (adId) => {
   }
 };
 
-  async function handleLike(reel) {
+    async function handleLike(reel) {
     if (!user) { navigate("/auth"); return; }
-    const already = !!likedReels[reel.id];
-    if (!already) triggerHeart(reel.id);
-    setLiveLikes(p => ({ ...p, [reel.id]: (p[reel.id] ?? reel.likes ?? 0) + (already ? -1 : 1) }));
-    await likeReel(reel.id, reel.likes || 0);
+    const reelId = reel?.id || reel?._id;
+    const currentlyLiked = !!likedReels[reelId];
+    if (!currentlyLiked) triggerHeart(reelId);
+      
+          setLiveLikes(p => ({
+      ...p,
+      [reelId]: Math.max(0, (p[reelId] ?? reel.likes ?? 0) + (!currentlyLiked ? 1 : -1))
+    }));
+
+    // Like count update (Ads aur Normal Reels dono ke liye)
+    if (reel.isAd) {
+      try {
+        const adRef = doc(db, "advertisements", reelId);
+        await updateDoc(adRef, {
+          likes: currentlyLiked ? increment(-1) : increment(1),
+        });
+        await likeReel(reelId, reel.likes || 0).catch(() => {});
+      } catch (err) {
+        console.error("Ad like error:", err);
+      }
+    } else {
+      await likeReel(reelId, reel.likes || 0);
+    }
+
+        // Like Notification Trigger (Sender DP + Thumbnail preview)
+    if (!currentlyLiked && user) {
+      // Pura reel object find karein agar parameter incomplete ho
+      const target = (reel && (reel.userId || reel.authorId || reel.creatorId || reel.advertiserId))
+        ? reel 
+        : (feed?.find(r => (r.id || r._id) === reelId) || liveReels?.find(r => (r.id || r._id) === reelId) || reel);
+
+      const ownerId = target?.userId || target?.authorId || target?.creatorId || target?.advertiserId;
+
+      console.log("📢 Like triggered! Target Owner:", ownerId, "Current User:", user?.uid);
+
+      // Testing ke liye: Agar dusra account nahi hai toh self-like par bhi notification dekhne ke liye "ownerId !== user.uid" ko check karein
+                              if (ownerId) {
+        (async () => {
+          try {
+            const avatarRaw = profile?.photoURL || profile?.avatar || profile?.avatarUrl || profile?.profilePic || profile?.image || user?.photoURL || "";
+            const finalAvatar = typeof resolveMediaUrl === "function" && avatarRaw ? resolveMediaUrl(avatarRaw) : (avatarRaw || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`);
+            
+            const finalName = profile?.displayName || profile?.name || profile?.username || user?.displayName || user?.email?.split("@")[0] || "Wildlife Explorer";
+
+            const rawThumb = target?.thumbnailUrl || target?.poster || target?.adVideoUrl || target?.videoUrl || "";
+            const finalThumb = typeof resolveMediaUrl === "function" && rawThumb ? resolveMediaUrl(rawThumb) : rawThumb;
+
+            await addDoc(collection(db, "notifications"), {
+              recipientId: ownerId,
+              senderId: user.uid,
+              senderName: finalName,
+              senderAvatar: finalAvatar,
+              type: "like",
+              reelId: reelId,
+              reelThumbnail: finalThumb || "",
+              isAd: Boolean(target?.isAd),
+              read: false,
+              createdAt: serverTimestamp(),
+            });
+
+            console.log("✅ Like notification saved with Cloudinary avatar:", finalAvatar);
+          } catch (e) {
+            console.error("❌ Notification send error:", e);
+          }
+        })();
+      }
+    }
   }
 
   function handleDoubleTap(reel, e) {
@@ -368,7 +451,7 @@ const handleRealAdView = async (adId) => {
           {/* Bottom Visit Website Button */}
           <div style={{
             position: "absolute",
-            bottom: "75px",
+            bottom: "105px",
             left: "12px",
             right: "70px",
             zIndex: 30

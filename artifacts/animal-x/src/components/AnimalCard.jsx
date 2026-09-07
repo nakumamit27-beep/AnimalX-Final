@@ -5,8 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import {
   getOverride,
   setOverride,
-  compressImageFile,
 } from "../utils/animalOverrides";
+import { uploadToCloudinary } from "../utils/cloudinary";
 
 export default function AnimalCard({ animal }) {
   const { isSuperAdmin, adminMode } = useAuth();
@@ -25,6 +25,7 @@ export default function AnimalCard({ animal }) {
   const [fLifespan, setFLifespan] = useState("");
   const [fDescription, setFDescription] = useState("");
   const [fImage, setFImage] = useState(null);
+  const [fImagePublicId, setFImagePublicId] = useState(null);
   const fileRef = useRef(null);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function AnimalCard({ animal }) {
     setFLifespan(displayLifespan || "");
     setFDescription(displayDesc || "");
     setFImage(null);
+    setFImagePublicId(null);
     setEditOpen(true);
   }
 
@@ -65,23 +67,11 @@ export default function AnimalCard({ animal }) {
     if (!file) return;
     try {
       setSaving(true);
-      const dataUrl = await compressImageFile(file, { maxEdge: 800, quality: 0.82 });
-      setFImage(dataUrl);
-
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', 'ml_default');
-
-      const res = await fetch('https://api.cloudinary.com/v1_1/x1ekanir/image/upload', {
-        method: 'POST',
-        body: formData
-      });
-      const data = await res.json();
-      if (data.secure_url) {
-        setFImage(data.secure_url);
-      }
+      const uploaded = await uploadToCloudinary(file);
+      setFImage(uploaded.url);
+      setFImagePublicId(uploaded.publicId);
     } catch (err) {
-      console.error(err);
+      alert(err?.message || "Photo upload failed.");
     } finally {
       setSaving(false);
     }
@@ -96,14 +86,18 @@ export default function AnimalCard({ animal }) {
     if (fLifespan.trim()) patch.lifespan = fLifespan.trim();
     if (fDescription.trim() && fDescription !== animal.description)
       patch.description = fDescription.trim();
-    if (fImage) patch.image = fImage;
+    if (fImage) {
+      patch.image = fImage;
+      patch.imagePublicId = fImagePublicId;
+      patch.imageObjectPath = null;
+    }
     if (!Object.keys(patch).length) { setEditOpen(false); return; }
     setSaving(true);
     try {
       await setOverride(animal.id, patch);
       setEditOpen(false);
     } catch (err) {
-      alert("Save failed: " + (err?.message || "Unknown error. Check Firebase Storage rules."));
+      alert("Save failed: " + (err?.message || "Unknown error. Check Cloudinary and Firestore permissions."));
     } finally {
       setSaving(false);
     }
@@ -126,15 +120,17 @@ export default function AnimalCard({ animal }) {
             </button>
           )}
           {imgError ? (
-            <div className="emoji">{emoji}</div>
-                  ) : (
-          <img 
-            src={fImage || override?.image || animal.image || animal.imageUrl || animal.photoUrl || `https://res.cloudinary.com/x1ekanir/image/upload/${(animal.name || 'animal').toLowerCase().replace(/\s+/g, '_')}.jpg`}
-            alt={displayName}
-            loading="lazy"
-            onError={() => setImgError(true)}
-          />
-        )}
+            <div className="photo-unavailable" role="img" aria-label={`${displayName} photo unavailable`}>
+              Photo unavailable
+            </div>
+          ) : (
+            <img
+              src={fImage || imgSrc}
+              alt={displayName}
+              loading="lazy"
+              onError={() => setImgError(true)}
+            />
+          )}
         </div>
         <div className="card-body">
           <span className="card-category">{animal.category}</span>

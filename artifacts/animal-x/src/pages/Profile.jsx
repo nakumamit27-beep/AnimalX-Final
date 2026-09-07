@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
-import { collection, query, where, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useSocial } from "../context/SocialContext";
 import {
   addCustomAnimal,
   getCustomAnimals,
   deleteCustomAnimal,
 } from "../utils/customAnimals";
-import { fileToDataURL } from "../utils/animalOverrides";
 import { categories } from "../data/animals";
 import BlueTick from "../components/BlueTick";
 import StoriesRow from "../components/StoriesRow";
@@ -17,6 +17,11 @@ import UploadStory from "../components/UploadStory";
 import CreatorDashboard from "../components/CreatorDashboard";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import { resolveMediaUrl } from "../utils/firebaseUpload";
+const resolveUrl = (url) => {
+  if (!url) return "";
+  if (typeof url === "string") return url;
+  return url.secure_url || url.url || "";
+};
 
 function formatCount(n) {
   if (n == null || isNaN(n)) return "0";
@@ -63,6 +68,7 @@ export default function Profile() {
     logout,
   } = useAuth();
   const { theme, toggleTheme } = useTheme();
+    const { following } = useSocial();
 
   const [tapCount, setTapCount] = useState(0);
   const tapTimer = useRef(null);
@@ -73,6 +79,98 @@ export default function Profile() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [nameInput, setNameInput] = useState(user?.name || "");
   const photoFileRef = useRef(null);
+    const [followModalType, setFollowModalType] = useState(null);
+  const [followListUsers, setFollowListUsers] = useState([]);
+  const [loadingFollowList, setLoadingFollowList] = useState(false);
+    const [userReels, setUserReels] = useState([]);
+
+  useEffect(() => {
+    const targetUid = user?.uid || profile?.uid || profile?.id;
+    if (!targetUid) return;
+
+    const q = query(
+      collection(db, "reels"),
+      where("userId", "==", targetUid)
+    );
+
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setUserReels(list);
+      },
+      (err) => console.error("Error fetching user reels:", err)
+    );
+
+    return () => unsub();
+  }, [user?.uid, profile?.uid, profile?.id]);
+
+    const openFollowModal = async (type) => {
+    setFollowModalType(type);
+    setLoadingFollowList(true);
+    const targetUid = user?.uid || profile?.uid || profile?.id;
+    if (!targetUid) {
+      setFollowListUsers([]);
+      setLoadingFollowList(false);
+      return;
+    }
+
+    try {
+      let ids = [];
+      if (type === "followers") {
+        const q = query(
+          collection(db, "followers"),
+          where("targetUserId", "==", targetUid)
+        );
+        const snap = await getDocs(q);
+        ids = snap.docs
+          .map((d) => d.data()?.followerUserId || d.data()?.followerId)
+          .filter(Boolean);
+      } else {
+        const q = query(
+          collection(db, "followers"),
+          where("followerUserId", "==", targetUid)
+        );
+        const snap = await getDocs(q);
+        ids = snap.docs
+          .map((d) => d.data()?.targetUserId || d.data()?.followingId)
+          .filter(Boolean);
+      }
+
+      const uniqueIds = Array.from(new Set(ids));
+      if (uniqueIds.length === 0) {
+        setFollowListUsers([]);
+        setLoadingFollowList(false);
+        return;
+      }
+
+      const usersData = [];
+      for (const uid of uniqueIds) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", uid));
+          if (userDoc.exists()) {
+            usersData.push({ id: uid, ...userDoc.data() });
+          } else {
+            usersData.push({ id: uid, username: "User", name: "WildSphere User" });
+          }
+        } catch (err) {
+          console.error("Error loading user:", uid, err);
+        }
+      }
+      setFollowListUsers(usersData);
+    } catch (e) {
+      console.error("Error loading follow list:", e);
+      setFollowListUsers([]);
+    } finally {
+      setLoadingFollowList(false);
+    }
+  };
+    useEffect(() => {
+    const currentName = profile?.name || profile?.displayName || user?.displayName || user?.name || "";
+    if (currentName) {
+      setNameInput(currentName);
+    }
+  }, [profile, user]);
     // 📍 Live Real-time Counters Hook
   const [realStats, setRealStats] = useState({
     postsCount: 0,
@@ -88,13 +186,13 @@ export default function Profile() {
     let legacyFollowerIds = new Set();
     let canonicalFollowingIds = new Set();
     let legacyFollowingIds = new Set();
-    const refreshRelationshipCounts = () => {
-      setRealStats((prev) => ({
-        ...prev,
-        followersCount: new Set([...canonicalFollowerIds, ...legacyFollowerIds]).size,
-        followingCount: new Set([...canonicalFollowingIds, ...legacyFollowingIds]).size,
-      }));
-    };
+                          const refreshRelationshipCounts = () => {
+        setRealStats((prev) => ({
+          ...prev,
+          followersCount: canonicalFollowerIds.size,
+          followingCount: canonicalFollowingIds.size,
+        }));
+      };
 
     const reelsQuery = query(collection(db, "reels"), where("userId", "==", targetUid));
     const unsubReels = onSnapshot(reelsQuery, (snap) => {
@@ -106,11 +204,18 @@ export default function Profile() {
       setRealStats((prev) => ({ ...prev, postsCount: snap.size }));
     }, () => {});
 
-    const followersQuery = query(collection(db, "followers"), where("targetUserId", "==", targetUid));
-    const unsubFollowers = onSnapshot(followersQuery, (snap) => {
-      canonicalFollowerIds = new Set(snap.docs.map((item) => item.data()?.followerUserId || item.data()?.followerId || item.id));
-      refreshRelationshipCounts();
-    }, () => {});
+            const followersQuery = query(
+          collection(db, "followers"),
+          where("targetUserId", "==", targetUid)
+        );
+        const unsubFollowers = onSnapshot(followersQuery, (snap) => {
+          canonicalFollowerIds = new Set(
+            snap.docs
+              .map((d) => d.data()?.followerUserId || d.data()?.followerId)
+              .filter(Boolean)
+          );
+          refreshRelationshipCounts();
+        }, () => {});
 
     const followingQuery = query(collection(db, "followers"), where("followerUserId", "==", targetUid));
     const unsubFollowing = onSnapshot(followingQuery, (snap) => {
@@ -118,10 +223,7 @@ export default function Profile() {
       refreshRelationshipCounts();
     }, () => {});
 
-    const unsubLegacyFollowers = onSnapshot(doc(db, "userFollowers", targetUid), (snap) => {
-      legacyFollowerIds = new Set(Object.keys(snap.data()?.followers || {}));
-      refreshRelationshipCounts();
-    }, () => {});
+                    const unsubLegacyFollowers = () => {};
     const unsubLegacyFollowing = onSnapshot(doc(db, "userFollowing", targetUid), (snap) => {
       legacyFollowingIds = new Set(Object.keys(snap.data()?.following || {}));
       refreshRelationshipCounts();
@@ -186,6 +288,7 @@ export default function Profile() {
   const [newName, setNewName] = useState("");
   const [newCategory, setNewCategory] = useState(categories[0]);
   const [newImage, setNewImage] = useState(null);
+  const [newImagePublicId, setNewImagePublicId] = useState(null);
   const [newHabits, setNewHabits] = useState("");
   const [newLifespan, setNewLifespan] = useState("");
   const [newSpeed, setNewSpeed] = useState("");
@@ -241,16 +344,67 @@ export default function Profile() {
     }
   }
 
-  function saveProfileEdits() {
-    updateProfile({ name: nameInput });
-    setEditProfileOpen(false);
+        async function saveProfileEdits() {
+    const newName = nameInput.trim();
+    if (!newName) {
+      alert("Name cannot be empty");
+      return;
+    }
+
+    // Username format check (spaces hatana & lowercase)
+    const cleanUsername = newName.toLowerCase().replace(/\s+/g, "_");
+
+    try {
+      // Unique Username Check: Kya yeh username kisi aur user ke paas pehle se hai?
+      if (user?.uid) {
+        const qUsername = query(
+          collection(db, "users"),
+          where("username", "==", cleanUsername),
+          limit(1)
+        );
+        const userSnap = await getDocs(qUsername);
+
+        if (!userSnap.empty && userSnap.docs[0].id !== user.uid) {
+          alert(`Username "@${cleanUsername}" pehle se kisi aur ne le rakha hai. Kripya doosra naam chunein!`);
+          return;
+        }
+      }
+
+      // 1. AuthContext me update karein
+      if (typeof updateProfile === "function") {
+        await updateProfile({ displayName: newName, name: newName, username: cleanUsername });
+      }
+
+      // 2. Firestore database me unique fields update karein
+      if (user?.uid) {
+        await updateDoc(doc(db, "users", user.uid), {
+          name: newName,
+          displayName: newName,
+          username: cleanUsername,
+          updatedAt: serverTimestamp(),
+        });
+      }
+
+      // 3. Local input state ko lock karein
+      setNameInput(newName);
+      setEditProfileOpen(false);
+      alert("Profile updated to @" + cleanUsername + "!");
+    } catch (err) {
+      console.error("Save profile error:", err);
+      alert("Failed to save: " + (err.message || "Unknown error"));
+    }
   }
 
   async function handleNewAnimalImage(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const dataUrl = await fileToDataURL(file);
-    setNewImage(dataUrl);
+    try {
+      const uploaded = await uploadToCloudinary(file);
+      setNewImage(uploaded.url);
+      setNewImagePublicId(uploaded.publicId);
+    } catch (error) {
+      alert(error.message || "Animal photo upload failed.");
+    }
   }
 
   function submitNewAnimal() {
@@ -262,6 +416,7 @@ export default function Profile() {
       name: newName.trim(),
       category: newCategory,
       image: newImage,
+      imagePublicId: newImagePublicId,
       habits: newHabits.trim(),
       habitat: newHabits.trim() || "Various habitats",
       lifespan: newLifespan.trim() || "Unknown",
@@ -269,6 +424,7 @@ export default function Profile() {
     });
     setNewName("");
     setNewImage(null);
+    setNewImagePublicId(null);
     setNewHabits("");
     setNewLifespan("");
     setNewCountry("");
@@ -316,7 +472,7 @@ export default function Profile() {
     );
   }
 
-  const displayName = profile.name || user.name || user.email;
+  const displayName = profile?.displayName || profile?.name || profile?.username || user?.displayName || user?.name || user?.email?.split("@")[0] || "User";
   const initial = (displayName || "U")[0].toUpperCase();
 
   const photoUrl = resolveMediaUrl(profile.photo);
@@ -378,12 +534,25 @@ export default function Profile() {
               <div className="stat-num">{formatCount(realStats.postsCount)}</div>
               <div className="stat-lbl">Posts</div>
             </div>
-            <div className="stat-block">
-              <div className="stat-num">{formatCount(realStats.followersCount)}</div>
+                                    <div 
+              className="stat-block" 
+              onClick={() => openFollowModal('followers')} 
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="stat-num">
+                {formatCount(realStats.followersCount)}
+              </div>
               <div className="stat-lbl">Followers</div>
             </div>
-            <div className="stat-block">
-              <div className="stat-num">{formatCount(realStats.followingCount)}</div>
+
+            <div 
+              className="stat-block" 
+              onClick={() => openFollowModal('following')} 
+              style={{ cursor: 'pointer' }}
+            >
+              <div className="stat-num">
+                {formatCount(realStats.followingCount)}
+              </div>
               <div className="stat-lbl">Following</div>
             </div>
           </div>
@@ -705,6 +874,158 @@ export default function Profile() {
           </div>
         </div>
       )}
+            {/* Followers / Following List Modal */}
+      {followModalType && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px'
+          }}
+          onClick={() => setFollowModalType(null)}
+        >
+          <div 
+            style={{
+              background: '#18181b',
+              width: '100%',
+              maxWidth: '420px',
+              maxHeight: '75vh',
+              borderRadius: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '14px 18px',
+              borderBottom: '1px solid rgba(255,255,255,0.08)'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', textTransform: 'capitalize' }}>
+                {followModalType}
+              </h3>
+              <button 
+                onClick={() => setFollowModalType(null)}
+                style={{ background: 'none', border: 'none', color: '#9ca3af', fontSize: '1.4rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: '12px', overflowY: 'auto', flex: 1 }}>
+              {loadingFollowList ? (
+                <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>Loading...</div>
+              ) : followListUsers.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '30px', color: '#6b7280' }}>
+                  No {followModalType} yet
+                </div>
+              ) : (
+                followListUsers.map((u) => {
+                  const isFollowed = following && following[u.id];
+                  return (
+                    <div 
+                      key={u.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 8px',
+                        borderRadius: '10px'
+                      }}
+                    >
+                      <div 
+                        style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+                        onClick={() => {
+                          setFollowModalType(null);
+                          window.location.href = `/profile/${u.id}`;
+                        }}
+                      >
+                        <img 
+                          src={resolveMediaUrl(u.avatar || u.photoURL) || '/default-avatar.png'} 
+                          alt={u.username || u.name}
+                          style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                        <div>
+                          <div style={{ fontWeight: '600', color: '#fff', fontSize: '0.95rem' }}>
+                            {u.displayName || u.name || u.username}
+                          </div>
+                          <div style={{ color: '#9ca3af', fontSize: '0.82rem' }}>
+                            @{u.username || 'user'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {user?.uid !== u.id && (
+                              <button
+                type="button"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (!user?.uid) {
+                    alert("Please login first.");
+                    return;
+                  }
+                  try {
+                    const targetId = u.id || u.uid;
+                    const followDocRef = doc(db, "followers", `${user.uid}_${targetId}`);
+
+                    if (isFollowed) {
+                      await deleteDoc(followDocRef);
+                      // Update context state if available
+                      if (typeof toggleFollow === "function") toggleFollow(targetId);
+                      // Force refresh count
+                      setRealStats((prev) => ({
+                        ...prev,
+                        followingCount: Math.max(0, (prev.followingCount || 1) - 1),
+                      }));
+                    } else {
+                      await setDoc(followDocRef, {
+                        followerUserId: user.uid,
+                        targetUserId: targetId,
+                        createdAt: serverTimestamp(),
+                      });
+                      if (typeof toggleFollow === "function") toggleFollow(targetId);
+                      setRealStats((prev) => ({
+                        ...prev,
+                        followingCount: (prev.followingCount || 0) + 1,
+                      }));
+                    }
+                  } catch (err) {
+                    console.error("Follow/Unfollow error:", err);
+                    alert("Action failed: " + err.message);
+                  }
+                }}
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: "8px",
+                  border: isFollowed ? "1px solid rgba(255, 255, 255, 0.15)" : "none",
+                  fontSize: "0.85rem",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  background: isFollowed ? "#27272a" : "#10b981",
+                  color: isFollowed ? "#e4e4e7" : "#fff",
+                  minWidth: "85px",
+                }}
+              >
+                {isFollowed ? "Following" : "Follow"}
+              </button>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 {/* Stories row */}
       <div className="profile-stories-section">
         <StoriesRow />
@@ -748,15 +1069,97 @@ export default function Profile() {
             </Link>
           </div>
         )}
-        {tab === "reels" && (
-          <div className="profile-grid-empty">
-            <div style={{ fontSize: 48 }}>🎬</div>
-            <p>You have {realStats.reelsCount} reels. Upload from the Reels page.</p>
-            <Link href="/reels" className="btn-primary" style={{ marginTop: 12 }}>
-              Upload a Reel
-            </Link>
-          </div>
-        )}
+                  {tab === "reels" && (
+            <div>
+              {userReels && userReels.length > 0 ? (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, 1fr)",
+                    gap: "6px",
+                    padding: "10px 0",
+                  }}
+                >
+                  {userReels.map((reel) => {
+                    const videoSrc = reel.videoUrl || reel.url || reel.mediaUrl;
+                    const thumbSrc = reel.thumbnailUrl || reel.thumbUrl;
+
+                    return (
+                      <div
+                        key={reel.id}
+                        onClick={() => {
+                          window.location.href = `/reels?reelId=${reel.id}`;
+                        }}
+                        style={{
+                          position: "relative",
+                          aspectRatio: "9/16",
+                          background: "#121212",
+                          borderRadius: "8px",
+                          overflow: "hidden",
+                          cursor: "pointer",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                        }}
+                      >
+                        {thumbSrc ? (
+                          <img
+                            src={thumbSrc}
+                            alt={reel.title || "Reel"}
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        ) : videoSrc ? (
+                          <video
+                            src={videoSrc}
+                            muted
+                            playsInline
+                            preload="metadata"
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "1.8rem",
+                            }}
+                          >
+                            🎬
+                          </div>
+                        )}
+
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: "6px",
+                            left: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            color: "#fff",
+                            fontSize: "0.75rem",
+                            fontWeight: "600",
+                            textShadow: "0 1px 3px rgba(0,0,0,0.8)",
+                          }}
+                        >
+                          ▶ {reel.views || reel.viewsCount || 0}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="profile-grid-empty">
+                  <div style={{ fontSize: 48 }}>🎬</div>
+                  <p>No wildlife reels uploaded yet.</p>
+                  <Link href="/reels" className="btn-primary" style={{ marginTop: 12 }}>
+                    Upload a Reel
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
         {tab === "tagged" && (
           <div className="profile-grid-empty">
             <div style={{ fontSize: 48 }}>🏷️</div>
@@ -1022,68 +1425,96 @@ export default function Profile() {
 }
 
 function AdminBanPanel() {
-  const [uid, setUid] = useState("");
+  const [userQuery, setUserQuery] = useState("");
   const [reason, setReason] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-    async function handleBan(action) {
-    if (!uid.trim()) {
-      alert("Enter a user UID to " + action);
+  async function resolveTargetUid(raw) {
+    const input = raw.trim().replace(/^@/, "");
+    if (!input) return null;
+
+    // 1. Agar direct UID hai toh pehle check karein
+    try {
+      const snap = await getDoc(doc(db, "users", input));
+      if (snap.exists()) return { uid: input, name: snap.data().username || snap.data().name || input };
+    } catch (_) {}
+
+    // 2. Username ya Name se search karein
+    try {
+      const qUser = query(collection(db, "users"), where("username", "==", input), limit(1));
+      const qSnap = await getDocs(qUser);
+      if (!qSnap.empty) {
+        const d = qSnap.docs[0];
+        return { uid: d.id, name: d.data().username || d.data().name || input };
+      }
+    } catch (_) {}
+
+    try {
+      const qName = query(collection(db, "users"), where("name", "==", input), limit(1));
+      const qSnap2 = await getDocs(qName);
+      if (!qSnap2.empty) {
+        const d = qSnap2.docs[0];
+        return { uid: d.id, name: d.data().username || d.data().name || input };
+      }
+    } catch (_) {}
+
+    return { uid: input, name: input };
+  }
+
+  async function handleBan(action) {
+    if (!userQuery.trim()) {
+      setResult({ ok: false, msg: "Enter a username (e.g. @wildsphere) or UID" });
       return;
     }
     setLoading(true);
+    setResult(null);
+
     try {
+      const target = await resolveTargetUid(userQuery);
+      const targetUid = target.uid;
+      const displayName = target.name;
+
       if (action === "ban") {
-        await setDoc(
-          doc(db, "userStrikes", uid.trim()),
-          {
-            banned: true,
-            banReason: reason || "Admin action",
-            bannedAt: Date.now(),
-            strikes: 3,
-          },
-          { merge: true }
-        );
-        await setDoc(
-          doc(db, "users", uid.trim()),
-          { banned: true },
-          { merge: true }
-        );
-        setResult({ ok: true, msg: `✅ User ${uid.trim()} banned.` });
+        await setDoc(doc(db, "userStrikes", targetUid), {
+          banned: true,
+          banReason: reason || "Admin action",
+          bannedAt: Date.now(),
+          strikes: 3,
+        }, { merge: true });
+
+        await setDoc(doc(db, "users", targetUid), { banned: true }, { merge: true });
+        setResult({ ok: true, msg: `✅ User @${displayName} banned (30 days upload lock).` });
+
       } else if (action === "unban") {
-        await setDoc(
-          doc(db, "userStrikes", uid.trim()),
-          { banned: false, strikes: 0, bannedAt: null },
-          { merge: true }
-        );
-        await setDoc(
-          doc(db, "users", uid.trim()),
-          { banned: false },
-          { merge: true }
-        );
-        setResult({ ok: true, msg: `✅ User ${uid.trim()} unbanned.` });
+        await setDoc(doc(db, "userStrikes", targetUid), {
+          banned: false,
+          strikes: 0,
+          bannedAt: null,
+        }, { merge: true });
+
+        await setDoc(doc(db, "users", targetUid), { banned: false }, { merge: true });
+        setResult({ ok: true, msg: `✅ User @${displayName} unbanned successfully.` });
+
       } else if (action === "strike") {
-        const snap = await getDoc(doc(db, "userStrikes", uid.trim()));
-        const cur = snap.exists() ? snap.data().strikes || 0 : 0;
+        const snap = await getDoc(doc(db, "userStrikes", targetUid));
+        const cur = snap.exists() ? (snap.data().strikes || 0) : 0;
         const next = Math.min(cur + 1, 3);
-        await setDoc(
-          doc(db, "userStrikes", uid.trim()),
-          {
-            strikes: next,
-            banned: next >= 3,
-            lastStrikeAt: Date.now(),
-            lastReason: reason || "Content violation",
-          },
-          { merge: true }
-        );
+
+        await setDoc(doc(db, "userStrikes", targetUid), {
+          strikes: next,
+          banned: next >= 3,
+          lastStrikeAt: Date.now(),
+          lastReason: reason || "Content violation",
+        }, { merge: true });
+
         setResult({
           ok: true,
-          msg: `⚠️ Strike added (${next}/3) for user ${uid.trim()}.`,
+          msg: `⚠️ Strike (${next}/3) recorded for @${displayName}.${next >= 3 ? " Auto-banned." : ""}`
         });
       }
     } catch (e) {
-      console.error("Ban/Strike error:", e);
+      console.error("Ban action error:", e);
       setResult({ ok: false, msg: "Error: " + e.message });
     } finally {
       setLoading(false);
@@ -1095,11 +1526,12 @@ function AdminBanPanel() {
       <div className="admin-ban-row">
         <input
           className="admin-ban-uid"
-          placeholder="Firebase User UID"
-          value={uid}
-          onChange={(e) => setUid(e.target.value)}
+          placeholder="Enter username (e.g. @nakum or wildsphere) or UID"
+          value={userQuery}
+          onChange={(e) => setUserQuery(e.target.value)}
         />
       </div>
+
       <div className="admin-ban-row">
         <input
           className="admin-ban-uid"
@@ -1108,6 +1540,7 @@ function AdminBanPanel() {
           onChange={(e) => setReason(e.target.value)}
         />
       </div>
+
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button
           className="admin-ban-btn strike"
@@ -1118,7 +1551,6 @@ function AdminBanPanel() {
             padding: "7px 14px",
             borderRadius: 8,
             fontWeight: 700,
-            fontSize: "0.8rem",
             cursor: "pointer",
           }}
           onClick={() => handleBan("strike")}
@@ -1126,6 +1558,7 @@ function AdminBanPanel() {
         >
           ⚠️ Add Strike
         </button>
+
         <button
           className="admin-ban-btn ban"
           onClick={() => handleBan("ban")}
@@ -1133,6 +1566,7 @@ function AdminBanPanel() {
         >
           🚫 Ban User
         </button>
+
         <button
           className="admin-ban-btn unban"
           onClick={() => handleBan("unban")}
@@ -1141,13 +1575,15 @@ function AdminBanPanel() {
           ✅ Unban User
         </button>
       </div>
+
       {result && (
         <div className={`admin-ban-result ${result.ok ? "" : "error"}`}>
           {result.msg}
         </div>
       )}
+
       <p className="admin-hint" style={{ marginTop: 4 }}>
-        3 strikes = 30-day upload ban. Entering UID is required.
+        Strike 3 par 30-day upload ban automatically lagta hai. Username (@nakum) ya UID dono chalenge.
       </p>
     </div>
   );

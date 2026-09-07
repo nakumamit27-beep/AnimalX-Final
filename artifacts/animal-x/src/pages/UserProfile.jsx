@@ -19,7 +19,7 @@ function fmt(n) {
 function resolveUrl(path) {
   if (!path) return null;
   if (path.startsWith("data:") || path.startsWith("http")) return path;
-  return `/api/storage${path}`;
+  return null;
 }
 
 export default function UserProfile() {
@@ -39,7 +39,9 @@ export default function UserProfile() {
   const [tickMsg, setTickMsg] = useState(null);
   const [totalLikes, setTotalLikes] = useState(0);
 
-  const isFollowing = !!following[userId];
+  const isFollowing = following instanceof Set 
+  ? following.has(userId) 
+  : (Array.isArray(following) ? following.includes(userId) : !!following?.[userId]);
   const isOwn = currentUser?.uid === userId;
   const canManageTick = isSuperAdmin && adminMode;
 
@@ -115,6 +117,14 @@ export default function UserProfile() {
       setTimeout(() => setTickMsg(null), 3000);
     } catch (e) { alert("Error: " + e.message); }
   }
+    useEffect(() => {
+    if (!loading && !profile) {
+      const timer = setTimeout(() => {
+        navigate("/profile");
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, profile, navigate]);
 
   if (loading) {
     return (
@@ -134,7 +144,19 @@ export default function UserProfile() {
           <div style={{ fontSize: "4rem" }}>👤</div>
           <h2>User not found</h2>
           <p style={{ color: "var(--text2)", marginTop: 8 }}>This profile doesn't exist or has been removed.</p>
-          <button onClick={() => navigate(-1)} className="btn-primary" style={{ marginTop: 16 }}>← Go Back</button>
+          <button
+  onClick={() => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/profile");
+    }
+  }}
+  className="btn-primary"
+  style={{ marginTop: 16 }}
+>
+  ← Go Back
+</button>
         </div>
       </div>
     );
@@ -152,7 +174,18 @@ export default function UserProfile() {
 
       {/* Header bar */}
       <div className="up-header">
-        <button className="up-back-btn" onClick={() => navigate(-1)}>← Back</button>
+        <button
+  className="up-back-btn"
+  onClick={() => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate("/profile");
+    }
+  }}
+>
+  ← Back
+</button>
         {canManageTick && (
           <div className="admin-tick-controls">
             <span className="admin-label">ADMIN</span>
@@ -212,12 +245,31 @@ export default function UserProfile() {
 
         {/* Follow / Edit buttons */}
         {!isOwn && currentUser && (
-          <button
-            className={`up-follow-btn ${isFollowing ? "following" : ""}`}
-            onClick={() => isFollowing ? unfollowUser(userId) : followUser(userId, username)}
-          >
-            {isFollowing ? "✓ Following" : "+ Follow"}
-          </button>
+                      <button
+              type="button"
+              className={`up-follow-btn ${isFollowing ? "following" : ""}`}
+              onClick={async (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                try {
+                  if (isFollowing) {
+                    await unfollowUser(userId);
+                  } else {
+                    await followUser(userId, username);
+                  }
+                } catch (err) {
+                  console.error("Follow error:", err);
+                }
+              }}
+              style={{
+                cursor: 'pointer',
+                pointerEvents: 'auto',
+                position: 'relative',
+                zIndex: 25
+              }}
+            >
+              {isFollowing ? "✓ Following" : "+ Follow"}
+            </button>
         )}
         {isOwn && (
           <Link href="/profile" className="up-follow-btn">✏️ Edit Profile</Link>
@@ -263,7 +315,14 @@ export default function UserProfile() {
               const videoUrl = resolveUrl(r.videoUrl);
               const thumbUrl = resolveUrl(r.thumbnailUrl);
               return (
-                <div key={r.id} className="up-reel-thumb">
+                <div
+  key={r.id}
+  className="up-reel-thumb"
+  onClick={() => {
+    window.location.href = `/reels?reelId=${r.id}`;
+  }}
+  style={{ cursor: 'pointer' }}
+>
                   {videoUrl ? (
                     thumbUrl
                       ? <img src={thumbUrl} alt={r.title} className="up-reel-img" />
@@ -335,7 +394,7 @@ function UserList({ users, emptyMsg, following, currentUser, followUser, unfollo
       {users.map(u => {
         const isFollowingU = !!following[u.id || u.uid];
         const isOwn = currentUser?.uid === (u.id || u.uid);
-        const photoUrl = u.photo ? (u.photo.startsWith("/api") || u.photo.startsWith("http") ? u.photo : `/api/storage${u.photo}`) : null;
+        const photoUrl = resolveUrl(u.photo || u.avatar || null);
         return (
           <div key={u.id || u.uid} className="up-user-row">
             <Link href={`/user/${u.id || u.uid}`} className="up-user-row-left">

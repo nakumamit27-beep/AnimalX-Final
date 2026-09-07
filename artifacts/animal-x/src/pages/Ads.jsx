@@ -3,6 +3,8 @@ import { useAuth } from "../context/AuthContext";
 import { useSocial } from "../context/SocialContext";
 import { Link } from "wouter";
 import { uploadToCloudinary } from "../utils/cloudinary";
+import { db, auth } from "../utils/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const PLANS = [
   { id: "starter",  name: "Starter",  price: 149,  usd: 2,   targetViews: 2000, views: "2,000 Views",   color: "#22c55e", desc: "Great for local wildlife pages" },
@@ -16,6 +18,7 @@ const CATEGORIES = [
   "Lions","Tigers","Wolves","Dogs","Cats","Birds","Reptiles","Ocean Animals",
   "Forest Animals","Safari","Nature","Mountains","Desert","Wildlife Travel","Zoo Lovers",
 ];
+const TARGET_COUNTRIES = ["Global", "India", "United States", "United Kingdom", "Canada", "UAE", "Australia", "Germany"];
 
 const PAYPAL_LINK = "https://www.paypal.com/ncp/payment/K5VACCZPCJJKG";
 const UPI_ID = "nakumamit27-1@okicici";
@@ -30,7 +33,8 @@ export default function Ads() {
   const [form, setForm] = useState({
     title: "", description: "", websiteUrl: "",
     businessName: "", businessLogo: "", contactEmail: "",
-    targetCategories: [],
+    targetCategories: [],    
+    targetCountry: "Global",
   });
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [payMethod, setPayMethod] = useState("paypal"); // paypal | upi
@@ -43,6 +47,7 @@ export default function Ads() {
     const [adVideo, setAdVideo] = useState(null);
   const [adVideoPreview, setAdVideoPreview] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
+    const [errorMessage, setErrorMessage] = useState("");
 
 
   if (!user) {
@@ -75,7 +80,7 @@ export default function Ads() {
             <br />Payment: {payMethod === "paypal" ? "PayPal" : "UPI"} · Ref: {txnId}
           </div>
           <button className="auth-btn" style={{ marginTop:24 }} onClick={() => {
-            setSubmitted(false); setStep(1); setForm({ title:"", description:"", websiteUrl:"", businessName:"", businessLogo:"", contactEmail:"", targetCategories:[] });
+            setSubmitted(false); setStep(1); setForm({ title:"", description:"", websiteUrl:"", businessName:"", businessLogo:"", contactEmail:"", targetCategories:[] });targetCountry: "Global",
             setSelectedPlan(null); setTxnId(""); setScreenshot(null); setScreenshotPreview(null);
           }}>Create Another Ad</button>
         </div>
@@ -110,43 +115,62 @@ export default function Ads() {
       adVideoUrl = res.url;
       adVideoPublicId = res.publicId;
       setUploadProgress(100);
-    } catch (e) {
+        } catch (e) {
       console.error("Upload error:", e);
       setSubmitting(false);
-      alert(e.message || "Cloudinary upload failed.");
+      setErrorMessage("Upload failed. Please check your network and try again.");
       return;
     }
 
-    const ok = await submitAd({
-            ...form,
-            // Target Website Link Exact Mapping
-            websiteUrl: form.websiteUrl || "",
-            targetUrl: form.websiteUrl || "",
-            link: form.websiteUrl || "",
-            website: form.websiteUrl || "",
+          // Direct Firestore submission (bina context drop huye)
+          const currentUid = auth.currentUser?.uid || user?.uid || "guest";
+    const currentEmail = auth.currentUser?.email || user?.email || "";
+    const currentAuthor = profile?.name || profile?.displayName || user?.displayName || user?.name || "User";
 
-            plan: selectedPlan?.id || "starter",
-            price: selectedPlan?.price || 149,
-             targetViews: selectedPlan?.targetViews || 2000,
-             viewsCount: 0,
-             clicksCount: 0,
-            accountType,
-             txnId: txnId.trim(),
-            screenshotPath,
-             screenshotPublicId,
-            adVideoUrl,
-             adVideoPublicId,
-            status: "pending",
-            approved: false,
-            username: profile?.username || user?.displayName || user?.name || user?.email?.split('@')[0] || "User",
-            userId: user?.uid,
-           });
-    setSubmitting(false);
-    if (ok) setSubmitted(true);
-    else alert("Submission failed. Please try again or email wildlifeanimalfight@gmail.com");
+    const adData = {
+      ...form,
+      websiteUrl: form.websiteUrl || "",
+      targetUrl: form.websiteUrl || "",
+      link: form.websiteUrl || "",
+      website: form.websiteUrl || "",
+      plan: selectedPlan?.id || "starter",
+      price: selectedPlan?.price || 149,
+      targetViews: selectedPlan?.targetViews || 2000,
+      views: 0,
+      viewsCount: 0,
+      clicksCount: 0,
+      accountType,
+      txnId: txnId.trim(),
+      screenshotPath,
+      screenshotPublicId,
+      adVideoUrl,
+      adVideoPublicId,
+      status: "pending",
+      approved: false,
+      username: currentAuthor,
+      authorName: currentAuthor,
+      userId: currentUid,
+      userEmail: currentEmail,
+      createdAt: serverTimestamp(),
+    };
+
+    try {
+      await addDoc(collection(db, "advertisements"), adData);
+      setSubmitting(false);
+      setSubmitted(true);
+    } catch (firestoreErr) {
+      console.error("Firestore save error:", firestoreErr);
+      const ok = await submitAd?.(adData);
+      setSubmitting(false);
+      if (ok) {
+        setSubmitted(true);
+      } else {
+        alert("Submission failed: " + (firestoreErr?.message || "Database permission denied"));
+      }
+    }
   }
 
-  return (
+return (
     <div className="ads-page">
       <div className="ads-header">
         <h1 className="page-title">📢 Advertise on WildSphere</h1>
@@ -253,6 +277,27 @@ export default function Ads() {
                 }))}
               >{c}</button>
             ))}
+          </div>
+                    {/* Target Country Selection */}
+          <div style={{ marginTop: "24px", textAlign: "left" }}>
+            <h3 style={{ fontSize: "14px", color: "#e5e7eb", marginBottom: "8px", fontWeight: "600" }}>
+              🌍 Select Target Country
+            </h3>
+            <p className="ads-helper" style={{ marginBottom: "12px" }}>
+              Select where this ad will be shown to users
+            </p>
+            <div className="ads-categories">
+              {TARGET_COUNTRIES.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={`ads-cat-btn ${form.targetCountry === c ? "selected" : ""}`}
+                  onClick={() => setForm((f) => ({ ...f, targetCountry: c }))}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
           </div>
           <div style={{ display:"flex", gap:12, marginTop:24 }}>
             <button className="ads-back-btn" onClick={() => setStep(1)}>← Back</button>
@@ -369,6 +414,61 @@ export default function Ads() {
             <button className="ads-back-btn" onClick={() => setStep(3)}>← Back</button>
             <button className="auth-btn" onClick={handleSubmit} disabled={submitting || !txnId.trim()}>
                {submitting ? `Uploading… ${uploadProgress}%` : "🚀 Submit Ad"}
+            </button>
+                    </div>
+        </div>
+      )}
+            {/* Custom Error Popup */}
+      {errorMessage && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.75)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 99999,
+            padding: "20px",
+          }}
+          onClick={() => setErrorMessage("")}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#181b22",
+              border: "1px solid rgba(239,68,68,0.3)",
+              borderRadius: "16px",
+              padding: "22px 18px",
+              maxWidth: "320px",
+              width: "100%",
+              textAlign: "center",
+              boxShadow: "0 20px 25px -5px rgba(0,0,0,0.6)",
+            }}
+          >
+            <div style={{ fontSize: "2.4rem", marginBottom: "8px" }}>⚠️</div>
+            <div style={{ color: "#ef4444", fontSize: "1.1rem", fontWeight: "700", marginBottom: "6px" }}>
+              Upload Failed
+            </div>
+            <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0 0 18px 0", lineHeight: "1.4" }}>
+              {errorMessage}
+            </p>
+            <button
+              type="button"
+              onClick={() => setErrorMessage("")}
+              style={{
+                width: "100%",
+                padding: "10px 0",
+                borderRadius: "10px",
+                background: "#2a2f3a",
+                color: "#e5e7eb",
+                border: "none",
+                fontWeight: "600",
+                cursor: "pointer",
+              }}
+            >
+              Dismiss
             </button>
           </div>
         </div>

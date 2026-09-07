@@ -19,7 +19,7 @@ function fmt(n) {
 function resolveUrl(path) {
   if (!path) return null;
   if (path.startsWith("data:") || path.startsWith("http")) return path;
-  return `/api/storage${path}`;
+  return null;
 }
 
 const CATS = ["All","Mammals","Birds","Aquatic","Reptiles","Small Creatures","Mountains","Sea","Desert"];

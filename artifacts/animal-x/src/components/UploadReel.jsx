@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { collection, addDoc, serverTimestamp, doc, setDoc, increment } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, setDoc, increment, query, where, limit, getDocs } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
 import { uploadToCloudinary } from "../utils/cloudinary";
@@ -22,6 +22,19 @@ const COPYRIGHT_KEYWORDS = [
   "instagram", "instareel", "youtube", "tiktok", "natgeo", "discovery", "bbc earth", "watermark",
   "downloaded", "screenrecord", "snaptik", "saveinsta", "copyright", "property of", "all rights reserved"
 ];
+const SEXUAL_KEYWORDS = [
+  "sex", "sexy", "nude", "porn", "adult", "erotic", "nsfw", "hot girl", 
+  "cleavage", "lingerie", "boobs", "ass", "strip", "dating", "kiss", "kissing",
+  "bikini", "sensual", "horny", "lust", "seduce", "onlyfans"
+];
+
+function checkExplicitContent(title = "", desc = "", hashtags = "") {
+  const combined = `${title} ${desc} ${hashtags}`.toLowerCase();
+  return SEXUAL_KEYWORDS.some(kw => {
+    const regex = new RegExp(`\\b${kw}\\b`, "i");
+    return regex.test(combined);
+  });
+}
 
 function checkModeration(title, desc, hashtags) {
   const text = `${title} ${desc} ${hashtags}`.toLowerCase();
@@ -75,6 +88,7 @@ export default function UploadReel({ onClose, onUploaded }) {
   const [copyrightError, setCopyrightError] = useState(null);
   const [banned, setBanned] = useState(false);
   const [addingStrike, setAddingStrike] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
   const videoInputRef = useRef(null);
   const thumbInputRef = useRef(null);
@@ -107,6 +121,11 @@ export default function UploadReel({ onClose, onUploaded }) {
     setError(null);
     if (step === 1) {
       if (!form.title.trim()) { setError("Title is required to continue."); return; }
+            // Explicit content check
+      if (checkExplicitContent(form.title, form.description, form.hashtags)) {
+        setErrorMessage("Sexual or explicit text is strictly prohibited on WildSphere.");
+        return;
+      }
       
       const isPirated = checkCopyrightViolations(form.title, form.description, form.hashtags, "");
       if (isPirated) {
@@ -138,16 +157,27 @@ export default function UploadReel({ onClose, onUploaded }) {
       setBanned(true);
       setError("Upload access banned for 30 days due to repeated community guideline violations.");
     } else {
-      alert(`Strike ${strikes}/3 recorded. ${3 - strikes} warning(s) remaining before a 30-day upload ban.`);
+      setErrorMessage(`Strike ${strikes}/3 recorded. ${3 - strikes} warning(s) remaining before a 30-day upload ban.`);
       setStep(2);
     }
   }
 
   async function handleSubmit() {
   if (!user) {
-    alert("Please login first.");
+    setErrorMessage("Please login first.");
     return;
   }
+        // Final NSFW Check before upload
+    if (checkExplicitContent(form.title, form.description, form.hashtags)) {
+      const strikeData = await addStrike(user.uid);
+      setErrorMessage(
+        strikeData.banned
+          ? "Account banned for 30 days due to explicit content violations."
+          : `Explicit content violation detected. Strike ${strikeData.strikes}/3 added.`
+      );
+      setUploading(false);
+      return;
+    }
 
   setUploading(true);
   setError(null);
@@ -177,6 +207,25 @@ export default function UploadReel({ onClose, onUploaded }) {
        thumbnailPublicId = thumbRes.publicId;
       setProgress(85);
     }
+        let originalCreatorName = null;
+    let isReuploadCopy = false;
+
+    // Check if duplicate reel exists (Original creator credit)
+    try {
+      const qDup = query(
+        collection(db, "reels"),
+        where("videoSize", "==", videoFile?.size || 0),
+        limit(1)
+      );
+      const dupSnap = await getDocs(qDup);
+      if (!dupSnap.empty) {
+        const orig = dupSnap.docs[0].data();
+        if (orig.userId !== user.uid) {
+          isReuploadCopy = true;
+          originalCreatorName = orig.authorName || orig.username || "WildSphere Creator";
+        }
+      }
+    } catch (_) {}
 
     // 2. Direct Firestore Entry
     const reelData = {
@@ -201,6 +250,10 @@ export default function UploadReel({ onClose, onUploaded }) {
       type: "live",
       moderated: true,
       copyrightProtected: true,
+            videoSize: videoFile?.size || 0,
+      isCopyrightTagged: isReuploadCopy,
+      originalCreatorName: originalCreatorName,
+      trendingScore: 0,
     };
 
 
@@ -211,11 +264,11 @@ export default function UploadReel({ onClose, onUploaded }) {
     if (onUploaded) onUploaded();
     if (onClose) onClose();
 
-  } catch (e) {
-    console.error("Upload error:", e);
-    setError("Upload failed: " + e.message);
-    setUploading(false);
-  }
+      } catch (e) {
+      console.error("Upload error:", e);
+      setUploading(false);
+      setErrorMessage("Upload interrupted or failed. Please check your connection.");
+    }
 }
 
   return (
@@ -446,6 +499,61 @@ export default function UploadReel({ onClose, onUploaded }) {
           </div>
         )}
       </div>
+            {/* Custom Error Popup */}
+      {errorMessage && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            backdropFilter: "blur(5px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 999999,
+            padding: "20px",
+          }}
+          onClick={() => setErrorMessage("")}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#161922",
+              border: "1px solid rgba(239, 68, 68, 0.35)",
+              borderRadius: "16px",
+              padding: "22px 18px",
+              maxWidth: "320px",
+              width: "100%",
+              textAlign: "center",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.7)",
+            }}
+          >
+            <div style={{ fontSize: "2.4rem", marginBottom: "8px" }}>⚠️</div>
+            <div style={{ color: "#ef4444", fontSize: "1.1rem", fontWeight: "700", marginBottom: "8px" }}>
+              Upload Notice
+            </div>
+            <p style={{ color: "#9ca3af", fontSize: "0.85rem", margin: "0 0 20px 0", lineHeight: "1.4" }}>
+              {errorMessage}
+            </p>
+            <button
+              type="button"
+              onClick={() => setErrorMessage("")}
+              style={{
+                width: "100%",
+                padding: "10px 0",
+                borderRadius: "10px",
+                background: "#2a2f3a",
+                color: "#e5e7eb",
+                border: "none",
+                fontWeight: "600",
+                cursor: "pointer",
+              }}
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

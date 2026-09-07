@@ -4,6 +4,11 @@ import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
 import BlueTick from "./BlueTick";
 import { resolveMediaUrl } from "../utils/firebaseUpload";
+const resolveUrl = (url) => {
+  if (!url) return "";
+  if (typeof url === "string") return url;
+  return url.secure_url || url.url || "";
+};
 
 const STORY_DURATION = 5000; // 5 seconds per story
 

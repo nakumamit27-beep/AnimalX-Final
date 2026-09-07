@@ -3,8 +3,9 @@ import { useParams, Link } from "wouter";
 import { db } from "../utils/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import animals from "../data/animals";
-import { getAnimalImage, getEmoji, getAnimalEmoji } from "../utils/image";
-import { getOverride, setOverride, compressImageFile, objectPathToUrl } from "../utils/animalOverrides";
+import { getAnimalImage, getEmoji, getAnimalEmoji, isPermanentImageUrl } from "../utils/image";
+import { getOverride, setOverride } from "../utils/animalOverrides";
+import { uploadToCloudinary } from "../utils/cloudinary";
 import { getAbility, getDefaultQuiz } from "../utils/animalAbility";
 import { useAuth } from "../context/AuthContext";
 import "../styles/animal-detail.css";
@@ -117,8 +118,8 @@ export default function AnimalDetail() {
   /* ── Derived values ── */
   const related      = animals.filter((a) => a.category === animal.category && a.id !== animal.id).slice(0, 6);
   const emoji        = getAnimalEmoji(animal.baseName || animal.name, animal.category);
-  const overrideImg  = override.image || (override.imageObjectPath ? objectPathToUrl(override.imageObjectPath) : null);
-  const imgSrc       = overrideImg || animal.imageUrl || getAnimalImage(animal);
+  const overrideImg  = isPermanentImageUrl(override.image) ? override.image : null;
+  const imgSrc       = overrideImg || getAnimalImage(animal);
   const ability      = override.ability || getAbility(animal);
   const quiz         = override.quiz || getDefaultQuiz(animal);
   const displayName  = override.name || animal.name;
@@ -150,8 +151,12 @@ export default function AnimalDetail() {
     if (!file) return;
     setUploading(true); setUploadMsg("Compressing & uploading…");
     try {
-      const dataUrl = await compressImageFile(file);
-      await setOverride(animal.id, { image: dataUrl });
+       const uploaded = await uploadToCloudinary(file);
+       await setOverride(animal.id, {
+         image: uploaded.url,
+         imagePublicId: uploaded.publicId,
+         imageObjectPath: null,
+       });
       setOverrideState(getOverride(animal.id));
       setImgError(false);
       setUploadMsg("✅ Photo updated!");
@@ -660,8 +665,8 @@ function AdminAnimalPanel({ animal, override, ability, quiz, activeTab, setActiv
 
 function CurrentPhoto({ override, animal }) {
   const [err, setErr] = useState(false);
-  const overrideImg   = override.image || (override.imageObjectPath ? objectPathToUrl(override.imageObjectPath) : null);
-  const src           = overrideImg || animal.imageUrl || getAnimalImage(animal);
+  const overrideImg   = isPermanentImageUrl(override.image) ? override.image : null;
+  const src           = overrideImg || getAnimalImage(animal);
   const emoji         = getAnimalEmoji(animal.baseName || animal.name, animal.category);
   if (err) return <div className="admin-photo-preview-emoji">{emoji}</div>;
   return <img src={src} alt={animal.name} className="admin-photo-preview" onError={() => setErr(true)} />;

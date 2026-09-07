@@ -1,37 +1,33 @@
 /**
- * Animal overrides — Firebase Storage (images) + Firestore (metadata) + localStorage cache.
+ * Animal overrides — Cloudinary (images) + Firestore (metadata) + localStorage cache.
  *
  * Image upload flow (admin only):
  *   1. Compress image to WebP / JPEG ≤ 300 KB via canvas
- *   2. Upload directly to Firebase Storage under animal-images/{timestamp}-{uuid}.webp
- *   3. Get public download URL from Firebase Storage
+ *   2. Upload directly to Cloudinary using the shared unsigned uploader
+ *   3. Store the permanent secure URL and public ID
  *   4. Store image URL + text fields in Firestore (animals/{animalId})
  *   5. Cache in localStorage for instant repeat reads
  *   6. Dispatch "ax-overrides-changed" so React re-renders everywhere
  *
- * Legacy Replit Object Storage paths (imageObjectPath starting with /objects/) are
- * served via /api/storage/objects/… for backward compatibility with existing records.
+ * Legacy Replit Object Storage paths are intentionally ignored by the client.
+ * Existing seeded animal photos are baked into public/animals for Firebase Hosting.
  */
 
-import { db, storage } from "./firebase";
+import { db } from "./firebase";
 import { collection, doc, setDoc, onSnapshot } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { uploadToCloudinary } from "./cloudinary";
 
 const CACHE_KEY = "ax_overrides_cache_v3";
 
 // ─── Storage URL helpers ──────────────────────────────────────────────────────
 
 /**
- * Convert a legacy Replit objectPath into a serving URL.
- * New uploads return full HTTPS Firebase Storage URLs directly.
- * This function is kept for backward-compatibility with existing stored records.
+ * Legacy object paths are not valid production media URLs.
  */
 export function objectPathToUrl(objectPath) {
-  if (!objectPath) return null;
-  if (objectPath.startsWith("http")) return objectPath;
-  // Legacy Replit path: /objects/uploads/uuid → /api/storage/objects/uploads/uuid
-  const clean = objectPath.replace(/^\/objects\//, "");
-  return `/api/storage/objects/${clean}`;
+  return typeof objectPath === "string" && /^https?:\/\//i.test(objectPath)
+    ? objectPath
+    : null;
 }
 
 // ─── Local cache helpers ──────────────────────────────────────────────────────
@@ -93,25 +89,11 @@ export function listenOverrides() {
   return _unsubscribe;
 }
 
-// ─── Firebase Storage upload ──────────────────────────────────────────────────
-
-/**
- * Upload a Blob/File to Firebase Storage.
- * Returns the public download URL.
- */
-async function uploadToFirebaseStorage(blob, contentType = "image/webp") {
-  const ext = contentType === "image/webp" ? "webp" : "jpg";
-  const fileName = `animal-images/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const storageRef = ref(storage, fileName);
-  await uploadBytes(storageRef, blob, { contentType });
-  return await getDownloadURL(storageRef);
-}
-
 // ─── Write (admin only) ───────────────────────────────────────────────────────
 
 /**
  * Save a patch for one animal to Firestore.
- * If patch.image is a raw data URL, compress + upload to Firebase Storage first.
+ * If patch.image is a raw data URL, upload it to Cloudinary first.
  */
 export async function setOverride(animalId, patch) {
   const id = String(animalId);
@@ -119,8 +101,9 @@ export async function setOverride(animalId, patch) {
 
   if (data.image && data.image.startsWith("data:")) {
     const blob = dataURLToBlob(data.image);
-    const downloadURL = await uploadToFirebaseStorage(blob, "image/webp");
-    data.image = downloadURL;
+    const uploaded = await uploadToCloudinary(blob);
+    data.image = uploaded.url;
+    data.imagePublicId = uploaded.publicId;
     data.imageObjectPath = null;
   }
 

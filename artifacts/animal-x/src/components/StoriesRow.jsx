@@ -7,7 +7,11 @@ import { useAuth } from "../context/AuthContext";
 import StoriesViewer from "./StoriesViewer";
 import UploadStory from "./UploadStory";
 import { resolveMediaUrl } from "../utils/firebaseUpload";
-
+const resolveUrl = (url) => {
+  if (!url) return "";
+  if (typeof url === "string") return url;
+  return url.secure_url || url.url || "";
+};
 export default function StoriesRow() {
   const { user, profile } = useAuth();
   const [stories, setStories] = useState([]);

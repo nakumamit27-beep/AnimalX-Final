@@ -113,17 +113,40 @@ export function AuthProvider({ children }) {
   }
 
   async function updateProfile(patch) {
-    setProfile((p) => ({ ...p, ...patch }));
-    if (user?.uid) {
-      try {
-        await updateDoc(doc(db, "users", user.uid), patch);
-      } catch {
-        try {
-          await setDoc(doc(db, "users", user.uid), patch, { merge: true });
-        } catch {}
-      }
+  const newName = patch.name || patch.displayName || patch.username;
+
+  // 1. Firebase Auth ke core user ko update karein
+  if (auth.currentUser && newName) {
+    try {
+      await fbUpdateProfile(auth.currentUser, {
+        displayName: newName,
+      });
+    } catch (e) {
+      console.error("Auth displayName update error:", e);
     }
   }
+
+  // 2. Local states turant update karein
+  setProfile((p) => ({ ...p, ...patch, name: newName || p.name }));
+  setUser((u) => (u ? { ...u, name: newName || u.name, displayName: newName || u.displayName } : u));
+
+  // 3. Firestore database me teeno fields sync karein
+  if (user?.uid || auth.currentUser?.uid) {
+    const uid = user?.uid || auth.currentUser?.uid;
+    const firestoreData = {
+      ...patch,
+      ...(newName ? { name: newName, displayName: newName, username: newName } : {}),
+      updatedAt: serverTimestamp(),
+    };
+    try {
+      await updateDoc(doc(db, "users", uid), firestoreData);
+    } catch {
+      try {
+        await setDoc(doc(db, "users", uid), firestoreData, { merge: true });
+      } catch {}
+    }
+  }
+}
 
   function unlockAdminMode() {
     if (!isSuperAdmin) {

@@ -1,5 +1,6 @@
 import { getOverride } from "./animalOverrides";
 import { getAnimalEmoji, getCategoryEmoji } from "./animalEmoji";
+import animalAssets from "../data/animalAssets.json";
 
 export function cleanName(name) {
   return (name || "")
@@ -9,29 +10,34 @@ export function cleanName(name) {
     .trim();
 }
 
-// Stable, deterministic image URL per animal name.
-// Same name always returns the same image (lock seed = name hash).
+export function isPermanentImageUrl(value) {
+  return typeof value === "string" && (
+    /^https?:\/\//i.test(value) ||
+    value.startsWith("data:") ||
+    value.startsWith("blob:") ||
+    value.startsWith("/animals/")
+  );
+}
+
+// The production bundle owns the canonical image for every seeded animal.
 export function getImage(name, id) {
   if (id != null) {
     const override = getOverride(id);
-    if (override && override.image) return override.image;
+    if (isPermanentImageUrl(override?.image)) return override.image;
+    if (animalAssets[String(id)]) return animalAssets[String(id)];
   }
-  const clean = cleanName(name || "wildlife");
-  const lockKey = clean.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const query = encodeURIComponent(clean + " animal wildlife");
-  return `https://loremflickr.com/600/400/${query}?lock=${lockKey}`;
+  return "/opengraph.jpg";
 }
 
 // Single source of truth: the animal's image (override OR default URL).
 // Use this everywhere (cards, banners, details) so they stay in sync.
 export function getAnimalImage(animal) {
   if (!animal) return getImage("wildlife", null);
-  // Prefer a photo already stored on the animal record. This keeps custom
-  // Firebase/Firestore media working in every game without re-uploading it.
-  if (animal.imageUrl) return animal.imageUrl;
-  // Custom-added animals have a direct image (data URL)
-  if (animal.isCustom && animal.image) return animal.image;
-  // Override OR default image
+  const override = animal.id != null ? getOverride(animal.id) : {};
+  if (isPermanentImageUrl(override?.image)) return override.image;
+  if (animalAssets[String(animal.id)]) return animalAssets[String(animal.id)];
+  if (isPermanentImageUrl(animal.imageUrl)) return animal.imageUrl;
+  if (isPermanentImageUrl(animal.image)) return animal.image;
   return getImage(animal.baseName || animal.name, animal.id);
 }
 

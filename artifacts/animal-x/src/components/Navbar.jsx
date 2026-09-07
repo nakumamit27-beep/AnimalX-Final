@@ -5,6 +5,8 @@ import { useSocial } from "../context/SocialContext";
 import NotificationBell from "./NotificationBell";
 import AdminDebugPanel from "./AdminDebugPanel";
 import AdminTestingPanel from "./AdminTestingPanel";
+import { db } from "../utils/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const bottomItems = [
   { href: "/", label: "Home", icon: "🏠" },
@@ -52,12 +54,37 @@ export default function Navbar() {
     }
   }
 
-  async function handleSendBroadcast() {
-    if (!broadcastMsg.trim()) return;
-    await sendBroadcast(broadcastMsg.trim());
-    setBroadcastMsg("");
-    setAdminPanelOpen(false);
-    alert("✅ Broadcast sent to all users!");
+    async function handleSendBroadcast() {
+    const msg = broadcastMsg.trim();
+    if (!msg) return;
+    try {
+      if (typeof sendBroadcast === "function") {
+        await sendBroadcast(msg);
+      }
+      await addDoc(collection(db, "notifications"), {
+        recipientId: "all",
+        senderId: user?.uid || "admin",
+        senderName: user?.displayName || "WildSphere Official",
+        senderAvatar: user?.photoURL || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+        type: "broadcast",
+        text: msg,
+        message: msg,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("WildSphere Announcement", {
+          body: msg,
+          icon: "/favicon.ico",
+        });
+      }
+      setBroadcastMsg("");
+      setAdminPanelOpen(false);
+      alert("✅ Broadcast sent to all users!");
+    } catch (err) {
+      console.error("Broadcast error:", err);
+      alert("Broadcast sending failed");
+    }
   }
 
   return (
@@ -65,7 +92,7 @@ export default function Navbar() {
       {broadcast && (
         <div className="broadcast-banner">
           <span className="broadcast-icon">📢</span>
-          <span className="broadcast-msg">{broadcast.message}</span>
+          <span className="broadcast-msg">{broadcast.message || broadcast.text || (typeof broadcast === "string" ? broadcast : "")}</span>
           <button className="broadcast-dismiss" onClick={() => dismissBroadcast(broadcast.id)}>✕</button>
         </div>
       )}
