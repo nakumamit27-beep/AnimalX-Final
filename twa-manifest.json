@@ -13,8 +13,8 @@
   "backgroundColor": "#000000",
   "enableNotifications": true,
   "startUrl": "/",
-  "iconUrl": "https://iili.io/n2GLEp2.png",
-  "splashScreenFadeOutDuration": 300,
+  "iconUrl": "https://happy-fd1bc.web.app/icon-512.png",
+  "splashScreenFadeOutDuration": 0,
   "signingKey": {
     "path": "/home/runner/workspace/android.keystore",
     "alias": "android"
@@ -46,5 +46,6 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "1"
+  "appVersion": "1",
+  "maskableIconUrl": "https://happy-fd1bc.web.app/icon-512.png"
 }
