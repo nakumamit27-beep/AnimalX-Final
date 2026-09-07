@@ -1,0 +1,70 @@
+name: Build Android App Bundle & APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli
+
+      - name: Build TWA Android App
+        run: |
+          # Agar android directory nahi hai to init karein, warna direct build
+          if [ ! -d "android" ] && [ -f "twa-manifest.json" ]; then
+            bubblewrap init --manifest="twa-manifest.json"
+          fi
+          # Build APK and AAB using keystore
+          if [ -f "android.keystore" ]; then
+            bubblewrap build --keyStorePath="android.keystore" --keyStorePassword="wild123" --keyPassword="wild123" || true
+          else
+            bubblewrap build || true
+          fi
+
+      - name: Find and Collect APK & AAB
+        run: |
+          mkdir -p output
+          find . -name "*.apk" -exec cp {} output/WildSphere.apk \; 2>/dev/null || true
+          find . -name "*.aab" -exec cp {} output/WildSphere.aab \; 2>/dev/null || true
+          ls -la output/
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: WildSphere-Android
+          path: output/*
+
+      - name: Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            output/WildSphere.apk
+            output/WildSphere.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
