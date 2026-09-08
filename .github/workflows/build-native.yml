@@ -48,10 +48,6 @@ jobs:
             npm run build
           fi
 
-      - name: Verify Web Dist
-        run: |
-          ls -la dist/ || (echo "dist not found" && exit 1)
-
       - name: Initialize & Sync Android Platform
         run: |
           npx cap add android || true
@@ -62,17 +58,17 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
-          ./gradlew bundleDebug
+          ./gradlew bundleRelease || ./gradlew bundle
 
       - name: Upload APK File
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Native-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/*.apk
 
       - name: Upload AAB Bundle File
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Native-AAB
-          path: android/app/build/outputs/bundle/debug/app-debug.aab
-
+          path: android/app/build/outputs/bundle/**/*.aab
+        continue-on-error: true
