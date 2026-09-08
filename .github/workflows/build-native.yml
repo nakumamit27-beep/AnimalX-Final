@@ -54,6 +54,14 @@ jobs:
 
       - name: Initialize & Sync Android Platform
         run: |
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.wildsphere.animalx",
+            "appName": "WildSphere",
+            "webDir": "dist",
+            "bundledWebRuntime": false
+          }
+          EOF
           npx cap add android || true
           npx cap sync android
 
@@ -76,4 +84,3 @@ jobs:
           name: WildSphere-Native-AAB
           path: android/app/build/outputs/bundle/**/*.aab
         continue-on-error: true
-
