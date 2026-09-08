@@ -58,7 +58,7 @@ jobs:
           {
             "appId": "com.wildsphere.animalx",
             "appName": "WildSphere",
-            "webDir": "dist",
+                    "webDir": "artifacts/animal-x/dist",
             "bundledWebRuntime": false
           }
           EOF
