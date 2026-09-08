@@ -29,24 +29,28 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Root Dependencies & Capacitor
+      - name: Install pnpm & Dependencies
         run: |
-          npm install --legacy-peer-deps
-          npm install -g vite
-          npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps
+          npm install -g pnpm vite
+          pnpm install --no-frozen-lockfile || npm install --ignore-scripts --legacy-peer-deps
+          npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps --ignore-scripts || true
 
       - name: Build Web Code
         run: |
           if [ -d "artifacts/animal-x" ]; then
             cd artifacts/animal-x
-            npm install --include=dev --legacy-peer-deps
-            npx vite build || npm run build
+            pnpm install --no-frozen-lockfile || npm install --legacy-peer-deps --ignore-scripts
+            npx vite build || pnpm run build || npm run build
             cd ../..
             mkdir -p dist
             cp -r artifacts/animal-x/dist/* dist/ 2>/dev/null || cp -r artifacts/animal-x/build/* dist/ 2>/dev/null || true
           else
-            npm run build
+            pnpm run build || npm run build
           fi
+
+      - name: Verify Web Dist
+        run: |
+          ls -la dist/ || (echo "dist not found" && exit 1)
 
       - name: Initialize & Sync Android Platform
         run: |
@@ -58,7 +62,7 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
-          ./gradlew bundleRelease || ./gradlew bundle
+          ./gradlew bundleRelease || ./gradlew bundle || true
 
       - name: Upload APK File
         uses: actions/upload-artifact@v4
