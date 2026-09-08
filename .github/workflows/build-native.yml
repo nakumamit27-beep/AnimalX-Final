@@ -33,9 +33,9 @@ jobs:
         run: |
           npm install -g pnpm@latest vite
           pnpm install --no-frozen-lockfile || true
-          pnpm add -w @capacitor/core @capacitor/cli @capacitor/android || npm install @capacitor/core @capacitor/cli @capacitor/android --no-save --legacy-peer-deps || true
+          pnpm add -w @capacitor/core @capacitor/cli @capacitor/android || npm install -g @capacitor/cli @capacitor/core @capacitor/android
 
-            - name: Build Web Code
+      - name: Build Web Code
         run: |
           pnpm --filter animal-x build || (cd artifacts/animal-x && pnpm build)
           rm -rf dist
@@ -80,4 +80,4 @@ jobs:
         with:
           name: WildSphere-Native-AAB
           path: android/app/build/outputs/bundle/**/*.aab
-        continue-on-error: true
+          continue-on-error: true
