@@ -35,30 +35,27 @@ jobs:
           pnpm install --no-frozen-lockfile || true
           pnpm add -w @capacitor/core @capacitor/cli @capacitor/android || npm install @capacitor/core @capacitor/cli @capacitor/android --no-save --legacy-peer-deps || true
 
-      - name: Build Web Code
+            - name: Build Web Code
         run: |
-          if [ -d "artifacts/animal-x" ]; then
-            cd artifacts/animal-x
-            pnpm install --no-frozen-lockfile || npm install --legacy-peer-deps || true
-            npx vite build || pnpm run build || npm run build
-            cd ../..
-            mkdir -p dist
-            cp -r artifacts/animal-x/dist/* dist/ 2>/dev/null || cp -r artifacts/animal-x/build/* dist/ 2>/dev/null || true
-          else
-            pnpm run build || npm run build
+          pnpm --filter animal-x build || (cd artifacts/animal-x && pnpm build)
+          rm -rf dist
+          mkdir -p dist
+          if [ -d "artifacts/animal-x/dist" ]; then
+            cp -r artifacts/animal-x/dist/* dist/
           fi
 
       - name: Verify Web Dist
         run: |
-          ls -la dist/ || (echo "dist not found" && exit 1)
+          ls -la dist/
+          test -f dist/index.html || (echo "index.html missing from dist!" && exit 1)
 
       - name: Initialize & Sync Android Platform
         run: |
           cat << 'EOF' > capacitor.config.json
           {
-            "appId": "com.wildsphere.animalx",
+            "appId": "com.wildsphere.animals",
             "appName": "WildSphere",
-                    "webDir": "artifacts/animal-x/dist",
+            "webDir": "dist",
             "bundledWebRuntime": false
           }
           EOF
