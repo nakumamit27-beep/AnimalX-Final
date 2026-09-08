@@ -44,3 +44,19 @@ defaultBucketID = "replit-objstore-a69f0f31-fdd4-42e3-aa1a-f77c299073cf"
 [nix]
 packages = ["nano", "firebase-tools"]
 channel = "stable-25_05"
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 80
+
+[[ports]]
+localPort = 21493
+externalPort = 3000
+
+[[ports]]
+localPort = 23592
+externalPort = 3001

@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
-import { collection, query, where, onSnapshot, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, limit, onSnapshot, doc,
+getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+serverTimestamp } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -83,6 +85,7 @@ export default function Profile() {
   const [followListUsers, setFollowListUsers] = useState([]);
   const [loadingFollowList, setLoadingFollowList] = useState(false);
     const [userReels, setUserReels] = useState([]);
+    const [toastMsg, setToastMsg] = useState("");
 
   useEffect(() => {
     const targetUid = user?.uid || profile?.uid || profile?.id;
@@ -187,12 +190,12 @@ export default function Profile() {
     let canonicalFollowingIds = new Set();
     let legacyFollowingIds = new Set();
                           const refreshRelationshipCounts = () => {
-        setRealStats((prev) => ({
-          ...prev,
-          followersCount: canonicalFollowerIds.size,
-          followingCount: canonicalFollowingIds.size,
-        }));
-      };
+  setRealStats((prev) => ({
+    ...prev,
+    followersCount: canonicalFollowerIds.size,
+followingCount: canonicalFollowingIds.size,
+  }));
+};
 
     const reelsQuery = query(collection(db, "reels"), where("userId", "==", targetUid));
     const unsubReels = onSnapshot(reelsQuery, (snap) => {
@@ -223,7 +226,10 @@ export default function Profile() {
       refreshRelationshipCounts();
     }, () => {});
 
-                    const unsubLegacyFollowers = () => {};
+                    const unsubLegacyFollowers = onSnapshot(doc(db, "userFollowers", targetUid), (snap) => {
+  legacyFollowerIds = new Set(Object.keys(snap.data()?.followers || {}));
+  refreshRelationshipCounts();
+}, () => {});
     const unsubLegacyFollowing = onSnapshot(doc(db, "userFollowing", targetUid), (snap) => {
       legacyFollowingIds = new Set(Object.keys(snap.data()?.following || {}));
       refreshRelationshipCounts();
@@ -388,7 +394,8 @@ export default function Profile() {
       // 3. Local input state ko lock karein
       setNameInput(newName);
       setEditProfileOpen(false);
-      alert("Profile updated to @" + cleanUsername + "!");
+      setToastMsg("Name changed successfully!");
+setTimeout(() => setToastMsg(""), 3000);
     } catch (err) {
       console.error("Save profile error:", err);
       alert("Failed to save: " + (err.message || "Unknown error"));
@@ -872,6 +879,25 @@ export default function Profile() {
               Cancel
             </button>
           </div>
+        </div>
+      )}
+            {toastMsg && (
+        <div style={{
+          position: "fixed",
+          bottom: "80px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          backgroundColor: "#1f2937",
+          color: "#22c55e",
+          padding: "12px 24px",
+          borderRadius: "9999px",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+          fontSize: "14px",
+          fontWeight: "600",
+          zIndex: 99999,
+          border: "1px solid rgba(34,197,94,0.3)"
+        }}>
+          ✓ {toastMsg}
         </div>
       )}
             {/* Followers / Following List Modal */}

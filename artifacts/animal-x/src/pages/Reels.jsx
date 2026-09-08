@@ -42,6 +42,7 @@ export default function Reels() {
   const [muted, setMuted] = useState(true);
   const [commentsReel, setCommentsReel] = useState(null);
   const [uploadOpen, setUploadOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
   const [heartAnims, setHeartAnims] = useState({});
   const [savedReels, setSavedReels] = useState(() => {
     try { return JSON.parse(localStorage.getItem("ax_saved_reels") || "{}"); } catch { return {}; }
@@ -321,25 +322,26 @@ const handleRealAdView = async (adId) => {
     }, 120);
   }
 
-    async function handleDeleteReel(reelItem) {
+      function handleDeleteReel(reelItem) {
+    setItemToDelete(reelItem);
+  }
+
+  async function confirmDeleteReel() {
+    if (!itemToDelete) return;
+    const reelItem = itemToDelete;
+    setItemToDelete(null);
+
     const reelId = typeof reelItem === "object" ? reelItem.id : reelItem;
     const isAd = typeof reelItem === "object" && (reelItem.isAd || reelItem.type === "ad");
 
-    if (!window.confirm(isAd ? "Kya aap is Ad ko permanent delete karna chahte hain?" : "Delete this reel?")) return;
-
     try {
       if (isAd) {
-        // Ads collection se delete karega
         await deleteDoc(doc(db, "advertisements", reelId));
-        alert("❌ Ad deleted successfully!");
       } else {
-        // Normal reels collection se delete karega
         await deleteDoc(doc(db, "reels", reelId));
-        alert("Reel deleted!");
       }
     } catch (e) {
       console.error("Delete error:", e);
-      alert("Delete failed: " + e.message);
     }
   }
 
@@ -580,9 +582,75 @@ const handleRealAdView = async (adId) => {
 
       {commentsReel && (
         <CommentsPanel reel={commentsReel} onClose={() => setCommentsReel(null)} />
-      )}
+                          )}
 
-      {uploadOpen && (
+          {itemToDelete && (
+            <div style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 9999,
+              background: "rgba(0,0,0,0.65)",
+              backdropFilter: "blur(4px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "16px"
+            }}>
+              <div style={{
+                background: "#262626",
+                borderRadius: "16px",
+                width: "100%",
+                maxWidth: "280px",
+                textAlign: "center",
+                overflow: "hidden",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
+                border: "1px solid rgba(255,255,255,0.08)"
+              }}>
+                <div style={{ padding: "22px 16px 18px" }}>
+                  <div style={{ fontSize: "17px", fontWeight: "700", color: "#fff", marginBottom: "6px" }}>
+                    {itemToDelete.type === "ad" ? "Delete Ad?" : "Delete Reel?"}
+                  </div>
+                  <div style={{ fontSize: "13px", color: "#a8a8a8", lineHeight: "1.4" }}>
+                    Are you sure you want to delete this? This action cannot be undone.
+                  </div>
+                </div>
+                <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+                  <button
+                    onClick={confirmDeleteReel}
+                    style={{
+                      width: "100%",
+                      padding: "14px 0",
+                      background: "transparent",
+                      border: "none",
+                      borderBottom: "1px solid rgba(255,255,255,0.12)",
+                      color: "#ed4956",
+                      fontWeight: "700",
+                      fontSize: "14px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => setItemToDelete(null)}
+                    style={{
+                      width: "100%",
+                      padding: "14px 0",
+                      background: "transparent",
+                      border: "none",
+                      color: "#fff",
+                      fontSize: "14px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {uploadOpen && (
         <UploadReel onClose={() => setUploadOpen(false)} onUploaded={() => setUploadOpen(false)} />
       )}
     </div>

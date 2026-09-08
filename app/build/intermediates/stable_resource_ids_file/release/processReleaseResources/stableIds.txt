@@ -895,6 +895,7 @@ app.web.happy_fd1bc.twa:color/abc_tint_spinner = 0x7f050017
 app.web.happy_fd1bc.twa:drawable/abc_ratingbar_small_material = 0x7f070035
 app.web.happy_fd1bc.twa:attr/windowActionBar = 0x7f03011d
 app.web.happy_fd1bc.twa:dimen/abc_dialog_fixed_height_minor = 0x7f06001d
+app.web.happy_fd1bc.twa:mipmap/ic_maskable = 0x7f0c0001
 app.web.happy_fd1bc.twa:color/button_material_light = 0x7f05002d
 app.web.happy_fd1bc.twa:drawable/abc_scrubber_track_mtrl_alpha = 0x7f07003a
 app.web.happy_fd1bc.twa:attr/trackTintMode = 0x7f030119

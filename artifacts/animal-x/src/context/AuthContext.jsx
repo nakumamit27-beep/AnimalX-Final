@@ -75,7 +75,18 @@ export function AuthProvider({ children }) {
   async function signup(name, email, password) {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await fbUpdateProfile(cred.user, { displayName: name });
+            const cleanName = (name && name.trim()) || email.split("@")[0];
+      await fbUpdateProfile(cred.user, { displayName: cleanName });
+
+      // Firestore database me bhi turant name save karein
+      await setDoc(doc(db, "users", cred.user.uid), {
+        ...DEFAULT_PROFILE,
+        name: cleanName,
+        displayName: cleanName,
+        email: email,
+        createdAt: serverTimestamp()
+      });
+
       return true;
     } catch (err) {
       const msg =

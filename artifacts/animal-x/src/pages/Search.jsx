@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import {
   collection, query, orderBy, limit, where,
-  getDocs, startAt, endAt
+  getDocs, startAt, endAt, doc, getDoc
 } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useAuth } from "../context/AuthContext";
@@ -97,7 +97,23 @@ export default function Search() {
         }
       });
 
-      setUsers(userResults);
+      const enrichedUsers = await Promise.all(
+  userResults.map(async (u) => {
+    try {
+      const followDoc = await getDoc(doc(db, "userFollowers", u.uid));
+      if (followDoc.exists()) {
+        const followersMap = followDoc.data().followers || {};
+        const count = Object.keys(followersMap).length;
+        return { ...u, followersCount: count };
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return { ...u, followersCount: 0 };
+  })
+);
+
+setUsers(enrichedUsers);
 
       // Search reels by title, hashtags, or category
       const reelsSnap = await getDocs(query(
@@ -267,9 +283,9 @@ export default function Search() {
                       </div>
                       {u.country && <div className="search-user-country">📍 {u.country}</div>}
                       <div className="search-user-meta">
-                        {u.followers > 0 && <span>👥 {fmt(u.followers)}</span>}
-                        {(u.reels || 0) > 0 && <span>🎬 {fmt(u.reels)} reels</span>}
-                      </div>
+  <span>👥 {fmt(u.followersCount ?? 0)}</span>
+  {(u.reels || 0) > 0 && <span>🎬 {fmt(u.reels)} reels</span>}
+</div>
                     </div>
                   </Link>
                   {!isOwn && user && (
