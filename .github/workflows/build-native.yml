@@ -15,10 +15,10 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (v22 for styleText support)
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
 
       - name: Setup Java (JDK 17)
         uses: actions/setup-java@v4
@@ -29,18 +29,17 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install pnpm & Dependencies
+      - name: Install pnpm & Root Tools
         run: |
           npm install -g pnpm@latest vite
-          pnpm config set ignore-scripts false
-          pnpm install --no-frozen-lockfile --unsafe-perm || true
+          pnpm install --no-frozen-lockfile || true
           pnpm add -w @capacitor/core @capacitor/cli @capacitor/android || npm install @capacitor/core @capacitor/cli @capacitor/android --no-save --legacy-peer-deps || true
 
       - name: Build Web Code
         run: |
           if [ -d "artifacts/animal-x" ]; then
             cd artifacts/animal-x
-            pnpm install --no-frozen-lockfile --unsafe-perm || npm install --legacy-peer-deps --ignore-scripts || true
+            pnpm install --no-frozen-lockfile || npm install --legacy-peer-deps || true
             npx vite build || pnpm run build || npm run build
             cd ../..
             mkdir -p dist
@@ -77,3 +76,4 @@ jobs:
           name: WildSphere-Native-AAB
           path: android/app/build/outputs/bundle/**/*.aab
         continue-on-error: true
+
