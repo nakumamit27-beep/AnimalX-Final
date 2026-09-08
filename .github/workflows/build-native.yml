@@ -31,15 +31,16 @@ jobs:
 
       - name: Install pnpm & Dependencies
         run: |
-          npm install -g pnpm vite
-          pnpm install --no-frozen-lockfile || npm install --ignore-scripts --legacy-peer-deps
-          npm install @capacitor/core @capacitor/cli @capacitor/android --legacy-peer-deps --ignore-scripts || true
+          npm install -g pnpm@latest vite
+          pnpm config set ignore-scripts false
+          pnpm install --no-frozen-lockfile --unsafe-perm || true
+          pnpm add -w @capacitor/core @capacitor/cli @capacitor/android || npm install @capacitor/core @capacitor/cli @capacitor/android --no-save --legacy-peer-deps || true
 
       - name: Build Web Code
         run: |
           if [ -d "artifacts/animal-x" ]; then
             cd artifacts/animal-x
-            pnpm install --no-frozen-lockfile || npm install --legacy-peer-deps --ignore-scripts
+            pnpm install --no-frozen-lockfile --unsafe-perm || npm install --legacy-peer-deps --ignore-scripts || true
             npx vite build || pnpm run build || npm run build
             cd ../..
             mkdir -p dist
