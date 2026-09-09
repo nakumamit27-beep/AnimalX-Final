@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Generate and Compile Android App
+      - name: Generate, Fix WebView and Compile APK
         shell: bash
         run: |
           mkdir -p build_output
@@ -31,12 +31,22 @@ jobs:
           
           cd WildSphere/android/source
           
-          # Fix invalid Android resource names (files starting with digits like 192x192.png)
+          # 1. Fix resource names
           find app/src/main/res -type f -name "[0-9]*.png" -delete
           
-          # Fix line endings and permissions
+          # 2. Enable DOM Storage, Database and Mixed Content in MainActivity.java
+          MAIN_JAVA=$(find app/src/main/java -name "MainActivity.java")
+          sed -i '/setJavaScriptEnabled(true);/a \
+                  webSettings.setDomStorageEnabled(true);\
+                  webSettings.setDatabaseEnabled(true);\
+                  webSettings.setAllowFileAccess(true);\
+                  webSettings.setAllowContentAccess(true);' "$MAIN_JAVA"
+
+          # 3. Fix line endings and permissions
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
+          
+          # 4. Compile APK
           ./gradlew assembleDebug --stacktrace
 
       - name: Upload WildSphere APK
