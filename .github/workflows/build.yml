@@ -1,0 +1,28 @@
+name: Generate WildSphere Package
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install PWABuilder CLI
+        run: npm install -g @pwabuilder/cli
+
+      - name: Run PWABuilder
+        run: |
+          mkdir -p output
+          pwa-cli android https://happy-fd1bc.web.app --packageId com.wildsphere.app --output ./output
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WildSphere-Package
+          path: ./output
