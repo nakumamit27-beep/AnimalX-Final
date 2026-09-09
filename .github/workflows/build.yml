@@ -22,10 +22,13 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install and Build with PWABuilder
+      - name: Install PWABuilder
+        run: npm install -g pwabuilder
+
+      - name: Generate Android App
         run: |
           mkdir -p output
-          npx @pwabuilder/cli https://happy-fd1bc.web.app/manifest.json -o ./output -p android
+          pwabuilder package https://happy-fd1bc.web.app --platform android --output ./output
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
