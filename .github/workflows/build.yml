@@ -25,16 +25,13 @@ jobs:
       - name: Install PWABuilder
         run: npm install -g pwabuilder
 
-      - name: Generate Android App
+      - name: Generate Android Project
         run: |
-          pwabuilder package https://happy-fd1bc.web.app --platform android
+          mkdir -p android-output
+          pwabuilder package https://happy-fd1bc.web.app --platform android --output ./android-output
 
-      - name: Upload Artifacts
+      - name: Upload WildSphere ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-Package
-          path: |
-            *.zip
-            **/*.apk
-            **/*.aab
-            **/*.keystore
+          name: WildSphere-Android-Package
+          path: ./android-output
