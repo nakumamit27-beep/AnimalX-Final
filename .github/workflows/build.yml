@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Generate Keystore and Compile Release APK
+      - name: Generate Keystore, APK and Read Package Name
         shell: bash
         run: |
           mkdir -p build_output
@@ -30,6 +30,12 @@ jobs:
           pwabuilder https://happy-fd1bc.web.app -p android -l debug
           
           cd WildSphere/android/source
+          
+          # 1. Print Application ID directly in logs
+          echo "=========================================="
+          echo "YOUR OFFICIAL APPLICATION ID IS:"
+          grep "applicationId" app/build.gradle
+          echo "=========================================="
           
           # Fix resource names
           find app/src/main/res -type f -name "[0-9]*.png" -delete
@@ -42,7 +48,7 @@ jobs:
                   webSettings.setAllowFileAccess(true);\
                   webSettings.setAllowContentAccess(true);' "$MAIN_JAVA"
 
-          # 1. Create Release Keystore inside the 'app' directory
+          # 2. Create Release Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -53,7 +59,7 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 2. Configure signing in build.gradle
+          # 3. Configure signing
           sed -i '/android {/a \
               signingConfigs {\
                   release {\
@@ -70,13 +76,13 @@ jobs:
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           
-          # 3. Build Signed Release APK
+          # 4. Compile Release APK
           ./gradlew assembleRelease --stacktrace
 
       - name: Upload Release Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-Release-Package
+          name: WildSphere-Final-Release
           path: |
             build_output/WildSphere/android/source/app/build/outputs/apk/**/*.apk
             build_output/WildSphere/android/source/app/wildsphere-release.jks
