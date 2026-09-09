@@ -8,22 +8,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Request PWABuilder Package
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install and Build with PWABuilder
         run: |
           mkdir -p output
-          curl -s -L -X POST "https://android.pwabuilder.com/api/build" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "manifestUrl": "https://happy-fd1bc.web.app/manifest.json",
-              "packageId": "com.wildsphere.app",
-              "name": "WildSphere",
-              "launcherName": "WildSphere",
-              "signingMode": "new"
-            }' \
-            --output ./output/WildSphere-Package.zip
+          npx @pwabuilder/cli https://happy-fd1bc.web.app/manifest.json -o ./output -p android
 
-      - name: Verify and Upload
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Package
-          path: ./output/WildSphere-Package.zip
+          path: ./output/**
