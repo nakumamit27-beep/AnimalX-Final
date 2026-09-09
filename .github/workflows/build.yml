@@ -8,11 +8,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup Java 17
+      - name: Setup Java 8
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '8'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Generate Keystore, APK and AAB
+      - name: Generate Keystore, APK and Read Package Name
         shell: bash
         run: |
           mkdir -p build_output
@@ -30,6 +30,12 @@ jobs:
           pwabuilder https://happy-fd1bc.web.app -p android -l debug
           
           cd WildSphere/android/source
+          
+          # Print Application ID directly in logs
+          echo "=========================================="
+          echo "OFFICIAL_APPLICATION_ID:"
+          grep "applicationId" app/build.gradle
+          echo "=========================================="
           
           # Fix resource names
           find app/src/main/res -type f -name "[0-9]*.png" -delete
@@ -42,7 +48,7 @@ jobs:
                   webSettings.setAllowFileAccess(true);\
                   webSettings.setAllowContentAccess(true);' "$MAIN_JAVA"
 
-          # 1. Generate permanent Release Keystore inside app folder
+          # 1. Create Release Keystore inside app directory
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -53,7 +59,7 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 2. Configure Signing in build.gradle
+          # 2. Configure signing in build.gradle
           sed -i '/android {/a \
               signingConfigs {\
                   release {\
@@ -66,22 +72,17 @@ jobs:
 
           sed -i 's/buildTypes {/buildTypes { release { signingConfig signingConfigs.release } /' app/build.gradle
 
-          # Fix line endings & permissions
+          # Fix line endings
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           
-          # Upgrade Gradle wrapper to 7.5 for AAB generation compatibility
-          sed -i 's/gradle-4.6-all.zip/gradle-7.5-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
-          sed -i 's/com.android.tools.build:gradle:3.2.1/com.android.tools.build:gradle:7.3.1/g' build.gradle
-          
-          # 3. Build Signed APK and Signed AAB
-          ./gradlew assembleRelease bundleRelease --stacktrace
+          # 3. Build Signed Release APK
+          ./gradlew assembleRelease --stacktrace
 
-      - name: Upload Production Artifacts
+      - name: Upload Release Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-Store-Package
+          name: WildSphere-Release-Package
           path: |
-            build_output/WildSphere/android/source/app/build/outputs/apk/release/*.apk
-            build_output/WildSphere/android/source/app/build/outputs/bundle/release/*.aab
+            build_output/WildSphere/android/source/app/build/outputs/apk/**/*.apk
             build_output/WildSphere/android/source/app/wildsphere-release.jks
