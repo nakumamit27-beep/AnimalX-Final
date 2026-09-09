@@ -27,11 +27,14 @@ jobs:
 
       - name: Generate Android App
         run: |
-          mkdir -p output
-          pwabuilder package https://happy-fd1bc.web.app --platform android --output ./output
+          pwabuilder package https://happy-fd1bc.web.app --platform android
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Package
-          path: ./output/**
+          path: |
+            *.zip
+            **/*.apk
+            **/*.aab
+            **/*.keystore
