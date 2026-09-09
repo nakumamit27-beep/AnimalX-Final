@@ -1,4 +1,4 @@
-name: Generate WildSphere Package
+name: Generate WildSphere Production Release
 
 on:
   workflow_dispatch:
@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Generate, Fix WebView and Compile APK
+      - name: Generate Keystore, APK and AAB
         shell: bash
         run: |
           mkdir -p build_output
@@ -31,10 +31,10 @@ jobs:
           
           cd WildSphere/android/source
           
-          # 1. Fix resource names
+          # Fix resource names
           find app/src/main/res -type f -name "[0-9]*.png" -delete
           
-          # 2. Enable DOM Storage, Database and Mixed Content in MainActivity.java
+          # Enable DOM Storage & Web features
           MAIN_JAVA=$(find app/src/main/java -name "MainActivity.java")
           sed -i '/setJavaScriptEnabled(true);/a \
                   webSettings.setDomStorageEnabled(true);\
@@ -42,15 +42,45 @@ jobs:
                   webSettings.setAllowFileAccess(true);\
                   webSettings.setAllowContentAccess(true);' "$MAIN_JAVA"
 
-          # 3. Fix line endings and permissions
+          # 1. Create permanent Release Keystore
+          keytool -genkeypair -v \
+            -keystore wildsphere-release.jks \
+            -alias wildsphere \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass wildsphere123 \
+            -keypass wildsphere123 \
+            -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
+
+          # 2. Configure signing in build.gradle
+          sed -i '/android {/a \
+              signingConfigs {\
+                  release {\
+                      storeFile file("wildsphere-release.jks")\
+                      storePassword "wildsphere123"\
+                      keyAlias "wildsphere"\
+                      keyPassword "wildsphere123"\
+                  }\
+              }' app/build.gradle
+
+          sed -i 's/buildTypes {/buildTypes { release { signingConfig signingConfigs.release } /' app/build.gradle
+
+          # Fix line endings
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           
-          # 4. Compile APK
-          ./gradlew assembleDebug --stacktrace
+          # 3. Build Release APK and Play Store AAB
+          ./gradlew assembleRelease bundleRelease --stacktrace
+          
+          # Copy Keystore to output folder for backup
+          cp wildsphere-release.jks app/build/outputs/
 
-      - name: Upload WildSphere APK
+      - name: Upload Production Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-APK
-          path: build_output/WildSphere/android/source/app/build/outputs/apk/**/*.apk
+          name: WildSphere-Production-Bundle
+          path: |
+            build_output/WildSphere/android/source/app/build/outputs/**/*.apk
+            build_output/WildSphere/android/source/app/build/outputs/**/*.aab
+            build_output/WildSphere/android/source/app/build/outputs/wildsphere-release.jks
