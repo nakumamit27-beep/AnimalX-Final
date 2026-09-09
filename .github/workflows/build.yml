@@ -13,16 +13,24 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install PWABuilder CLI
-        run: npm install -g @pwabuilder/cli
-
-      - name: Run PWABuilder
+      - name: Download WildSphere Android ZIP from PWABuilder
         run: |
           mkdir -p output
-          pwa-cli android https://happy-fd1bc.web.app --packageId com.wildsphere.app --output ./output
+          curl -X POST "https://pwabuilder-cloudapk.azurewebsites.com/build" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "packageId": "com.wildsphere.app",
+              "name": "WildSphere",
+              "launcherName": "WildSphere",
+              "webManifestUrl": "https://happy-fd1bc.web.app/manifest.json",
+              "appVersion": "1.0.0",
+              "versionCode": 1,
+              "host": "happy-fd1bc.web.app",
+              "startUrl": "/"
+            }' --output ./output/WildSphere-Android.zip
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Package
-          path: ./output
+          path: ./output/WildSphere-Android.zip
