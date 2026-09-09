@@ -30,6 +30,11 @@ jobs:
           pwabuilder https://happy-fd1bc.web.app -p android -l debug
           
           cd WildSphere/android/source
+          
+          # Fix invalid Android resource names (files starting with digits like 192x192.png)
+          find app/src/main/res -type f -name "[0-9]*.png" -delete
+          
+          # Fix line endings and permissions
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
