@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Generate Keystore, APK and Read Package Name
+      - name: Generate Keystore, APK and AAB
         shell: bash
         run: |
           mkdir -p build_output
@@ -30,12 +30,6 @@ jobs:
           pwabuilder https://happy-fd1bc.web.app -p android -l debug
           
           cd WildSphere/android/source
-          
-          # Print Application ID directly in logs
-          echo "=========================================="
-          echo "OFFICIAL_APPLICATION_ID:"
-          grep "applicationId" app/build.gradle
-          echo "=========================================="
           
           # Fix resource names
           find app/src/main/res -type f -name "[0-9]*.png" -delete
@@ -76,13 +70,14 @@ jobs:
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           
-          # 3. Build Signed Release APK
-          ./gradlew assembleRelease --stacktrace
+          # 3. Build Signed Release APK and Signed Release AAB
+          ./gradlew assembleRelease bundleRelease --stacktrace
 
       - name: Upload Release Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-Release-Package
+          name: WildSphere-PlayStore-Bundle
           path: |
-            build_output/WildSphere/android/source/app/build/outputs/apk/**/*.apk
+            build_output/WildSphere/android/source/app/build/outputs/**/*.apk
+            build_output/WildSphere/android/source/app/build/outputs/**/*.aab
             build_output/WildSphere/android/source/app/wildsphere-release.jks
