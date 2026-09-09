@@ -8,29 +8,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Download WildSphere Android ZIP from PWABuilder
-        run: |
-          mkdir -p output
-          curl -X POST "https://pwabuilder-cloudapk.azurewebsites.com/build" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "packageId": "com.wildsphere.app",
-              "name": "WildSphere",
-              "launcherName": "WildSphere",
-              "webManifestUrl": "https://happy-fd1bc.web.app/manifest.json",
-              "appVersion": "1.0.0",
-              "versionCode": 1,
-              "host": "happy-fd1bc.web.app",
-              "startUrl": "/"
-            }' --output ./output/WildSphere-Android.zip
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli
 
-      - name: Upload Artifact
+      - name: Initialize and Build Android App
+        run: |
+          mkdir build-dir && cd build-dir
+          bubblewrap init --manifest="https://happy-fd1bc.web.app/manifest.json" --directory=. --chromeosonly=false
+          bubblewrap build --skipPwaValidation
+
+      - name: Upload APK and AAB Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-Package
-          path: ./output/WildSphere-Android.zip
+          name: WildSphere-Android-Files
+          path: |
+            build-dir/*.apk
+            build-dir/*.aab
+            build-dir/*.keystore
