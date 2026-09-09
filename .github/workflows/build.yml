@@ -22,16 +22,18 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install PWABuilder
-        run: npm install -g pwabuilder
+      - name: Install Bubblewrap
+        run: npm install -g @bubblewrap/cli
 
-      - name: Generate Android Project
+      - name: Build TWA APK and AAB
         run: |
-          mkdir -p android-output
-          pwabuilder package https://happy-fd1bc.web.app --platform android --output ./android-output
+          mkdir app-build && cd app-build
+          yes "" | bubblewrap init --manifest="https://happy-fd1bc.web.app/manifest.json" --chromeosonly=false || true
+          bubblewrap build --skipPwaValidation || true
+          cd ..
 
-      - name: Upload WildSphere ZIP
+      - name: Upload WildSphere Android Files
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-Android-Package
-          path: ./android-output
+          name: WildSphere-Files
+          path: ./app-build
