@@ -8,45 +8,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Automate PWABuilder Download
+      - name: Request PWABuilder Package
         run: |
           mkdir -p output
-          npm install puppeteer
-          node -e '
-          const puppeteer = require("puppeteer");
-          (async () => {
-            const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox", "--disable-setuid-sandbox"] });
-            const page = await browser.newPage();
-            const client = await page.target().createCDPSession();
-            await client.send("Page.setDownloadBehavior", {
-              behavior: "allow",
-              downloadPath: process.cwd() + "/output"
-            });
-            console.log("Opening PWABuilder...");
-            await page.goto("https://www.pwabuilder.com", { waitUntil: "networkidle2" });
-            await page.type("input[type=url]", "https://happy-fd1bc.web.app");
-            await page.keyboard.press("Enter");
-            await page.waitForNavigation({ waitUntil: "networkidle2", timeout: 60000 });
-            console.log("Navigating to Android Package...");
-            await page.goto("https://www.pwabuilder.com/reportcard?site=https://happy-fd1bc.web.app", { waitUntil: "networkidle2" });
-            const androidBtn = await page.waitForSelector("button, a", { timeout: 30000 });
-            await page.evaluate(() => {
-              const buttons = Array.from(document.querySelectorAll("button, a"));
-              const btn = buttons.find(b => b.innerText.includes("Package") || b.innerText.includes("Android"));
-              if (btn) btn.click();
-            });
-            await new Promise(r => setTimeout(r, 15000));
-            await browser.close();
-          })();
-          '
+          curl -s -L -X POST "https://android.pwabuilder.com/api/build" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "manifestUrl": "https://happy-fd1bc.web.app/manifest.json",
+              "packageId": "com.wildsphere.app",
+              "name": "WildSphere",
+              "launcherName": "WildSphere",
+              "signingMode": "new"
+            }' \
+            --output ./output/WildSphere-Package.zip
 
-      - name: Upload PWABuilder ZIP
+      - name: Verify and Upload
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Package
-          path: ./output/*
+          path: ./output/WildSphere-Package.zip
