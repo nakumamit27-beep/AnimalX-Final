@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Build TWA Release Without Splash Delay
+      - name: Build Android Production APK & AAB
         shell: bash
         run: |
           mkdir -p build_output
@@ -31,7 +31,7 @@ jobs:
           
           cd WildSphere/android/source
           
-          # Clean Permissions
+          # 1. Clean Manifest Permissions
           python3 - << 'EOF'
           with open("app/src/main/AndroidManifest.xml", "r") as f:
               xml = f.read()
@@ -52,10 +52,10 @@ jobs:
                   f.write(xml)
           EOF
 
-          # Remove numeric image assets
+          # 2. Fix numeric resource assets
           find app/src/main/res -type f -name "[0-9]*.png" -delete
 
-          # Bypass splash hang: Force immediate webview launch
+          # 3. FIX SPLASH FREEZE: Force Instant Page Launch in strings.xml
           python3 - << 'EOF'
           import os
           for root, dirs, files in os.walk("app/src/main/res"):
@@ -64,13 +64,19 @@ jobs:
                       p = os.path.join(root, file)
                       with open(p, "r", errors="ignore") as f:
                           c = f.read()
-                      if "splash_screen" in c:
+                      modified = False
+                      if 'name="show_splash_screen">true<' in c:
                           c = c.replace('name="show_splash_screen">true<', 'name="show_splash_screen">false<')
+                          modified = True
+                      if 'name="fallbackType">customtabs<' in c:
+                          c = c.replace('name="fallbackType">customtabs<', 'name="fallbackType">webview<')
+                          modified = True
+                      if modified:
                           with open(p, "w") as f:
                               f.write(c)
           EOF
 
-          # Fixed Production Keystore
+          # 4. Generate Master Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -81,7 +87,7 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # Configure build.gradle release signing
+          # 5. Sign APK and AAB with Keystore
           python3 - << 'EOF'
           with open("app/build.gradle", "r") as f:
               gradle = f.read()
@@ -112,12 +118,13 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease --stacktrace
 
+          # 6. Collect final Android APK and AAB
           mkdir -p final_bundle
           find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Release.apk \;
           find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/WildSphere-PlayStore.aab \;
           cp app/wildsphere-release.jks final_bundle/wildsphere-release.jks
 
-      - name: Upload Artifacts
+      - name: Upload Android Release Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Final-Release
