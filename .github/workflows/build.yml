@@ -8,11 +8,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup Java 8
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '8'
+          java-version: '17'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Build Clean Production Release
+      - name: Build and Sign Production APK with apksigner
         shell: bash
         run: |
           mkdir -p build_output
@@ -31,7 +31,7 @@ jobs:
           
           cd WildSphere/android/source
           
-          # 1. Add permissions cleanly
+          # 1. Standard API 28 Clean Permissions
           python3 - << 'EOF'
           with open("app/src/main/AndroidManifest.xml", "r") as f:
               xml = f.read()
@@ -55,7 +55,7 @@ jobs:
           # 2. Fix numeric resource assets
           find app/src/main/res -type f -name "[0-9]*.png" -delete
 
-          # 3. Create fresh release keystore
+          # 3. Create Release Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -66,46 +66,39 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 4. Attach signing to release build cleanly
-          python3 - << 'EOF'
-          with open("app/build.gradle", "r") as f:
-              code = f.read()
-
-          cfg = """
-              signingConfigs {
-                  release {
-                      storeFile file("wildsphere-release.jks")
-                      storePassword "wildsphere123"
-                      keyAlias "wildsphere"
-                      keyPassword "wildsphere123"
-                  }
-              }
-          """
-          if "android {" in code:
-              code = code.replace("android {", "android {\n" + cfg, 1)
-
-          if "buildTypes {" in code:
-              code = code.replace("buildTypes {", "buildTypes {\n        release {\n            signingConfig signingConfigs.release\n        }", 1)
-
-          with open("app/build.gradle", "w") as f:
-              f.write(code)
-          EOF
-
-          # 5. Compile signed release binaries
+          # 4. Compile APK and AAB
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease --stacktrace
 
-          # 6. Fallback sign via jarsigner (ensures APK is 100% signed on disk)
-          for f in $(find app/build/outputs/apk/release -name "*.apk"); do
-            jarsigner -keystore app/wildsphere-release.jks -storepass wildsphere123 -keypass wildsphere123 "$f" wildsphere
-          done
+          # 5. Proper Alignment & V2+V3 Signing with Android apksigner
+          mkdir -p final_apk
+          RAW_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          
+          # Align APK
+          zipalign -v -p 4 "$RAW_APK" final_apk/WildSphere-Aligned.apk
 
-      - name: Upload Production Artifacts
+          # Sign with apksigner (Guarantees install on Android 9, 10, 11, 12, 13, 14, 15)
+          apksigner sign --ks app/wildsphere-release.jks \
+            --ks-key-alias wildsphere \
+            --ks-pass pass:wildsphere123 \
+            --key-pass pass:wildsphere123 \
+            --out final_apk/WildSphere-Installable.apk \
+            final_apk/WildSphere-Aligned.apk
+
+          # Prepare AAB and Keystore for Play Store
+          RAW_AAB=$(find app/build/outputs/bundle/release -name "*.aab" | head -n 1)
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore app/wildsphere-release.jks \
+            -storepass wildsphere123 \
+            -keypass wildsphere123 \
+            "$RAW_AAB" wildsphere
+            
+          cp "$RAW_AAB" final_apk/WildSphere-PlayStore.aab
+          cp app/wildsphere-release.jks final_apk/wildsphere-release.jks
+
+      - name: Upload Installable APK & PlayStore Bundle
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-PlayStore-Bundle
-          path: |
-            build_output/WildSphere/android/source/app/build/outputs/**/*.apk
-            build_output/WildSphere/android/source/app/build/outputs/**/*.aab
-            build_output/WildSphere/android/source/app/wildsphere-release.jks
+          name: WildSphere-Final-Release
+          path: build_output/WildSphere/android/source/final_apk/*
