@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Build Production APK & AAB with Working Gallery Picker
+      - name: Build Production APK and AAB with Working Gallery Picker
         shell: bash
         run: |
           mkdir -p build_output
@@ -31,7 +31,7 @@ jobs:
           
           cd WildSphere/android/source
           
-          # 1. Android Permissions & File Provider Support in AndroidManifest.xml
+          # 1. Android Permissions & Queries (Enables Android 11+ System Gallery & File Picker)
           python3 - << 'EOF'
           with open("app/src/main/AndroidManifest.xml", "r") as f:
               xml = f.read()
@@ -40,6 +40,7 @@ jobs:
               <uses-permission android:name="android.permission.INTERNET" />
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
               <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.RECORD_AUDIO" />
               <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
               <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
               <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
@@ -48,6 +49,20 @@ jobs:
               <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
               <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
               <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+              
+              <queries>
+                  <intent>
+                      <action android:name="android.intent.action.GET_CONTENT" />
+                      <data android:mimeType="*/*" />
+                  </intent>
+                  <intent>
+                      <action android:name="android.intent.action.OPEN_DOCUMENT" />
+                      <data android:mimeType="*/*" />
+                  </intent>
+                  <intent>
+                      <action android:name="android.media.action.IMAGE_CAPTURE" />
+                  </intent>
+              </queries>
           """
           if "</manifest>" in xml:
               xml = xml.replace("</manifest>", permissions + "\n</manifest>")
@@ -61,89 +76,8 @@ jobs:
 
           # 2. Fix numeric resource assets
           find app/src/main/res -type f -name "[0-9]*.png" -delete
-          
-          # 3. Inject Full File Chooser Engine into MainActivity
-          python3 - << 'EOF'
-          import glob
-          files = glob.glob("app/src/main/java/**/MainActivity.java", recursive=True)
-          if files:
-              file_path = files[0]
-              with open(file_path, "r") as f:
-                  code = f.read()
 
-              # Add necessary imports
-              imports = """
-          import android.content.Intent;
-          import android.net.Uri;
-          import android.webkit.ValueCallback;
-          import android.webkit.WebChromeClient;
-          import android.webkit.GeolocationPermissions;
-          """
-              if "import android.webkit.WebView;" in code and "import android.webkit.ValueCallback;" not in code:
-                  code = code.replace("import android.webkit.WebView;", "import android.webkit.WebView;" + imports)
-
-              # Add file callback variables inside class
-              class_vars = """
-              public static ValueCallback<Uri[]> mUploadCallback;
-              public static final int FILECHOOSER_RESULTCODE = 5110;
-              """
-              if "class MainActivity" in code and "FILECHOOSER_RESULTCODE" not in code:
-                  pos = code.find("{", code.find("class MainActivity")) + 1
-                  code = code[:pos] + class_vars + code[pos:]
-
-              # Add onShowFileChooser and Geolocation in WebChromeClient
-              chrome_client = """
-                      webSettings.setDomStorageEnabled(true);
-                      webSettings.setDatabaseEnabled(true);
-                      webSettings.setAllowFileAccess(true);
-                      webSettings.setAllowContentAccess(true);
-                      webSettings.setGeolocationEnabled(true);
-                      webView.setWebChromeClient(new WebChromeClient() {
-                          @Override
-                          public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
-                              callback.invoke(origin, true, false);
-                          }
-                          @Override
-                          public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
-                              if (mUploadCallback != null) {
-                                  mUploadCallback.onReceiveValue(null);
-                              }
-                              mUploadCallback = filePathCallback;
-                              Intent intent = fileChooserParams.createIntent();
-                              try {
-                                  startActivityForResult(intent, FILECHOOSER_RESULTCODE);
-                              } catch (Exception e) {
-                                  mUploadCallback = null;
-                                  return false;
-                              }
-                              return true;
-                          }
-                      });
-              """
-              if "webSettings.setJavaScriptEnabled(true);" in code and "FILECHOOSER_RESULTCODE" not in code[code.find("webSettings.setJavaScriptEnabled(true);"):]:
-                  code = code.replace("webSettings.setJavaScriptEnabled(true);", "webSettings.setJavaScriptEnabled(true);" + chrome_client)
-
-              # Add onActivityResult at the end of class
-              activity_result = """
-              @Override
-              protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-                  super.onActivityResult(requestCode, resultCode, data);
-                  if (requestCode == FILECHOOSER_RESULTCODE) {
-                      if (mUploadCallback == null) return;
-                      mUploadCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
-                      mUploadCallback = null;
-                  }
-              }
-              """
-              if "onActivityResult" not in code:
-                  last_brace = code.rfind("}")
-                  code = code[:last_brace] + activity_result + "\n}"
-
-              with open(file_path, "w") as f:
-                  f.write(code)
-          EOF
-
-          # 4. Generate Fresh Release Keystore
+          # 3. Generate Fresh Release Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -154,7 +88,7 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 5. Configure signing cleanly in app/build.gradle
+          # 4. Configure signing cleanly in app/build.gradle
           python3 - << 'EOF'
           with open("app/build.gradle", "r") as f:
               gradle = f.read()
@@ -178,7 +112,7 @@ jobs:
               f.write(gradle)
           EOF
 
-          # 6. Fix line endings & Compile both APK and AAB
+          # 5. Fix line endings & Compile both APK and AAB
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease --stacktrace
