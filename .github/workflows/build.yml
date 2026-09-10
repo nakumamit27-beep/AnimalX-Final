@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Generate Keystore, APK and AAB
+      - name: Build Fresh Production Release with Full Permissions
         shell: bash
         run: |
           mkdir -p build_output
@@ -31,18 +31,55 @@ jobs:
           
           cd WildSphere/android/source
           
-          # Fix resource names
+          # 1. Add All Android Permissions (Storage, Media, Camera, Location, Notification)
+          MANIFEST="app/src/main/AndroidManifest.xml"
+          sed -i '/<manifest/a \
+              <uses-permission android:name="android.permission.INTERNET" />\
+              <uses-permission android:name="android.permission.CAMERA" />\
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />\
+              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />\
+              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />\
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />' "$MANIFEST"
+
+          # 2. Fix Resource Names
           find app/src/main/res -type f -name "[0-9]*.png" -delete
           
-          # Enable DOM Storage & Web features
+          # 3. Inject WebChromeClient for File Upload (Gallery/Camera) and Location Prompts
           MAIN_JAVA=$(find app/src/main/java -name "MainActivity.java")
+          sed -i '/import android.webkit.WebView;/a \
+          import android.webkit.ValueCallback;\
+          import android.webkit.WebChromeClient;\
+          import android.webkit.GeolocationPermissions;\
+          import android.net.Uri;\
+          import android.content.Intent;' "$MAIN_JAVA"
+
           sed -i '/setJavaScriptEnabled(true);/a \
                   webSettings.setDomStorageEnabled(true);\
                   webSettings.setDatabaseEnabled(true);\
                   webSettings.setAllowFileAccess(true);\
-                  webSettings.setAllowContentAccess(true);' "$MAIN_JAVA"
+                  webSettings.setAllowContentAccess(true);\
+                  webSettings.setGeolocationEnabled(true);\
+                  webView.setWebChromeClient(new WebChromeClient() {\
+                      @Override\
+                      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {\
+                          callback.invoke(origin, true, false);\
+                      }\
+                      @Override\
+                      public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {\
+                          Intent intent = fileChooserParams.createIntent();\
+                          try {\
+                              startActivityForResult(intent, 1001);\
+                              return true;\
+                          } catch (Exception e) {\
+                              return false;\
+                          }\
+                      }\
+                  });' "$MAIN_JAVA"
 
-          # 1. Create Release Keystore inside app directory
+          # 4. Generate Fresh Release Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -53,7 +90,7 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 2. Configure signing in build.gradle
+          # 5. Configure Signing in build.gradle
           sed -i '/android {/a \
               signingConfigs {\
                   release {\
@@ -66,14 +103,12 @@ jobs:
 
           sed -i 's/buildTypes {/buildTypes { release { signingConfig signingConfigs.release } /' app/build.gradle
 
-          # Fix line endings
+          # 6. Fix line endings & Compile both APK and AAB
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
-          
-          # 3. Build Signed Release APK and Signed Release AAB
           ./gradlew assembleRelease bundleRelease --stacktrace
 
-      - name: Upload Release Artifacts
+      - name: Upload Production Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-PlayStore-Bundle
