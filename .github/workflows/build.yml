@@ -31,7 +31,7 @@ jobs:
           
           cd WildSphere/android/source
           
-          # 1. Add Android Permissions cleanly without breaking XML
+          # 1. Android Permissions
           python3 - << 'EOF'
           with open("app/src/main/AndroidManifest.xml", "r") as f:
               content = f.read()
@@ -53,10 +53,10 @@ jobs:
                   f.write(content)
           EOF
 
-          # 2. Fix Resource Names
+          # 2. Delete numeric resource assets
           find app/src/main/res -type f -name "[0-9]*.png" -delete
           
-          # 3. Inject WebChromeClient for File Chooser & Geolocation
+          # 3. Clean Settings Injection into MainActivity
           python3 - << 'EOF'
           import glob
           files = glob.glob("app/src/main/java/**/MainActivity.java", recursive=True)
@@ -65,15 +65,8 @@ jobs:
               with open(file_path, "r") as f:
                   code = f.read()
               
-              imports = """
-          import android.webkit.ValueCallback;
-          import android.webkit.WebChromeClient;
-          import android.webkit.GeolocationPermissions;
-          import android.net.Uri;
-          import android.content.Intent;
-          """
-              if "import android.webkit.WebView;" in code:
-                  code = code.replace("import android.webkit.WebView;", "import android.webkit.WebView;" + imports)
+              if "import android.webkit.WebChromeClient;" not in code:
+                  code = code.replace("import android.webkit.WebView;", "import android.webkit.WebView;\nimport android.webkit.WebChromeClient;\nimport android.webkit.GeolocationPermissions;")
               
               injection = """
                       webSettings.setDomStorageEnabled(true);
@@ -86,16 +79,6 @@ jobs:
                           public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
                               callback.invoke(origin, true, false);
                           }
-                          @Override
-                          public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
-                              Intent intent = fileChooserParams.createIntent();
-                              try {
-                                  startActivityForResult(intent, 1001);
-                                  return true;
-                              } catch (Exception e) {
-                                  return false;
-                              }
-                          }
                       });
               """
               if "webSettings.setJavaScriptEnabled(true);" in code:
@@ -105,7 +88,7 @@ jobs:
                   f.write(code)
           EOF
 
-          # 4. Generate Fresh Release Keystore
+          # 4. Generate Fresh Production Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -140,7 +123,7 @@ jobs:
               f.write(gradle)
           EOF
 
-          # 6. Fix line endings & Compile both APK and AAB
+          # 6. Build APK & AAB
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease --stacktrace
