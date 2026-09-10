@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Build and Sign Production APK & AAB
+      - name: Build TWA Release Without Splash Delay
         shell: bash
         run: |
           mkdir -p build_output
@@ -31,7 +31,7 @@ jobs:
           
           cd WildSphere/android/source
           
-          # 1. Clean Android Permissions
+          # Clean Permissions
           python3 - << 'EOF'
           with open("app/src/main/AndroidManifest.xml", "r") as f:
               xml = f.read()
@@ -52,10 +52,25 @@ jobs:
                   f.write(xml)
           EOF
 
-          # 2. Fix numeric resource assets
+          # Remove numeric image assets
           find app/src/main/res -type f -name "[0-9]*.png" -delete
 
-          # 3. Create Release Keystore
+          # Bypass splash hang: Force immediate webview launch
+          python3 - << 'EOF'
+          import os
+          for root, dirs, files in os.walk("app/src/main/res"):
+              for file in files:
+                  if file.endswith(".xml"):
+                      p = os.path.join(root, file)
+                      with open(p, "r", errors="ignore") as f:
+                          c = f.read()
+                      if "splash_screen" in c:
+                          c = c.replace('name="show_splash_screen">true<', 'name="show_splash_screen">false<')
+                          with open(p, "w") as f:
+                              f.write(c)
+          EOF
+
+          # Fixed Production Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -66,7 +81,7 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 4. Safely Configure Release Signing in build.gradle
+          # Configure build.gradle release signing
           python3 - << 'EOF'
           with open("app/build.gradle", "r") as f:
               gradle = f.read()
@@ -86,7 +101,6 @@ jobs:
           if "android {" in gradle and "signingConfigs" not in gradle:
               gradle = gradle.replace("android {", "android {\n" + signing_block)
           
-          # Replace release build type to use the signing config
           if "buildTypes {" in gradle:
               gradle = gradle.replace("buildTypes {", "buildTypes {\n        release {\n            signingConfig signingConfigs.release\n        }")
 
@@ -94,18 +108,16 @@ jobs:
               f.write(gradle)
           EOF
 
-          # 5. Fix line endings and Build Signed APK & AAB
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease --stacktrace
 
-          # 6. Copy output files to an easy folder
           mkdir -p final_bundle
           find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Release.apk \;
           find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/WildSphere-PlayStore.aab \;
           cp app/wildsphere-release.jks final_bundle/wildsphere-release.jks
 
-      - name: Upload Final Release Artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Final-Release
