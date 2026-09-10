@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Build Production APK and AAB with Working Gallery Picker
+      - name: Build Clean Production Release
         shell: bash
         run: |
           mkdir -p build_output
@@ -31,7 +31,7 @@ jobs:
           
           cd WildSphere/android/source
           
-          # 1. Android Permissions & Queries (Enables Android 11+ System Gallery & File Picker)
+          # 1. Add standard permissions safely to AndroidManifest.xml (API 28 compatible)
           python3 - << 'EOF'
           with open("app/src/main/AndroidManifest.xml", "r") as f:
               xml = f.read()
@@ -43,41 +43,19 @@ jobs:
               <uses-permission android:name="android.permission.RECORD_AUDIO" />
               <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
               <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-              <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
               <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
               <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-              
-              <queries>
-                  <intent>
-                      <action android:name="android.intent.action.GET_CONTENT" />
-                      <data android:mimeType="*/*" />
-                  </intent>
-                  <intent>
-                      <action android:name="android.intent.action.OPEN_DOCUMENT" />
-                      <data android:mimeType="*/*" />
-                  </intent>
-                  <intent>
-                      <action android:name="android.media.action.IMAGE_CAPTURE" />
-                  </intent>
-              </queries>
           """
           if "</manifest>" in xml:
               xml = xml.replace("</manifest>", permissions + "\n</manifest>")
-          
-          if "<application" in xml and 'android:requestLegacyExternalStorage' not in xml:
-              xml = xml.replace("<application", '<application android:requestLegacyExternalStorage="true" ')
-
-          with open("app/src/main/AndroidManifest.xml", "w") as f:
-              f.write(xml)
+              with open("app/src/main/AndroidManifest.xml", "w") as f:
+                  f.write(xml)
           EOF
 
           # 2. Fix numeric resource assets
           find app/src/main/res -type f -name "[0-9]*.png" -delete
 
-          # 3. Generate Fresh Release Keystore
+          # 3. Create fresh release keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -88,7 +66,7 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 4. Configure signing cleanly in app/build.gradle
+          # 4. Configure signing in app/build.gradle
           python3 - << 'EOF'
           with open("app/build.gradle", "r") as f:
               gradle = f.read()
