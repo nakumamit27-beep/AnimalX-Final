@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Build Production APK and AAB with Working File Picker
+      - name: Build Production APK and AAB with Full Permissions
         shell: bash
         run: |
           mkdir -p build_output
@@ -31,7 +31,7 @@ jobs:
           
           cd WildSphere/android/source
           
-          # 1. Android Permissions & File Provider Support in AndroidManifest.xml
+          # 1. Add Android Permissions cleanly (No invalid attributes)
           python3 - << 'EOF'
           with open("app/src/main/AndroidManifest.xml", "r") as f:
               xml = f.read()
@@ -43,18 +43,11 @@ jobs:
               <uses-permission android:name="android.permission.RECORD_AUDIO" />
               <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
               <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
               <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
               <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
           """
           if "</manifest>" in xml:
               xml = xml.replace("</manifest>", permissions + "\n</manifest>")
-          
-          # Allow external file & camera access in application tag
-          if "<application" in xml:
-              xml = xml.replace("<application", '<application android:requestLegacyExternalStorage="true" ')
 
           with open("app/src/main/AndroidManifest.xml", "w") as f:
               f.write(xml)
@@ -63,7 +56,7 @@ jobs:
           # 2. Fix numeric resource assets
           find app/src/main/res -type f -name "[0-9]*.png" -delete
           
-          # 3. Clean Settings & WebChromeClient in MainActivity.java
+          # 3. Add WebChromeClient and WebSettings cleanly to MainActivity
           python3 - << 'EOF'
           import glob
           files = glob.glob("app/src/main/java/**/MainActivity.java", recursive=True)
@@ -80,8 +73,6 @@ jobs:
                       webSettings.setDatabaseEnabled(true);
                       webSettings.setAllowFileAccess(true);
                       webSettings.setAllowContentAccess(true);
-                      webSettings.setAllowFileAccessFromFileURLs(true);
-                      webSettings.setAllowUniversalAccessFromFileURLs(true);
                       webSettings.setGeolocationEnabled(true);
                       webView.setWebChromeClient(new WebChromeClient() {
                           @Override
