@@ -31,53 +31,79 @@ jobs:
           
           cd WildSphere/android/source
           
-          # 1. Add All Android Permissions (Storage, Media, Camera, Location, Notification)
-          MANIFEST="app/src/main/AndroidManifest.xml"
-          sed -i '/<manifest/a \
-              <uses-permission android:name="android.permission.INTERNET" />\
-              <uses-permission android:name="android.permission.CAMERA" />\
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\
-              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />\
-              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />\
-              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />\
-              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\
-              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\
-              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />' "$MANIFEST"
+          # 1. Add Android Permissions cleanly without breaking XML
+          python3 - << 'EOF'
+          with open("app/src/main/AndroidManifest.xml", "r") as f:
+              content = f.read()
+          
+          perms = """
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+          """
+          if "</manifest>" in content:
+              content = content.replace("</manifest>", perms + "\n</manifest>")
+              with open("app/src/main/AndroidManifest.xml", "w") as f:
+                  f.write(content)
+          EOF
 
           # 2. Fix Resource Names
           find app/src/main/res -type f -name "[0-9]*.png" -delete
           
-          # 3. Inject WebChromeClient for File Upload (Gallery/Camera) and Location Prompts
-          MAIN_JAVA=$(find app/src/main/java -name "MainActivity.java")
-          sed -i '/import android.webkit.WebView;/a \
-          import android.webkit.ValueCallback;\
-          import android.webkit.WebChromeClient;\
-          import android.webkit.GeolocationPermissions;\
-          import android.net.Uri;\
-          import android.content.Intent;' "$MAIN_JAVA"
-
-          sed -i '/setJavaScriptEnabled(true);/a \
-                  webSettings.setDomStorageEnabled(true);\
-                  webSettings.setDatabaseEnabled(true);\
-                  webSettings.setAllowFileAccess(true);\
-                  webSettings.setAllowContentAccess(true);\
-                  webSettings.setGeolocationEnabled(true);\
-                  webView.setWebChromeClient(new WebChromeClient() {\
-                      @Override\
-                      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {\
-                          callback.invoke(origin, true, false);\
-                      }\
-                      @Override\
-                      public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {\
-                          Intent intent = fileChooserParams.createIntent();\
-                          try {\
-                              startActivityForResult(intent, 1001);\
-                              return true;\
-                          } catch (Exception e) {\
-                              return false;\
-                          }\
-                      }\
-                  });' "$MAIN_JAVA"
+          # 3. Inject WebChromeClient for File Chooser & Geolocation
+          python3 - << 'EOF'
+          import glob
+          files = glob.glob("app/src/main/java/**/MainActivity.java", recursive=True)
+          if files:
+              file_path = files[0]
+              with open(file_path, "r") as f:
+                  code = f.read()
+              
+              imports = """
+          import android.webkit.ValueCallback;
+          import android.webkit.WebChromeClient;
+          import android.webkit.GeolocationPermissions;
+          import android.net.Uri;
+          import android.content.Intent;
+          """
+              if "import android.webkit.WebView;" in code:
+                  code = code.replace("import android.webkit.WebView;", "import android.webkit.WebView;" + imports)
+              
+              injection = """
+                      webSettings.setDomStorageEnabled(true);
+                      webSettings.setDatabaseEnabled(true);
+                      webSettings.setAllowFileAccess(true);
+                      webSettings.setAllowContentAccess(true);
+                      webSettings.setGeolocationEnabled(true);
+                      webView.setWebChromeClient(new WebChromeClient() {
+                          @Override
+                          public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                              callback.invoke(origin, true, false);
+                          }
+                          @Override
+                          public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
+                              Intent intent = fileChooserParams.createIntent();
+                              try {
+                                  startActivityForResult(intent, 1001);
+                                  return true;
+                              } catch (Exception e) {
+                                  return false;
+                              }
+                          }
+                      });
+              """
+              if "webSettings.setJavaScriptEnabled(true);" in code:
+                  code = code.replace("webSettings.setJavaScriptEnabled(true);", "webSettings.setJavaScriptEnabled(true);" + injection)
+              
+              with open(file_path, "w") as f:
+                  f.write(code)
+          EOF
 
           # 4. Generate Fresh Release Keystore
           keytool -genkeypair -v \
@@ -91,17 +117,28 @@ jobs:
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
           # 5. Configure Signing in build.gradle
-          sed -i '/android {/a \
-              signingConfigs {\
-                  release {\
-                      storeFile file("wildsphere-release.jks")\
-                      storePassword "wildsphere123"\
-                      keyAlias "wildsphere"\
-                      keyPassword "wildsphere123"\
-                  }\
-              }' app/build.gradle
-
-          sed -i 's/buildTypes {/buildTypes { release { signingConfig signingConfigs.release } /' app/build.gradle
+          python3 - << 'EOF'
+          with open("app/build.gradle", "r") as f:
+              gradle = f.read()
+          
+          signing = """
+              signingConfigs {
+                  release {
+                      storeFile file("wildsphere-release.jks")
+                      storePassword "wildsphere123"
+                      keyAlias "wildsphere"
+                      keyPassword "wildsphere123"
+                  }
+              }
+          """
+          if "android {" in gradle:
+              gradle = gradle.replace("android {", "android {\n" + signing)
+          if "buildTypes {" in gradle:
+              gradle = gradle.replace("buildTypes {", "buildTypes {\n        release { signingConfig signingConfigs.release }")
+          
+          with open("app/build.gradle", "w") as f:
+              f.write(gradle)
+          EOF
 
           # 6. Fix line endings & Compile both APK and AAB
           sed -i -e 's/\r$//' gradlew
