@@ -1,4 +1,4 @@
-name: Generate WildSphere Production Release
+name: Generate WildSphere Standalone Release
 
 on:
   workflow_dispatch:
@@ -6,49 +6,133 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
-      - name: Generate Android App from Cloud
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Fullscreen Standalone App with All Media Permissions
         shell: bash
         run: |
-          mkdir -p final_release
+          # Clean workspace to prevent file collisions
+          rm -rf app-builder final_artifacts
+          mkdir -p app-builder final_artifacts
+          cd app-builder
 
-          # Call official Microsoft PWABuilder Cloud Packaging API
-          curl -s -X POST "https://pwabuilder-cloudapk.azurewebsites.net/generateAppPackage" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "name": "WildSphere",
-              "launcherName": "WildSphere",
-              "packageId": "app.web.happy_fd1bc.twa",
-              "host": "happy-fd1bc.web.app",
-              "startUrl": "/",
-              "webManifestUrl": "https://happy-fd1bc.web.app/manifest.json",
-              "display": "standalone",
-              "themeColor": "#0e1117",
-              "navigationColor": "#0e1117",
-              "backgroundColor": "#0e1117",
-              "enableNotifications": true,
-              "fallbackType": "none",
-              "appVersion": "1.0.0",
-              "appVersionCode": 1,
-              "signing": {
-                "file": null,
-                "alias": "wildsphere",
-                "fullName": "WildSphere",
-                "organization": "WildSphere",
-                "organizationalUnit": "App",
-                "countryCode": "IN",
-                "keyPassword": "wildsphere123",
-                "storePassword": "wildsphere123"
+          # 1. Official Google TWA Standalone Template Clone
+          git clone --depth=1 https://github.com/GoogleChrome/android-browser-helper.git helper-source
+          cd helper-source/demos/twa-basic
+
+          # 2. Inject Android 11 to 15 Media & Hardware Permissions
+          python3 - << 'EOF'
+          import os
+
+          manifest_path = "src/main/AndroidManifest.xml"
+          if os.path.exists(manifest_path):
+              with open(manifest_path, "r") as f:
+                  xml = f.read()
+
+              # All permissions for Camera, Video/Photo Gallery, Audio, Location & Notifications
+              permissions = """
+                  <uses-permission android:name="android.permission.INTERNET" />
+                  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+                  <uses-permission android:name="android.permission.CAMERA" />
+                  <uses-permission android:name="android.permission.RECORD_AUDIO" />
+                  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+                  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+                  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+                  <!-- Storage permissions for Android 12 and below -->
+                  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+                  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+                  <!-- Modern direct Media & Gallery upload for Android 13, 14, 15 -->
+                  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+                  <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+                  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+                  <uses-feature android:name="android.hardware.camera" android:required="false" />
+                  <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+              """
+              xml = xml.replace("</manifest>", permissions + "\n</manifest>")
+              with open(manifest_path, "w") as f:
+                  f.write(xml)
+
+          # Update build.gradle variables for WildSphere
+          gradle_path = "build.gradle"
+          if os.path.exists(gradle_path):
+              with open(gradle_path, "r") as f:
+                  g = f.read()
+              g = g.replace('applicationId "com.google.androidbrowserhelper.demos.twabasic"', 'applicationId "app.web.happy_fd1bc.twa"')
+              g = g.replace('def defaultUrl = "https://peconn.github.io"', 'def defaultUrl = "https://happy-fd1bc.web.app"')
+              g = g.replace('def hostName = "peconn.github.io"', 'def hostName = "happy-fd1bc.web.app"')
+              
+              # Force No-Chrome Standalone Fullscreen
+              g = g.replace('def fallbackType = "customtabs"', 'def fallbackType = "none"')
+              
+              # Keystore configuration
+              signing = """
+              signingConfigs {
+                  release {
+                      storeFile file("wildsphere.jks")
+                      storePassword "wildsphere123"
+                      keyAlias "wildsphere"
+                      keyPassword "wildsphere123"
+                      v1SigningEnabled true
+                      v2SigningEnabled true
+                  }
               }
-            }' \
-            --output app-bundle.zip
+              """
+              g = g.replace("android {", "android {\n" + signing)
+              g = g.replace("buildTypes {", "buildTypes {\n        release {\n            signingConfig signingConfigs.release\n        }")
+              with open(gradle_path, "w") as f:
+                  f.write(g)
 
-          # Unzip and organize artifacts
-          unzip -o app-bundle.zip -d final_release/
+          # Disable any splash screen hang
+          for root, dirs, files in os.walk("src/main/res"):
+              for file in files:
+                  if file.endswith(".xml"):
+                      p = os.path.join(root, file)
+                      with open(p, "r", errors="ignore") as f:
+                          c = f.read()
+                      if 'name="show_splash_screen">true<' in c:
+                          c = c.replace('name="show_splash_screen">true<', 'name="show_splash_screen">false<')
+                          with open(p, "w") as f:
+                              f.write(c)
+          EOF
+
+          # 3. Create Master Signing Keystore
+          keytool -genkeypair -v \
+            -keystore wildsphere.jks \
+            -alias wildsphere \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass "wildsphere123" \
+            -keypass "wildsphere123" \
+            -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
+
+          # 4. Build Signed APK & Play Store AAB
+          sed -i -e 's/\r$//' ../../gradlew
+          chmod +x ../../gradlew
+          ../../gradlew assembleRelease bundleRelease --stacktrace
+
+          # 5. Extract Output Files
+          find build/outputs/apk/release -name "*.apk" -exec cp {} ../../../final_artifacts/WildSphere-Release.apk \;
+          find build/outputs/bundle/release -name "*.aab" -exec cp {} ../../../final_artifacts/WildSphere-PlayStore.aab \;
+          cp wildsphere.jks ../../../final_artifacts/wildsphere.jks
 
       - name: Upload WildSphere Production Release
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Final-Release
-          path: final_release/**
+          path: final_artifacts/*
