@@ -14,58 +14,55 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Build TWA Release Supporting Android 11 to 15
+      - name: Build Official Google TWA Standalone App
         shell: bash
         run: |
-          mkdir -p build_output
-          cd build_output
-          
-          # Use npx directly so command not found error never happens
-          npx -y @pwabuilder/cli https://happy-fd1bc.web.app -p android -l debug
-          
-          cd WildSphere/android/source
-          
-          # 1. Direct Gallery, Video, Audio and Camera Permissions (Android 11-15)
-          python3 - << 'EOF'
-          with open("app/src/main/AndroidManifest.xml", "r") as f:
-              xml = f.read()
-          
-          permissions = """
-              <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-              <uses-permission android:name="android.permission.CAMERA" />
-              <uses-permission android:name="android.permission.RECORD_AUDIO" />
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
-              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-              <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-          """
-          
-          features = """
-              <uses-feature android:name="android.hardware.camera" android:required="false" />
-              <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
-          """
-          
-          if "</manifest>" in xml:
-              xml = xml.replace("</manifest>", permissions + features + "\n</manifest>")
-              with open("app/src/main/AndroidManifest.xml", "w") as f:
-                  f.write(xml)
-          EOF
+          npm install -g @bubblewrap/cli
 
-          # 2. Fix numeric resource filename bug
-          find app/src/main/res -type f -name "[0-9]*.png" -delete
+          mkdir -p twa_project
+          cd twa_project
 
-          # 3. Disable Splash Screen Freeze & Chrome URL bar
+          # 1. Initialize Bubblewrap project from your live web app
+          bubblewrap init --manifest="https://happy-fd1bc.web.app/manifest.json" --directory="."
+
+          # 2. Add Direct Camera, Audio and Android 11-15 Media Permissions
           python3 - << 'EOF'
           import os
+
+          # Manifest update
+          manifest_path = "app/src/main/AndroidManifest.xml"
+          if os.path.exists(manifest_path):
+              with open(manifest_path, "r") as f:
+                  xml = f.read()
+              permissions = """
+                  <uses-permission android:name="android.permission.INTERNET" />
+                  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+                  <uses-permission android:name="android.permission.CAMERA" />
+                  <uses-permission android:name="android.permission.RECORD_AUDIO" />
+                  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+                  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+                  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+                  <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+                  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+              """
+              features = """
+                  <uses-feature android:name="android.hardware.camera" android:required="false" />
+              """
+              if "</manifest>" in xml:
+                  xml = xml.replace("</manifest>", permissions + features + "\n</manifest>")
+                  with open(manifest_path, "w") as f:
+                      f.write(xml)
+                  print("✔ Injected Android 11-15 Media Permissions")
+
+          # Disable Splash Freeze & Fallback Custom Tab
           for root, dirs, files in os.walk("app/src/main/res"):
               for file in files:
                   if file.endswith(".xml"):
@@ -84,7 +81,7 @@ jobs:
                               f.write(c)
           EOF
 
-          # 4. Generate Production Keystore
+          # 3. Generate Master Production Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -95,12 +92,10 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 5. Sign APK and AAB with TargetSdk 34 (Android 14/15 Support)
+          # 4. Configure Release Signing
           python3 - << 'EOF'
           with open("app/build.gradle", "r") as f:
               gradle = f.read()
-
-          gradle = gradle.replace("targetSdkVersion 33", "targetSdkVersion 34")
 
           signing_block = """
               signingConfigs {
@@ -124,18 +119,19 @@ jobs:
               f.write(gradle)
           EOF
 
+          # 5. Build APK and Play Store AAB
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease --stacktrace
 
-          # 6. Bundle Final Artifacts
+          # 6. Prepare Final Artifacts
           mkdir -p final_bundle
           find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Release.apk \;
           find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/WildSphere-PlayStore.aab \;
           cp app/wildsphere-release.jks final_bundle/wildsphere-release.jks
 
-      - name: Upload Final Release Artifacts
+      - name: Upload Final Android Releases
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Final-Release
-          path: build_output/WildSphere/android/source/final_bundle/*
+          path: twa_project/final_bundle/*
