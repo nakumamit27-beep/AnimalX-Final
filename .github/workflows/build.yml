@@ -8,21 +8,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup Java 8
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '8'
+          java-version: '17'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install PWABuilder CLI
-        run: npm install -g pwabuilder
+      - name: Install Latest PWABuilder CLI
+        run: npm install -g @pwabuilder/cli || npm install -g pwabuilder
 
-      - name: Build Standalone TWA (No Browser Bar)
+      - name: Build TWA Release Supporting Android 11 to 15
         shell: bash
         run: |
           mkdir -p build_output
@@ -31,7 +31,7 @@ jobs:
           
           cd WildSphere/android/source
           
-          # 1. Clean Permissions
+          # 1. Inject Modern Android 13/14/15 Photo, Video & Camera Permissions
           python3 - << 'EOF'
           with open("app/src/main/AndroidManifest.xml", "r") as f:
               xml = f.read()
@@ -41,21 +41,31 @@ jobs:
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
               <uses-permission android:name="android.permission.CAMERA" />
               <uses-permission android:name="android.permission.RECORD_AUDIO" />
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+              <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
               <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
               <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
           """
+          
+          # Add hardware camera features
+          features = """
+              <uses-feature android:name="android.hardware.camera" android:required="false" />
+              <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+          """
+          
           if "</manifest>" in xml:
-              xml = xml.replace("</manifest>", permissions + "\n</manifest>")
+              xml = xml.replace("</manifest>", permissions + features + "\n</manifest>")
               with open("app/src/main/AndroidManifest.xml", "w") as f:
                   f.write(xml)
           EOF
 
-          # 2. Fix numeric assets
+          # 2. Fix numeric resource filename bug
           find app/src/main/res -type f -name "[0-9]*.png" -delete
 
-          # 3. Disable Chrome URL Bar & Force Fullscreen Standalone App
+          # 3. Disable Splash Hang & Chrome Tab Popup (Force Clean Standalone)
           python3 - << 'EOF'
           import os
           for root, dirs, files in os.walk("app/src/main/res"):
@@ -64,21 +74,19 @@ jobs:
                       p = os.path.join(root, file)
                       with open(p, "r", errors="ignore") as f:
                           c = f.read()
-                      modified = False
-                      # Splash screen disable karein taaki freeze na ho
+                      mod = False
                       if 'name="show_splash_screen">true<' in c:
                           c = c.replace('name="show_splash_screen">true<', 'name="show_splash_screen">false<')
-                          modified = True
-                      # Chrome URL bar hatakar Webapp fullscreen mode karein
+                          mod = True
                       if 'name="fallbackType">customtabs<' in c:
                           c = c.replace('name="fallbackType">customtabs<', 'name="fallbackType">none<')
-                          modified = True
-                      if modified:
+                          mod = True
+                      if mod:
                           with open(p, "w") as f:
                               f.write(c)
           EOF
 
-          # 4. Master Keystore
+          # 4. Generate Production Signing Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -89,10 +97,13 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 5. Build.gradle signing
+          # 5. Configure targetSdk 34 (Android 14/15 Ready) & Sign Release
           python3 - << 'EOF'
           with open("app/build.gradle", "r") as f:
               gradle = f.read()
+
+          # Upgrade targetSdk to 34 if lower
+          gradle = gradle.replace("targetSdkVersion 33", "targetSdkVersion 34")
 
           signing_block = """
               signingConfigs {
@@ -120,12 +131,13 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease --stacktrace
 
+          # 6. Bundle Final Files
           mkdir -p final_bundle
           find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Release.apk \;
           find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/WildSphere-PlayStore.aab \;
           cp app/wildsphere-release.jks final_bundle/wildsphere-release.jks
 
-      - name: Upload Final Release
+      - name: Upload Final Release Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Final-Release
