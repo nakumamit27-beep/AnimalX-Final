@@ -1,4 +1,4 @@
-name: Build WildSphere Standalone APK & AAB
+name: Generate WildSphere Production Release
 
 on:
   workflow_dispatch:
@@ -8,53 +8,127 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Generate Production TWA from Cloud API
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install PWABuilder CLI
+        run: npm install -g pwabuilder
+
+      - name: Generate Keystore, APK and AAB
         shell: bash
         run: |
-          mkdir -p final_output
+          mkdir -p build_output
+          cd build_output
+          pwabuilder https://happy-fd1bc.web.app -p android -l debug
 
-          # Microsoft PWABuilder Cloud API call for WildSphere
-          curl -s -X POST "https://pwabuilder-cloudapk.azurewebsites.net/generateAppPackage" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "name": "WildSphere",
-              "launcherName": "WildSphere",
-              "packageId": "app.web.happy_fd1bc.twa",
-              "host": "happy-fd1bc.web.app",
-              "startUrl": "/",
-              "webManifestUrl": "https://happy-fd1bc.web.app/manifest.json",
-              "display": "standalone",
-              "themeColor": "#0e1117",
-              "navigationColor": "#0e1117",
-              "backgroundColor": "#0e1117",
-              "enableNotifications": true,
-              "fallbackType": "none",
-              "appVersion": "1.0.0",
-              "appVersionCode": 1,
-              "signing": {
-                "file": null,
-                "alias": "wildsphere",
-                "fullName": "WildSphere",
-                "organization": "WildSphere",
-                "organizationalUnit": "App",
-                "countryCode": "IN",
-                "keyPassword": "wildsphere123",
-                "storePassword": "wildsphere123"
+          cd WildSphere/android/source
+
+          # 1. Fix numeric resource names bug
+          find app/src/main/res -type f -name "[0-9]*.png" -delete
+
+          # 2. Permanent Fix: Disable Splash Freeze & Remove Chrome Tab Fallback
+          python3 - << 'EOF'
+          import os
+
+          # Disable Splash screen freeze in res XMLs
+          for root, dirs, files in os.walk("app/src/main/res"):
+              for file in files:
+                  if file.endswith(".xml"):
+                      p = os.path.join(root, file)
+                      with open(p, "r", errors="ignore") as f:
+                          c = f.read()
+                      mod = False
+                      if 'name="show_splash_screen">true<' in c:
+                          c = c.replace('name="show_splash_screen">true<', 'name="show_splash_screen">false<')
+                          mod = True
+                      if 'name="fallbackType">customtabs<' in c:
+                          c = c.replace('name="fallbackType">customtabs<', 'name="fallbackType">none<')
+                          mod = True
+                      if mod:
+                          with open(p, "w") as f:
+                              f.write(c)
+
+          # Add Full Gallery & Camera Permissions (Android 11 to 15)
+          manifest_path = "app/src/main/AndroidManifest.xml"
+          if os.path.exists(manifest_path):
+              with open(manifest_path, "r") as f:
+                  xml = f.read()
+              perms = """
+                  <uses-permission android:name="android.permission.INTERNET" />
+                  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+                  <uses-permission android:name="android.permission.CAMERA" />
+                  <uses-permission android:name="android.permission.RECORD_AUDIO" />
+                  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+                  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+                  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+                  <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+                  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+                  <uses-feature android:name="android.hardware.camera" android:required="false" />
+              """
+              xml = xml.replace("</manifest>", perms + "\n</manifest>")
+              with open(manifest_path, "w") as f:
+                  f.write(xml)
+          EOF
+
+          # 3. Create Master Keystore
+          keytool -genkeypair -v \
+            -keystore app/wildsphere-release.jks \
+            -alias wildsphere \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass wildsphere123 \
+            -keypass wildsphere123 \
+            -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
+
+          # 4. Configure Release Signing in build.gradle
+          python3 - << 'EOF'
+          with open("app/build.gradle", "r") as f:
+              gradle = f.read()
+
+          signing = """
+              signingConfigs {
+                  release {
+                      storeFile file("wildsphere-release.jks")
+                      storePassword "wildsphere123"
+                      keyAlias "wildsphere"
+                      keyPassword "wildsphere123"
+                      v1SigningEnabled true
+                      v2SigningEnabled true
+                  }
               }
-            }' \
-            --output app-bundle.zip
+          """
+          if "android {" in gradle and "signingConfigs" not in gradle:
+              gradle = gradle.replace("android {", "android {\n" + signing)
+          
+          if "buildTypes {" in gradle:
+              gradle = gradle.replace("buildTypes {", "buildTypes {\n        release {\n            signingConfig signingConfigs.release\n        }")
 
-          # Unzip files
-          unzip -o app-bundle.zip -d extracted/
+          with open("app/build.gradle", "w") as f:
+              f.write(gradle)
+          EOF
 
-          # Organize clean artifacts for download
-          find extracted/ -name "*.apk" -exec cp {} final_output/WildSphere-Release.apk \;
-          find extracted/ -name "*.aab" -exec cp {} final_output/WildSphere-PlayStore.aab \;
-          find extracted/ -name "*.keystore" -o -name "*.jks" -exec cp {} final_output/wildsphere.keystore \;
-          find extracted/ -name "assetlinks.json" -exec cp {} final_output/assetlinks.json \;
+          # 5. Fix line endings & Build Release Files
+          sed -i -e 's/\r$//' gradlew
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease --stacktrace
 
-      - name: Upload Final Android Releases
+          # 6. Organize Final Release Artifacts
+          mkdir -p final_bundle
+          find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Release.apk \;
+          find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/WildSphere-PlayStore.aab \;
+          cp app/wildsphere-release.jks final_bundle/wildsphere-release.jks
+
+      - name: Upload Release Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-Final-Release
-          path: final_output/*
+          name: WildSphere-PlayStore-Bundle
+          path: build_output/WildSphere/android/source/final_bundle/*
