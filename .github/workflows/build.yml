@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Generate Keystore, APK and AAB
+      - name: Build Standalone Native Web Engine
         shell: bash
         run: |
           mkdir -p build_output
@@ -31,14 +31,14 @@ jobs:
 
           cd WildSphere/android/source
 
-          # 1. Fix numeric resource names bug
+          # 1. Clean numeric resource names bug
           find app/src/main/res -type f -name "[0-9]*.png" -delete
 
-          # 2. Fix Splash Screen Freeze & Block Browser Tabs
+          # 2. Fix Splash Freeze, Enable Fullscreen, Disable Fallback Chrome Bars
           python3 - << 'EOF'
           import os
 
-          # Disable splash freeze in all resource files
+          # String and configuration overrides
           for root, dirs, files in os.walk("app/src/main/res"):
               for file in files:
                   if file.endswith(".xml"):
@@ -50,13 +50,13 @@ jobs:
                           c = c.replace('name="show_splash_screen">true<', 'name="show_splash_screen">false<')
                           mod = True
                       if 'name="fallbackType">customtabs<' in c:
-                          c = c.replace('name="fallbackType">customtabs<', 'name="fallbackType">none<')
+                          c = c.replace('name="fallbackType">customtabs<', 'name="fallbackType">webview<')
                           mod = True
                       if mod:
                           with open(p, "w") as f:
                               f.write(c)
 
-          # 3. Add Android 11 to 15 Direct Media & Camera Permissions
+          # Manifest updates: Permissions for Android 11 to 15 + Direct Gallery/Video Upload
           manifest_path = "app/src/main/AndroidManifest.xml"
           if os.path.exists(manifest_path):
               with open(manifest_path, "r") as f:
@@ -71,14 +71,37 @@ jobs:
                   <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
                   <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
                   <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+                  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+                  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
                   <uses-feature android:name="android.hardware.camera" android:required="false" />
               """
               xml = xml.replace("</manifest>", perms + "\n</manifest>")
               with open(manifest_path, "w") as f:
                   f.write(xml)
+
+          # Enable DOMStorage, Database, JavaScript, and File Upload in WebView Fallback Java
+          for root, dirs, files in os.walk("app/src/main/java"):
+              for file in files:
+                  if file.endswith(".java"):
+                      p = os.path.join(root, file)
+                      with open(p, "r", errors="ignore") as f:
+                          src = f.read()
+                      if "getSettings()" in src or "WebView" in src:
+                          injection = """
+                              settings.setDomStorageEnabled(true);
+                              settings.setDatabaseEnabled(true);
+                              settings.setJavaScriptEnabled(true);
+                              settings.setAllowFileAccess(true);
+                              settings.setAllowContentAccess(true);
+                              settings.setMediaPlaybackRequiresUserGesture(false);
+                          """
+                          if "setJavaScriptEnabled(true);" in src and "setDomStorageEnabled" not in src:
+                              src = src.replace("setJavaScriptEnabled(true);", injection)
+                              with open(p, "w") as f:
+                                  f.write(src)
           EOF
 
-          # 4. Create Release Keystore
+          # 3. Create Master Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -89,7 +112,7 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 5. Configure Signing in build.gradle
+          # 4. Configure Release Signing in build.gradle
           python3 - << 'EOF'
           with open("app/build.gradle", "r") as f:
               gradle = f.read()
@@ -114,12 +137,12 @@ jobs:
               f.write(gradle)
           EOF
 
-          # 6. Fix line endings and Build Release
+          # 5. Fix line endings & Build Release
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease --stacktrace
 
-          # 7. Collect output files
+          # 6. Organize Final Release Artifacts
           mkdir -p final_bundle
           find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Release.apk \;
           find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/WildSphere-PlayStore.aab \;
