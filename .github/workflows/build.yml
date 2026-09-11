@@ -1,4 +1,4 @@
-name: Build WildSphere Fullscreen Native APK
+name: Build WildSphere Standalone APK & AAB
 
 on:
   workflow_dispatch:
@@ -8,229 +8,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Generate Clean Android Project & Build
+      - name: Generate Production TWA from Cloud API
+        shell: bash
         run: |
-          rm -rf native-project final_output
-          mkdir -p native-project/app/src/main/res/values
-          mkdir -p native-project/app/src/main/res/drawable
           mkdir -p final_output
-          cd native-project
 
-          # 1. Root settings.gradle
-          cat << 'EOF' > settings.gradle
-          rootProject.name = "WildSphere"
-          include ':app'
-          EOF
-
-          # 2. Root build.gradle
-          cat << 'EOF' > build.gradle
-          buildscript {
-              repositories {
-                  google()
-                  mavenCentral()
+          # Microsoft PWABuilder Cloud API call for WildSphere
+          curl -s -X POST "https://pwabuilder-cloudapk.azurewebsites.net/generateAppPackage" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "WildSphere",
+              "launcherName": "WildSphere",
+              "packageId": "app.web.happy_fd1bc.twa",
+              "host": "happy-fd1bc.web.app",
+              "startUrl": "/",
+              "webManifestUrl": "https://happy-fd1bc.web.app/manifest.json",
+              "display": "standalone",
+              "themeColor": "#0e1117",
+              "navigationColor": "#0e1117",
+              "backgroundColor": "#0e1117",
+              "enableNotifications": true,
+              "fallbackType": "none",
+              "appVersion": "1.0.0",
+              "appVersionCode": 1,
+              "signing": {
+                "file": null,
+                "alias": "wildsphere",
+                "fullName": "WildSphere",
+                "organization": "WildSphere",
+                "organizationalUnit": "App",
+                "countryCode": "IN",
+                "keyPassword": "wildsphere123",
+                "storePassword": "wildsphere123"
               }
-              dependencies {
-                  classpath 'com.android.tools.build:gradle:8.2.2'
-              }
-          }
-          allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-          EOF
+            }' \
+            --output app-bundle.zip
 
-          # 3. app/build.gradle with Signing and TWA dependencies
-          cat << 'EOF' > app/build.gradle
-          plugins {
-              id 'com.android.application'
-          }
+          # Unzip files
+          unzip -o app-bundle.zip -d extracted/
 
-          android {
-              namespace 'app.web.happy_fd1bc.twa'
-              compileSdk 34
+          # Organize clean artifacts for download
+          find extracted/ -name "*.apk" -exec cp {} final_output/WildSphere-Release.apk \;
+          find extracted/ -name "*.aab" -exec cp {} final_output/WildSphere-PlayStore.aab \;
+          find extracted/ -name "*.keystore" -o -name "*.jks" -exec cp {} final_output/wildsphere.keystore \;
+          find extracted/ -name "assetlinks.json" -exec cp {} final_output/assetlinks.json \;
 
-              defaultConfig {
-                  applicationId "app.web.happy_fd1bc.twa"
-                  minSdk 21
-                  targetSdk 34
-                  versionCode 1
-                  versionName "1.0.0"
-
-                  manifestPlaceholders = [
-                      hostName: "happy-fd1bc.web.app",
-                      defaultUrl: "https://happy-fd1bc.web.app",
-                      launcherName: "WildSphere",
-                      assetStatements: '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"web","site":"https://happy-fd1bc.web.app"}}]'
-                  ]
-              }
-
-              signingConfigs {
-                  release {
-                      storeFile file("wildsphere.jks")
-                      storePassword "wildsphere123"
-                      keyAlias "wildsphere"
-                      keyPassword "wildsphere123"
-                      v1SigningEnabled true
-                      v2SigningEnabled true
-                  }
-              }
-
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.release
-                      minifyEnabled false
-                      shrinkResources false
-                  }
-              }
-              compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_17
-                  targetCompatibility JavaVersion.VERSION_17
-              }
-          }
-
-          dependencies {
-              implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
-          }
-          EOF
-
-          # 4. Strings & Colors
-          cat << 'EOF' > app/src/main/res/values/strings.xml
-          <resources>
-              <string name="app_name">WildSphere</string>
-          </resources>
-          EOF
-
-          cat << 'EOF' > app/src/main/res/values/styles.xml
-          <resources>
-              <style name="Theme.LauncherActivity" parent="Theme.AppCompat.NoActionBar">
-                  <item name="android:windowIsTranslucent">true</item>
-                  <item name="android:windowBackground">@android:color/transparent</item>
-                  <item name="android:windowNoTitle">true</item>
-              </style>
-          </resources>
-          EOF
-
-          # 5. AndroidManifest.xml (Fullscreen + Gallery/Video/Camera/Location Permissions)
-          cat << 'EOF' > app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-              <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-              <uses-permission android:name="android.permission.CAMERA" />
-              <uses-permission android:name="android.permission.RECORD_AUDIO" />
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
-              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-              <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-              <uses-permission android:name="android.permission.VIBRATE" />
-
-              <uses-feature android:name="android.hardware.camera" android:required="false" />
-              <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
-
-              <application
-                  android:allowBackup="true"
-                  android:icon="@android:drawable/sym_def_app_icon"
-                  android:label="${launcherName}"
-                  android:supportsRtl="true"
-                  android:theme="@style/Theme.LauncherActivity">
-
-                  <meta-data
-                      android:name="asset_statements"
-                      android:value="${assetStatements}" />
-
-                  <activity
-                      android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
-                      android:label="${launcherName}"
-                      android:exported="true">
-
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.DEFAULT_URL"
-                          android:value="${defaultUrl}" />
-
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR"
-                          android:value="#000000" />
-
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.NAVIGATION_BAR_COLOR"
-                          android:value="#000000" />
-
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.DISPLAY_MODE"
-                          android:value="immersive" />
-
-                      <meta-data
-                          android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY"
-                          android:value="webview" />
-
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-
-                      <intent-filter android:autoVerify="true">
-                          <action android:name="android.intent.action.VIEW" />
-                          <category android:name="android.intent.category.DEFAULT" />
-                          <category android:name="android.intent.category.BROWSABLE" />
-                          <data
-                              android:scheme="https"
-                              android:host="${hostName}" />
-                      </intent-filter>
-                  </activity>
-
-                  <activity
-                      android:name="com.google.androidbrowserhelper.trusted.WebViewFallbackActivity"
-                      android:configChanges="orientation|screenSize"
-                      android:exported="false" />
-
-              </application>
-          </manifest>
-          EOF
-
-          # 6. Generate Keystore
-          keytool -genkeypair -v \
-            -keystore app/wildsphere.jks \
-            -alias wildsphere \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass wildsphere123 \
-            -keypass wildsphere123 \
-            -dname "CN=WildSphere, OU=Mobile, O=WildSphere, L=Mumbai, S=MH, C=IN"
-
-          # 7. Print SHA-256 for assetlinks.json
-          echo "================ DIGITAL ASSET LINKS FINGERPRINT ================"
-          keytool -list -v -keystore app/wildsphere.jks -alias wildsphere -storepass wildsphere123 | grep "SHA256:"
-          echo "================================================================="
-
-          # 8. Run Build with System Gradle
-          gradle assembleRelease bundleRelease --stacktrace
-
-          # 9. Copy files to final folder
-          cp app/build/outputs/apk/release/*.apk ../final_output/wildsphere-release.apk
-          cp app/build/outputs/bundle/release/*.aab ../final_output/wildsphere-release.aab
-          cp app/wildsphere.jks ../final_output/wildsphere.jks
-
-      - name: Upload APK & AAB Artifacts
+      - name: Upload Final Android Releases
         uses: actions/upload-artifact@v4
         with:
-          name: wildsphere-app-package
-          path: final_output/
+          name: WildSphere-Final-Release
+          path: final_output/*
