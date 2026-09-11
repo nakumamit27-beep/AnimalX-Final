@@ -27,18 +27,11 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
-
-      - name: Setup Bubblewrap Environment Paths
+      - name: Install Bubblewrap CLI & Bind SDK
         run: |
-          mkdir -p ~/.bubblewrap
-          cat << EOF > ~/.bubblewrap/config.json
-          {
-            "jdkPath": "${JAVA_HOME}",
-            "androidSdkPath": "${ANDROID_HOME}"
-          }
-          EOF
+          npm install -g @bubblewrap/cli
+          # Configure official Bubblewrap paths for Java & Android SDK
+          bubblewrap updateConfig --jdkPath="$JAVA_HOME" --androidSdkPath="$ANDROID_HOME"
 
       - name: Create twa-manifest.json
         run: |
@@ -87,9 +80,7 @@ jobs:
 
       - name: Clean and Generate Keystore
         run: |
-          # Delete existing keystore if committed in repo to avoid password collision
           rm -f ./android.keystore
-          
           keytool -genkeypair -v \
             -keystore ./android.keystore \
             -alias android \
@@ -108,7 +99,7 @@ jobs:
           # Generate Android Project files from manifest
           bubblewrap update --skipPwaValidation
 
-          # Inject Camera and modern Android 11-15 Gallery/Video permissions
+          # Inject Camera and Android 11-15 Gallery/Video permissions
           python3 - << 'EOF'
           import os
 
@@ -136,7 +127,7 @@ jobs:
                   with open(manifest_path, "w") as f:
                       f.write(xml)
 
-          # Ensure splash freeze is disabled
+          # Disable splash screen freeze
           for root, dirs, files in os.walk("app/src/main/res"):
               for file in files:
                   if file.endswith(".xml"):
