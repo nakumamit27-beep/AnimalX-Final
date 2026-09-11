@@ -27,17 +27,25 @@ jobs:
         run: |
           npm install -g @bubblewrap/cli
 
+          # Bubblewrap non-interactive paths config
+          mkdir -p ~/.bubblewrap
+          cat << EOF > ~/.bubblewrap/config.json
+          {
+            "jdkPath": "${JAVA_HOME}",
+            "androidSdkPath": "${ANDROID_HOME}"
+          }
+          EOF
+
           mkdir -p twa_project
           cd twa_project
 
-          # 1. Initialize Bubblewrap project from your live web app
-          bubblewrap init --manifest="https://happy-fd1bc.web.app/manifest.json" --directory="."
+          # Initialize TWA without asking prompts
+          bubblewrap init --manifest="https://happy-fd1bc.web.app/manifest.json" --directory="." --skipPwaValidation
 
-          # 2. Add Direct Camera, Audio and Android 11-15 Media Permissions
+          # 1. Inject Android 11 to 15 Photo, Video, Camera permissions
           python3 - << 'EOF'
           import os
 
-          # Manifest update
           manifest_path = "app/src/main/AndroidManifest.xml"
           if os.path.exists(manifest_path):
               with open(manifest_path, "r") as f:
@@ -62,7 +70,7 @@ jobs:
                       f.write(xml)
                   print("✔ Injected Android 11-15 Media Permissions")
 
-          # Disable Splash Freeze & Fallback Custom Tab
+          # 2. Disable Splash Freeze & Fallback Custom Tab
           for root, dirs, files in os.walk("app/src/main/res"):
               for file in files:
                   if file.endswith(".xml"):
@@ -81,7 +89,7 @@ jobs:
                               f.write(c)
           EOF
 
-          # 3. Generate Master Production Keystore
+          # 3. Generate Master Release Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -92,7 +100,7 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 4. Configure Release Signing
+          # 4. Sign Release Build
           python3 - << 'EOF'
           with open("app/build.gradle", "r") as f:
               gradle = f.read()
@@ -119,18 +127,18 @@ jobs:
               f.write(gradle)
           EOF
 
-          # 5. Build APK and Play Store AAB
+          # 5. Build APK & Play Store AAB
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease --stacktrace
 
-          # 6. Prepare Final Artifacts
+          # 6. Collect final release files
           mkdir -p final_bundle
           find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Release.apk \;
           find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/WildSphere-PlayStore.aab \;
           cp app/wildsphere-release.jks final_bundle/wildsphere-release.jks
 
-      - name: Upload Final Android Releases
+      - name: Upload Final Release Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Final-Release
