@@ -27,11 +27,30 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Bubblewrap CLI & Bind SDK
+      - name: Pre-configure Bubblewrap Environment
         run: |
           npm install -g @bubblewrap/cli
-          # Configure official Bubblewrap paths for Java & Android SDK
-          bubblewrap updateConfig --jdkPath="$JAVA_HOME" --androidSdkPath="$ANDROID_HOME"
+          # Create official Bubblewrap config directly to suppress prompts completely
+          mkdir -p ~/.bubblewrap
+          cat << EOF > ~/.bubblewrap/config.json
+          {
+            "jdkPath": "${JAVA_HOME}",
+            "androidSdkPath": "${ANDROID_HOME}"
+          }
+          EOF
+
+      - name: Clean and Generate Keystore
+        run: |
+          rm -f ./android.keystore
+          keytool -genkeypair -v \
+            -keystore ./android.keystore \
+            -alias android \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass "wildsphere123" \
+            -keypass "wildsphere123" \
+            -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
       - name: Create twa-manifest.json
         run: |
@@ -78,28 +97,12 @@ jobs:
           }
           EOF
 
-      - name: Clean and Generate Keystore
+      - name: Generate Project & Inject Media Permissions
         run: |
-          rm -f ./android.keystore
-          keytool -genkeypair -v \
-            -keystore ./android.keystore \
-            -alias android \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass "wildsphere123" \
-            -keypass "wildsphere123" \
-            -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
+          # Generate Android Project files without interactive prompts
+          yes "" | bubblewrap update --skipPwaValidation || true
 
-      - name: Generate & Build Project with Android 11-15 Media Permissions
-        env:
-          BUBBLEWRAP_KEYSTORE_PASSWORD: "wildsphere123"
-          BUBBLEWRAP_KEY_PASSWORD: "wildsphere123"
-        run: |
-          # Generate Android Project files from manifest
-          bubblewrap update --skipPwaValidation
-
-          # Inject Camera and Android 11-15 Gallery/Video permissions
+          # Android 11 to 15 Photo, Video, Camera permissions injection
           python3 - << 'EOF'
           import os
 
@@ -127,7 +130,6 @@ jobs:
                   with open(manifest_path, "w") as f:
                       f.write(xml)
 
-          # Disable splash screen freeze
           for root, dirs, files in os.walk("app/src/main/res"):
               for file in files:
                   if file.endswith(".xml"):
@@ -140,10 +142,13 @@ jobs:
                               f.write(c)
           EOF
 
-          # Build signed APK and AAB
-          bubblewrap build --skipPwaValidation
+      - name: Build Signed APK and AAB
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: "wildsphere123"
+          BUBBLEWRAP_KEY_PASSWORD: "wildsphere123"
+        run: |
+          yes "" | bubblewrap build --skipPwaValidation || ./gradlew assembleRelease bundleRelease
 
-          # Collect built files
           mkdir -p final_artifacts
           find . -name "*.apk" -not -path "./node_modules/*" -exec cp {} final_artifacts/WildSphere-Release.apk \;
           find . -name "*.aab" -not -path "./node_modules/*" -exec cp {} final_artifacts/WildSphere-PlayStore.aab \;
