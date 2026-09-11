@@ -1,116 +1,64 @@
-name: Build Android APK & AAB
+name: Build Android WildSphere Production
 
 on:
-  push:
-    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Setup Java (JDK 17)
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-      - name: Pre-configure Bubblewrap Environment
+      - name: Clone Official Android TWA Engine & Configure
+        shell: bash
         run: |
-          npm install -g @bubblewrap/cli
-          # Create official Bubblewrap config directly to suppress prompts completely
-          mkdir -p ~/.bubblewrap
-          cat << EOF > ~/.bubblewrap/config.json
-          {
-            "jdkPath": "${JAVA_HOME}",
-            "androidSdkPath": "${ANDROID_HOME}"
-          }
-          EOF
+          # 1. Download official PWABuilder Android wrapper source
+          git clone --depth=1 https://github.com/pwa-builder/pwabuilder-android.git app-project
+          cd app-project
 
-      - name: Clean and Generate Keystore
-        run: |
-          rm -f ./android.keystore
-          keytool -genkeypair -v \
-            -keystore ./android.keystore \
-            -alias android \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass "wildsphere123" \
-            -keypass "wildsphere123" \
-            -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
-
-      - name: Create twa-manifest.json
-        run: |
-          cat << 'EOF' > twa-manifest.json
-          {
-            "packageId": "app.web.happy_fd1bc.twa",
-            "host": "happy-fd1bc.web.app",
-            "name": "WildSphere",
-            "launcherName": "WildSphere",
-            "display": "standalone",
-            "themeColor": "#0e1117",
-            "themeColorDark": "#0e1117",
-            "navigationColor": "#0e1117",
-            "navigationColorDark": "#0e1117",
-            "navigationDividerColor": "#0e1117",
-            "navigationDividerColorDark": "#0e1117",
-            "backgroundColor": "#0e1117",
-            "enableNotifications": true,
-            "startUrl": "/",
-            "iconUrl": "https://happy-fd1bc.web.app/icons/icon-512x512.png",
-            "splashScreenFadeOutDuration": 0,
-            "signingKey": {
-              "path": "./android.keystore",
-              "alias": "android"
-            },
-            "appVersionName": "1.0.0",
-            "appVersionCode": 1,
-            "generatorApp": "bubblewrap-cli",
-            "webManifestUrl": "https://happy-fd1bc.web.app/manifest.json",
-            "fallbackType": "none",
-            "features": {},
-            "alphaDependencies": {
-              "enabled": false
-            },
-            "enableSiteSettingsShortcut": false,
-            "isChromeOSOnly": false,
-            "isMetaQuest": false,
-            "fullScopeUrl": "https://happy-fd1bc.web.app/",
-            "minSdkVersion": 21,
-            "orientation": "default",
-            "fingerprints": [],
-            "additionalTrustedOrigins": [],
-            "retainedBundles": []
-          }
-          EOF
-
-      - name: Generate Project & Inject Media Permissions
-        run: |
-          # Generate Android Project files without interactive prompts
-          yes "" | bubblewrap update --skipPwaValidation || true
-
-          # Android 11 to 15 Photo, Video, Camera permissions injection
+          # 2. Configure project variables for WildSphere
           python3 - << 'EOF'
-          import os
+          import json, os
 
+          # Update string resources & app configuration
+          strings_path = "app/src/main/res/values/strings.xml"
+          if os.path.exists(strings_path):
+              with open(strings_path, "r") as f:
+                  data = f.read()
+              data = data.replace("PWA Application", "WildSphere")
+              data = data.replace("https://example.com", "https://happy-fd1bc.web.app")
+              with open(strings_path, "w") as f:
+                  f.write(data)
+
+          # Disable splash freeze and chrome fallback
+          for root, dirs, files in os.walk("app/src/main/res"):
+              for file in files:
+                  if file.endswith(".xml"):
+                      p = os.path.join(root, file)
+                      with open(p, "r", errors="ignore") as f:
+                          c = f.read()
+                      c = c.replace('name="show_splash_screen">true<', 'name="show_splash_screen">false<')
+                      c = c.replace('name="fallbackType">customtabs<', 'name="fallbackType">none<')
+                      with open(p, "w") as f:
+                          f.write(c)
+
+          # Manifest permissions for Android 11 to 15 Photo/Video Upload
           manifest_path = "app/src/main/AndroidManifest.xml"
           if os.path.exists(manifest_path):
               with open(manifest_path, "r") as f:
                   xml = f.read()
-              permissions = """
+              perms = """
                   <uses-permission android:name="android.permission.INTERNET" />
                   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
                   <uses-permission android:name="android.permission.CAMERA" />
@@ -120,42 +68,60 @@ jobs:
                   <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
                   <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
                   <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-              """
-              features = """
                   <uses-feature android:name="android.hardware.camera" android:required="false" />
-                  <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
               """
-              if "</manifest>" in xml:
-                  xml = xml.replace("</manifest>", permissions + features + "\n</manifest>")
-                  with open(manifest_path, "w") as f:
-                      f.write(xml)
-
-          for root, dirs, files in os.walk("app/src/main/res"):
-              for file in files:
-                  if file.endswith(".xml"):
-                      p = os.path.join(root, file)
-                      with open(p, "r", errors="ignore") as f:
-                          c = f.read()
-                      if 'name="show_splash_screen">true<' in c:
-                          c = c.replace('name="show_splash_screen">true<', 'name="show_splash_screen">false<')
-                          with open(p, "w") as f:
-                              f.write(c)
+              xml = xml.replace("</manifest>", perms + "\n</manifest>")
+              with open(manifest_path, "w") as f:
+                  f.write(xml)
           EOF
 
-      - name: Build Signed APK and AAB
-        env:
-          BUBBLEWRAP_KEYSTORE_PASSWORD: "wildsphere123"
-          BUBBLEWRAP_KEY_PASSWORD: "wildsphere123"
-        run: |
-          yes "" | bubblewrap build --skipPwaValidation || ./gradlew assembleRelease bundleRelease
+          # 3. Create Master Signing Keystore
+          keytool -genkeypair -v \
+            -keystore app/wildsphere.jks \
+            -alias wildsphere \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass "wildsphere123" \
+            -keypass "wildsphere123" \
+            -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          mkdir -p final_artifacts
-          find . -name "*.apk" -not -path "./node_modules/*" -exec cp {} final_artifacts/WildSphere-Release.apk \;
-          find . -name "*.aab" -not -path "./node_modules/*" -exec cp {} final_artifacts/WildSphere-PlayStore.aab \;
-          cp ./android.keystore final_artifacts/wildsphere.keystore
+          # 4. Attach Signing Config into Gradle
+          python3 - << 'EOF'
+          with open("app/build.gradle", "r") as f:
+              gradle = f.read()
 
-      - name: Upload Final Android Releases
+          signing = """
+              signingConfigs {
+                  release {
+                      storeFile file("wildsphere.jks")
+                      storePassword "wildsphere123"
+                      keyAlias "wildsphere"
+                      keyPassword "wildsphere123"
+                      v1SigningEnabled true
+                      v2SigningEnabled true
+                  }
+              }
+          """
+          gradle = gradle.replace("android {", "android {\n" + signing)
+          gradle = gradle.replace("buildTypes {", "buildTypes {\n        release {\n            signingConfig signingConfigs.release\n        }")
+          with open("app/build.gradle", "w") as f:
+              f.write(gradle)
+          EOF
+
+          # 5. Build Release APK and Play Store AAB
+          sed -i -e 's/\r$//' gradlew
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease --stacktrace
+
+          # 6. Prepare Final Output
+          mkdir -p ../output_artifacts
+          cp app/build/outputs/apk/release/*-release.apk ../output_artifacts/WildSphere-Release.apk || cp app/build/outputs/apk/release/*.apk ../output_artifacts/WildSphere-Release.apk
+          cp app/build/outputs/bundle/release/*-release.aab ../output_artifacts/WildSphere-PlayStore.aab || cp app/build/outputs/bundle/release/*.aab ../output_artifacts/WildSphere-PlayStore.aab
+          cp app/wildsphere.jks ../output_artifacts/wildsphere.jks
+
+      - name: Upload Final Release Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Final-Release
-          path: final_artifacts/*
+          path: output_artifacts/*
