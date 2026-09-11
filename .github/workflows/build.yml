@@ -19,19 +19,18 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install Latest PWABuilder CLI
-        run: npm install -g @pwabuilder/cli || npm install -g pwabuilder
-
       - name: Build TWA Release Supporting Android 11 to 15
         shell: bash
         run: |
           mkdir -p build_output
           cd build_output
-          pwabuilder https://happy-fd1bc.web.app -p android -l debug
+          
+          # Use npx directly so command not found error never happens
+          npx -y @pwabuilder/cli https://happy-fd1bc.web.app -p android -l debug
           
           cd WildSphere/android/source
           
-          # 1. Inject Modern Android 13/14/15 Photo, Video & Camera Permissions
+          # 1. Direct Gallery, Video, Audio and Camera Permissions (Android 11-15)
           python3 - << 'EOF'
           with open("app/src/main/AndroidManifest.xml", "r") as f:
               xml = f.read()
@@ -50,7 +49,6 @@ jobs:
               <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
           """
           
-          # Add hardware camera features
           features = """
               <uses-feature android:name="android.hardware.camera" android:required="false" />
               <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
@@ -65,7 +63,7 @@ jobs:
           # 2. Fix numeric resource filename bug
           find app/src/main/res -type f -name "[0-9]*.png" -delete
 
-          # 3. Disable Splash Hang & Chrome Tab Popup (Force Clean Standalone)
+          # 3. Disable Splash Screen Freeze & Chrome URL bar
           python3 - << 'EOF'
           import os
           for root, dirs, files in os.walk("app/src/main/res"):
@@ -86,7 +84,7 @@ jobs:
                               f.write(c)
           EOF
 
-          # 4. Generate Production Signing Keystore
+          # 4. Generate Production Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -97,12 +95,11 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 5. Configure targetSdk 34 (Android 14/15 Ready) & Sign Release
+          # 5. Sign APK and AAB with TargetSdk 34 (Android 14/15 Support)
           python3 - << 'EOF'
           with open("app/build.gradle", "r") as f:
               gradle = f.read()
 
-          # Upgrade targetSdk to 34 if lower
           gradle = gradle.replace("targetSdkVersion 33", "targetSdkVersion 34")
 
           signing_block = """
@@ -131,7 +128,7 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease --stacktrace
 
-          # 6. Bundle Final Files
+          # 6. Bundle Final Artifacts
           mkdir -p final_bundle
           find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Release.apk \;
           find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/WildSphere-PlayStore.aab \;
