@@ -1,4 +1,4 @@
-name: Generate WildSphere Standalone Release
+name: Build WildSphere Fullscreen Native APK
 
 on:
   workflow_dispatch:
@@ -6,81 +6,78 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
 
     steps:
-      - name: Setup Java 17
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
           java-version: '17'
+          distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Build Fullscreen Standalone App with All Media Permissions
-        shell: bash
+      - name: Generate Clean Android Project & Build
         run: |
-          # Clean workspace to prevent file collisions
-          rm -rf app-builder final_artifacts
-          mkdir -p app-builder final_artifacts
-          cd app-builder
+          rm -rf native-project final_output
+          mkdir -p native-project/app/src/main/res/values
+          mkdir -p native-project/app/src/main/res/drawable
+          mkdir -p final_output
+          cd native-project
 
-          # 1. Official Google TWA Standalone Template Clone
-          git clone --depth=1 https://github.com/GoogleChrome/android-browser-helper.git helper-source
-          cd helper-source/demos/twa-basic
+          # 1. Root settings.gradle
+          cat << 'EOF' > settings.gradle
+          rootProject.name = "WildSphere"
+          include ':app'
+          EOF
 
-          # 2. Inject Android 11 to 15 Media & Hardware Permissions
-          python3 - << 'EOF'
-          import os
+          # 2. Root build.gradle
+          cat << 'EOF' > build.gradle
+          buildscript {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:8.2.2'
+              }
+          }
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          EOF
 
-          manifest_path = "src/main/AndroidManifest.xml"
-          if os.path.exists(manifest_path):
-              with open(manifest_path, "r") as f:
-                  xml = f.read()
+          # 3. app/build.gradle with Signing and TWA dependencies
+          cat << 'EOF' > app/build.gradle
+          plugins {
+              id 'com.android.application'
+          }
 
-              # All permissions for Camera, Video/Photo Gallery, Audio, Location & Notifications
-              permissions = """
-                  <uses-permission android:name="android.permission.INTERNET" />
-                  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-                  <uses-permission android:name="android.permission.CAMERA" />
-                  <uses-permission android:name="android.permission.RECORD_AUDIO" />
-                  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-                  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-                  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-                  <!-- Storage permissions for Android 12 and below -->
-                  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-                  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
-                  <!-- Modern direct Media & Gallery upload for Android 13, 14, 15 -->
-                  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-                  <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-                  <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-                  <uses-feature android:name="android.hardware.camera" android:required="false" />
-                  <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
-              """
-              xml = xml.replace("</manifest>", permissions + "\n</manifest>")
-              with open(manifest_path, "w") as f:
-                  f.write(xml)
+          android {
+              namespace 'app.web.happy_fd1bc.twa'
+              compileSdk 34
 
-          # Update build.gradle variables for WildSphere
-          gradle_path = "build.gradle"
-          if os.path.exists(gradle_path):
-              with open(gradle_path, "r") as f:
-                  g = f.read()
-              g = g.replace('applicationId "com.google.androidbrowserhelper.demos.twabasic"', 'applicationId "app.web.happy_fd1bc.twa"')
-              g = g.replace('def defaultUrl = "https://peconn.github.io"', 'def defaultUrl = "https://happy-fd1bc.web.app"')
-              g = g.replace('def hostName = "peconn.github.io"', 'def hostName = "happy-fd1bc.web.app"')
-              
-              # Force No-Chrome Standalone Fullscreen
-              g = g.replace('def fallbackType = "customtabs"', 'def fallbackType = "none"')
-              
-              # Keystore configuration
-              signing = """
+              defaultConfig {
+                  applicationId "app.web.happy_fd1bc.twa"
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0.0"
+
+                  manifestPlaceholders = [
+                      hostName: "happy-fd1bc.web.app",
+                      defaultUrl: "https://happy-fd1bc.web.app",
+                      launcherName: "WildSphere",
+                      assetStatements: '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"web","site":"https://happy-fd1bc.web.app"}}]'
+                  ]
+              }
+
               signingConfigs {
                   release {
                       storeFile file("wildsphere.jks")
@@ -91,48 +88,149 @@ jobs:
                       v2SigningEnabled true
                   }
               }
-              """
-              g = g.replace("android {", "android {\n" + signing)
-              g = g.replace("buildTypes {", "buildTypes {\n        release {\n            signingConfig signingConfigs.release\n        }")
-              with open(gradle_path, "w") as f:
-                  f.write(g)
 
-          # Disable any splash screen hang
-          for root, dirs, files in os.walk("src/main/res"):
-              for file in files:
-                  if file.endswith(".xml"):
-                      p = os.path.join(root, file)
-                      with open(p, "r", errors="ignore") as f:
-                          c = f.read()
-                      if 'name="show_splash_screen">true<' in c:
-                          c = c.replace('name="show_splash_screen">true<', 'name="show_splash_screen">false<')
-                          with open(p, "w") as f:
-                              f.write(c)
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                      minifyEnabled false
+                      shrinkResources false
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+
+          dependencies {
+              implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+          }
           EOF
 
-          # 3. Create Master Signing Keystore
+          # 4. Strings & Colors
+          cat << 'EOF' > app/src/main/res/values/strings.xml
+          <resources>
+              <string name="app_name">WildSphere</string>
+          </resources>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/values/styles.xml
+          <resources>
+              <style name="Theme.LauncherActivity" parent="Theme.AppCompat.NoActionBar">
+                  <item name="android:windowIsTranslucent">true</item>
+                  <item name="android:windowBackground">@android:color/transparent</item>
+                  <item name="android:windowNoTitle">true</item>
+              </style>
+          </resources>
+          EOF
+
+          # 5. AndroidManifest.xml (Fullscreen + Gallery/Video/Camera/Location Permissions)
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.RECORD_AUDIO" />
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+              <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+              <uses-permission android:name="android.permission.VIBRATE" />
+
+              <uses-feature android:name="android.hardware.camera" android:required="false" />
+              <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+              <application
+                  android:allowBackup="true"
+                  android:icon="@android:drawable/sym_def_app_icon"
+                  android:label="${launcherName}"
+                  android:supportsRtl="true"
+                  android:theme="@style/Theme.LauncherActivity">
+
+                  <meta-data
+                      android:name="asset_statements"
+                      android:value="${assetStatements}" />
+
+                  <activity
+                      android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
+                      android:label="${launcherName}"
+                      android:exported="true">
+
+                      <meta-data
+                          android:name="android.support.customtabs.trusted.DEFAULT_URL"
+                          android:value="${defaultUrl}" />
+
+                      <meta-data
+                          android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR"
+                          android:value="#000000" />
+
+                      <meta-data
+                          android:name="android.support.customtabs.trusted.NAVIGATION_BAR_COLOR"
+                          android:value="#000000" />
+
+                      <meta-data
+                          android:name="android.support.customtabs.trusted.DISPLAY_MODE"
+                          android:value="immersive" />
+
+                      <meta-data
+                          android:name="android.support.customtabs.trusted.FALLBACK_STRATEGY"
+                          android:value="webview" />
+
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+
+                      <intent-filter android:autoVerify="true">
+                          <action android:name="android.intent.action.VIEW" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                          <category android:name="android.intent.category.BROWSABLE" />
+                          <data
+                              android:scheme="https"
+                              android:host="${hostName}" />
+                      </intent-filter>
+                  </activity>
+
+                  <activity
+                      android:name="com.google.androidbrowserhelper.trusted.WebViewFallbackActivity"
+                      android:configChanges="orientation|screenSize"
+                      android:exported="false" />
+
+              </application>
+          </manifest>
+          EOF
+
+          # 6. Generate Keystore
           keytool -genkeypair -v \
-            -keystore wildsphere.jks \
+            -keystore app/wildsphere.jks \
             -alias wildsphere \
             -keyalg RSA \
             -keysize 2048 \
             -validity 10000 \
-            -storepass "wildsphere123" \
-            -keypass "wildsphere123" \
-            -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
+            -storepass wildsphere123 \
+            -keypass wildsphere123 \
+            -dname "CN=WildSphere, OU=Mobile, O=WildSphere, L=Mumbai, S=MH, C=IN"
 
-          # 4. Build Signed APK & Play Store AAB
-          sed -i -e 's/\r$//' ../../gradlew
-          chmod +x ../../gradlew
-          ../../gradlew assembleRelease bundleRelease --stacktrace
+          # 7. Print SHA-256 for assetlinks.json
+          echo "================ DIGITAL ASSET LINKS FINGERPRINT ================"
+          keytool -list -v -keystore app/wildsphere.jks -alias wildsphere -storepass wildsphere123 | grep "SHA256:"
+          echo "================================================================="
 
-          # 5. Extract Output Files
-          find build/outputs/apk/release -name "*.apk" -exec cp {} ../../../final_artifacts/WildSphere-Release.apk \;
-          find build/outputs/bundle/release -name "*.aab" -exec cp {} ../../../final_artifacts/WildSphere-PlayStore.aab \;
-          cp wildsphere.jks ../../../final_artifacts/wildsphere.jks
+          # 8. Run Build with System Gradle
+          gradle assembleRelease bundleRelease --stacktrace
 
-      - name: Upload WildSphere Production Release
+          # 9. Copy files to final folder
+          cp app/build/outputs/apk/release/*.apk ../final_output/wildsphere-release.apk
+          cp app/build/outputs/bundle/release/*.aab ../final_output/wildsphere-release.aab
+          cp app/wildsphere.jks ../final_output/wildsphere.jks
+
+      - name: Upload APK & AAB Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-Final-Release
-          path: final_artifacts/*
+          name: wildsphere-app-package
+          path: final_output/
