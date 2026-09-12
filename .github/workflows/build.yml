@@ -20,22 +20,37 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Configure Clean Native Android App & Bundling
+      - name: Setup Node & pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Build Web App
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm --filter animal-x run build || npm run build || true
+
+      - name: Configure Clean Native Android App & Assets Bundling
         shell: bash
         run: |
           mkdir -p app/src/main/assets/public
 
-          # 1. Frontend files ko direct APK ke andar pack karna
-          if [ -d "artifacts/animal-x/dist/public" ]; then
-            cp -r artifacts/animal-x/dist/public/* app/src/main/assets/public/
-          elif [ -d "public" ]; then
-            cp -r public/* app/src/main/assets/public/
+          # 1. Dist files copy karna (1679_animal_photo ko exclude karke)
+          if [ -d "artifacts/animal-x/dist" ]; then
+            rsync -av --exclude='1679_animal_photo*' artifacts/animal-x/dist/ app/src/main/assets/public/
+          elif [ -d "dist" ]; then
+            rsync -av --exclude='1679_animal_photo*' dist/ app/src/main/assets/public/
           fi
 
-          # 2. Res folder se corrupt files saaf karna
+          # Public assets/sounds copy karna
+          if [ -d "artifacts/animal-x/public" ]; then
+            rsync -av --exclude='1679_animal_photo*' artifacts/animal-x/public/ app/src/main/assets/public/
+          fi
+
+          # 2. Corrupt drawables hatana
           find app/src/main/res -name "*[0-9]*.png" -delete || true
 
-          # 3. Clean AndroidManifest.xml (Zero Firebase, Zero Chrome, Zero TWA)
+          # 3. AndroidManifest.xml with all permissions
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -44,20 +59,23 @@ jobs:
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
               <uses-permission android:name="android.permission.CAMERA" />
               <uses-permission android:name="android.permission.RECORD_AUDIO" />
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+              <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
               <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
               <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
               <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
               <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
               <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
               <application
                   android:allowBackup="true"
                   android:icon="@mipmap/ic_launcher"
                   android:label="WildSphere"
                   android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-                  android:usesCleartextTraffic="true">
+                  android:usesCleartextTraffic="true"
+                  android:hardwareAccelerated="true">
 
                   <activity
                       android:name=".MainActivity"
@@ -73,7 +91,7 @@ jobs:
           </manifest>
           EOF
 
-          # 4. Purani sabhi conflicting Java files ko delete karke clean native MainActivity likhna
+          # 4. Clean Native Java with Permissions, Audio & File Upload Picker
           rm -rf app/src/main/java/*
           mkdir -p app/src/main/java/app/web/happy_fd1bc
 
@@ -92,6 +110,7 @@ jobs:
           import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
+          import androidx.core.app.ActivityCompat;
 
           public class MainActivity extends Activity {
               private WebView webView;
@@ -104,12 +123,25 @@ jobs:
                   webView = new WebView(this);
                   setContentView(webView);
 
+                  // Request Runtime Permissions for Storage, Camera, Mic, Location
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                      ActivityCompat.requestPermissions(this, new String[]{
+                          "android.permission.CAMERA",
+                          "android.permission.RECORD_AUDIO",
+                          "android.permission.ACCESS_FINE_LOCATION",
+                          "android.permission.READ_MEDIA_IMAGES",
+                          "android.permission.READ_MEDIA_VIDEO"
+                      }, 1);
+                  }
+
                   WebSettings settings = webView.getSettings();
                   settings.setJavaScriptEnabled(true);
                   settings.setDomStorageEnabled(true);
                   settings.setDatabaseEnabled(true);
                   settings.setAllowFileAccess(true);
                   settings.setAllowContentAccess(true);
+                  settings.setAllowFileAccessFromFileURLs(true);
+                  settings.setAllowUniversalAccessFromFileURLs(true);
                   settings.setGeolocationEnabled(true);
                   settings.setMediaPlaybackRequiresUserGesture(false);
                   settings.setUseWideViewPort(true);
@@ -159,19 +191,22 @@ jobs:
 
               @Override
               public void onBackPressed() {
-                  if (webView.canGoBack()) webView.goBack();
-                  else super.onBackPressed();
+                  if (webView.canGoBack()) {
+                      webView.goBack();
+                  } else {
+                      super.onBackPressed();
+                  }
               }
           }
           EOF
 
-          # 5. Guaranteed Clean app/build.gradle (Zero TWA dependencies)
+          # 5. Clean app/build.gradle
           cat << 'EOF' > app/build.gradle
           apply plugin: 'com.android.application'
 
           android {
-              namespace 'app.web.happy_fd1bc'
-              compileSdkVersion 34
+              namespace "app.web.happy_fd1bc"
+              compileSdk 34
 
               defaultConfig {
                   applicationId "app.web.happy_fd1bc"
@@ -187,6 +222,7 @@ jobs:
                       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
                   }
               }
+
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_17
                   targetCompatibility JavaVersion.VERSION_17
@@ -195,6 +231,7 @@ jobs:
 
           dependencies {
               implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'androidx.core:core:1.12.0'
           }
           EOF
 
@@ -206,8 +243,8 @@ jobs:
           ./gradlew clean assembleRelease bundleRelease --no-daemon
 
           mkdir -p final_bundle
-          find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Release.apk \;
-          find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/WildSphere-PlayStore.aab \;
+          find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/ \;
+          find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/ \;
 
       - name: Upload Native Release Package
         uses: actions/upload-artifact@v4
