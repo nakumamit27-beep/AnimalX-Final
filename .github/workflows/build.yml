@@ -22,7 +22,7 @@ jobs:
       - name: Install PWABuilder CLI
         run: npm install -g pwabuilder
 
-      - name: Build Standalone Native Web Engine
+      - name: Build Standalone Native APK & AAB
         shell: bash
         run: |
           mkdir -p build_output
@@ -31,14 +31,14 @@ jobs:
 
           cd WildSphere/android/source
 
-          # 1. Clean numeric resource names bug
+          # 1. Resource name issue fix
           find app/src/main/res -type f -name "[0-9]*.png" -delete
 
-          # 2. Fix Splash Freeze, Enable Fullscreen, Disable Fallback Chrome Bars
+          # 2. Splash Freeze & Fullscreen Fix (Via XML resources, No Java corruption)
           python3 - << 'EOF'
           import os
 
-          # String and configuration overrides
+          # Disable Splash Freeze & Force Fullscreen
           for root, dirs, files in os.walk("app/src/main/res"):
               for file in files:
                   if file.endswith(".xml"):
@@ -50,13 +50,13 @@ jobs:
                           c = c.replace('name="show_splash_screen">true<', 'name="show_splash_screen">false<')
                           mod = True
                       if 'name="fallbackType">customtabs<' in c:
-                          c = c.replace('name="fallbackType">customtabs<', 'name="fallbackType">webview<')
+                          c = c.replace('name="fallbackType">customtabs<', 'name="fallbackType">none<')
                           mod = True
                       if mod:
                           with open(p, "w") as f:
                               f.write(c)
 
-          # Manifest updates: Permissions for Android 11 to 15 + Direct Gallery/Video Upload
+          # 3. Add Direct Media/Video/Gallery Permissions (Android 11 to 15)
           manifest_path = "app/src/main/AndroidManifest.xml"
           if os.path.exists(manifest_path):
               with open(manifest_path, "r") as f:
@@ -78,30 +78,9 @@ jobs:
               xml = xml.replace("</manifest>", perms + "\n</manifest>")
               with open(manifest_path, "w") as f:
                   f.write(xml)
-
-          # Enable DOMStorage, Database, JavaScript, and File Upload in WebView Fallback Java
-          for root, dirs, files in os.walk("app/src/main/java"):
-              for file in files:
-                  if file.endswith(".java"):
-                      p = os.path.join(root, file)
-                      with open(p, "r", errors="ignore") as f:
-                          src = f.read()
-                      if "getSettings()" in src or "WebView" in src:
-                          injection = """
-                              settings.setDomStorageEnabled(true);
-                              settings.setDatabaseEnabled(true);
-                              settings.setJavaScriptEnabled(true);
-                              settings.setAllowFileAccess(true);
-                              settings.setAllowContentAccess(true);
-                              settings.setMediaPlaybackRequiresUserGesture(false);
-                          """
-                          if "setJavaScriptEnabled(true);" in src and "setDomStorageEnabled" not in src:
-                              src = src.replace("setJavaScriptEnabled(true);", injection)
-                              with open(p, "w") as f:
-                                  f.write(src)
           EOF
 
-          # 3. Create Master Keystore
+          # 4. Create Master Keystore
           keytool -genkeypair -v \
             -keystore app/wildsphere-release.jks \
             -alias wildsphere \
@@ -112,7 +91,7 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 4. Configure Release Signing in build.gradle
+          # 5. Configure Clean Release Signing in build.gradle
           python3 - << 'EOF'
           with open("app/build.gradle", "r") as f:
               gradle = f.read()
@@ -137,12 +116,12 @@ jobs:
               f.write(gradle)
           EOF
 
-          # 5. Fix line endings & Build Release
+          # 6. Fix line endings & Compile
           sed -i -e 's/\r$//' gradlew
           chmod +x gradlew
           ./gradlew assembleRelease bundleRelease --stacktrace
 
-          # 6. Organize Final Release Artifacts
+          # 7. Collect Final Artifacts
           mkdir -p final_bundle
           find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Release.apk \;
           find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/WildSphere-PlayStore.aab \;
