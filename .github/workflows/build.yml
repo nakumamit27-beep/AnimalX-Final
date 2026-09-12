@@ -20,29 +20,27 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Setup Node.js & pnpm
+      - name: Setup Node & pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
 
-      - name: Build Web App
+      - name: Install Dependencies & Build Web Code
         run: |
           pnpm install --no-frozen-lockfile
-          pnpm --filter animal-x run build || npm run build || true
+          pnpm --filter animal-x run build || pnpm run build
 
       - name: Configure Pure Offline Android Project
         shell: bash
         run: |
-          # 1. Assets folder banayein
           mkdir -p app/src/main/assets/public
 
-          # 2. Frontend bundle copy karein (1679 photos wala folder exclude karke)
+          # 1. Frontend dist copy karna (1679_animal_photo ko STRICT exclude karke)
           if [ -d "artifacts/animal-x/dist" ]; then
             rsync -av --exclude='*1679_animal_photo*' artifacts/animal-x/dist/ app/src/main/assets/public/
           elif [ -d "dist" ]; then
@@ -53,11 +51,11 @@ jobs:
             rsync -av --exclude='*1679_animal_photo*' artifacts/animal-x/public/ app/src/main/assets/public/
           fi
 
-          # Double check: kisi bhi halat me 1679_animal_photo na rahe
+          # Double check: kisi bhi halat me 1679_animal_photo folder assets me na rahe
           find app/src/main/assets/public -type d -name "*1679_animal_photo*" -exec rm -rf {} + 2>/dev/null || true
           find app/src/main/assets/public -type f -name "*1679_animal_photo*" -delete 2>/dev/null || true
 
-          # 3. Res clean up
+          # 2. Res clean up
           mkdir -p app/src/main/res/values
           find app/src/main/res -name "*[0-9]*.png" -delete 2>/dev/null || true
 
@@ -69,7 +67,7 @@ jobs:
           </resources>
           EOF
 
-          # 4. Pure Android Manifest (All Permissions: Camera, Audio, Media, Storage, Location, Notifications)
+          # 3. AndroidManifest.xml (Camera, Audio, Storage, Location, Notifications)
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -109,7 +107,7 @@ jobs:
           </manifest>
           EOF
 
-          # 5. Native MainActivity.java (Offline WebView, File Chooser for Video/Reels, Audio, Geo-Location)
+          # 4. Native MainActivity.java (Reels/Video upload file chooser, Audio, Location)
           rm -rf app/src/main/java/*
           mkdir -p app/src/main/java/app/web/happy_fd1bc
 
@@ -220,7 +218,7 @@ jobs:
           }
           EOF
 
-          # 6. app/build.gradle
+          # 5. Clean app/build.gradle
           cat << 'EOF' > app/build.gradle
           apply plugin: 'com.android.application'
 
