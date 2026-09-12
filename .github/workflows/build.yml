@@ -1,4 +1,4 @@
-name: Generate WildSphere Production Release
+name: Build Full Native Android App with Media and Location
 
 on:
   workflow_dispatch:
@@ -8,64 +8,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup Java 8
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '8'
+          java-version: '17'
 
-      - name: Setup Node.js
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install PWABuilder CLI
-        run: npm install -g pwabuilder
-
-      - name: Build Standalone Native APK & AAB
+      - name: Configure Android Native Engine with Upload & Location Bridge
         shell: bash
         run: |
-          mkdir -p build_output
-          cd build_output
-          pwabuilder https://happy-fd1bc.web.app -p android -l debug
+          mkdir -p app/src/main/assets/public
 
-          cd WildSphere/android/source
+          # Copy frontend distribution files directly inside APK
+          if [ -d "artifacts/animal-x/dist/public" ]; then
+            cp -r artifacts/animal-x/dist/public/* app/src/main/assets/public/
+          elif [ -d "public" ]; then
+            cp -r public/* app/src/main/assets/public/
+          fi
 
-          # 1. Resource name issue fix
-          find app/src/main/res -type f -name "[0-9]*.png" -delete
-
-          # 2. Splash Freeze & Fullscreen Fix (Via XML resources, No Java corruption)
           python3 - << 'EOF'
-          import os
+          import os, glob
 
-          # Disable Splash Freeze & Force Fullscreen
-          for root, dirs, files in os.walk("app/src/main/res"):
-              for file in files:
-                  if file.endswith(".xml"):
-                      p = os.path.join(root, file)
-                      with open(p, "r", errors="ignore") as f:
-                          c = f.read()
-                      mod = False
-                      if 'name="show_splash_screen">true<' in c:
-                          c = c.replace('name="show_splash_screen">true<', 'name="show_splash_screen">false<')
-                          mod = True
-                      if 'name="fallbackType">customtabs<' in c:
-                          c = c.replace('name="fallbackType">customtabs<', 'name="fallbackType">none<')
-                          mod = True
-                      if mod:
-                          with open(p, "w") as f:
-                              f.write(c)
+          # 1. Clean broken image names
+          for f in glob.glob("app/src/main/res/**/[0-9]*.png", recursive=True):
+              try: os.remove(f)
+              except: pass
 
-          # 3. Add Direct Media/Video/Gallery Permissions (Android 11 to 15)
-          manifest_path = "app/src/main/AndroidManifest.xml"
-          if os.path.exists(manifest_path):
-              with open(manifest_path, "r") as f:
-                  xml = f.read()
+          # 2. Inject Full System Permissions in AndroidManifest.xml
+          manifest = "app/src/main/AndroidManifest.xml"
+          if os.path.exists(manifest):
+              with open(manifest, "r") as f:
+                  m = f.read()
+              
               perms = """
                   <uses-permission android:name="android.permission.INTERNET" />
                   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
                   <uses-permission android:name="android.permission.CAMERA" />
                   <uses-permission android:name="android.permission.RECORD_AUDIO" />
+                  <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
                   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
                   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
                   <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
@@ -74,15 +62,145 @@ jobs:
                   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
                   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
                   <uses-feature android:name="android.hardware.camera" android:required="false" />
+                  <uses-feature android:name="android.hardware.location.gps" android:required="false" />
               """
-              xml = xml.replace("</manifest>", perms + "\n</manifest>")
-              with open(manifest_path, "w") as f:
-                  f.write(xml)
+              if "android.permission.ACCESS_FINE_LOCATION" not in m:
+                  m = m.replace("</manifest>", perms + "\n</manifest>")
+              
+              # Allow mixed content and local storage access
+              if 'android:usesCleartextTraffic="true"' not in m:
+                  m = m.replace("<application", '<application android:usesCleartextTraffic="true" android:requestLegacyExternalStorage="true"')
+              
+              with open(manifest, "w") as f:
+                  f.write(m)
+
+          # 3. Create Full Native Activity with File Chooser (Gallery/Video) & Location Handlers
+          main_java_dir = "app/src/main/java/app/web/happy_fd1bc"
+          os.makedirs(main_java_dir, exist_ok=True)
+          
+          activity_code = """package app.web.happy_fd1bc;
+
+          import android.Manifest;
+          import android.app.Activity;
+          import android.content.Intent;
+          import android.content.pm.PackageManager;
+          import android.net.Uri;
+          import android.os.Build;
+          import android.os.Bundle;
+          import android.webkit.GeolocationPermissions;
+          import android.webkit.PermissionRequest;
+          import android.webkit.ValueCallback;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import androidx.annotation.NonNull;
+          import androidx.core.app.ActivityCompat;
+          import androidx.core.content.ContextCompat;
+
+          public class MainActivity extends Activity {
+              private WebView webView;
+              private ValueCallback<Uri[]> uploadMessage;
+              private final static int FILECHOOSER_RESULTCODE = 1001;
+              private final static int PERMISSION_REQUEST_CODE = 1002;
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+
+                  webView = new WebView(this);
+                  setContentView(webView);
+
+                  requestAppPermissions();
+
+                  WebSettings settings = webView.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+                  settings.setDatabaseEnabled(true);
+                  settings.setAllowFileAccess(true);
+                  settings.setAllowContentAccess(true);
+                  settings.setGeolocationEnabled(true);
+                  settings.setMediaPlaybackRequiresUserGesture(false);
+                  settings.setUseWideViewPort(true);
+                  settings.setLoadWithOverviewMode(true);
+
+                  webView.setWebViewClient(new WebViewClient());
+                  webView.setWebChromeClient(new WebChromeClient() {
+                      // 1. File Upload / Gallery / Video Picker Bridge
+                      @Override
+                      public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+                          if (uploadMessage != null) {
+                              uploadMessage.onReceiveValue(null);
+                          }
+                          uploadMessage = filePathCallback;
+                          Intent intent = fileChooserParams.createIntent();
+                          try {
+                              startActivityForResult(intent, FILECHOOSER_RESULTCODE);
+                          } catch (Exception e) {
+                              uploadMessage = null;
+                              return false;
+                          }
+                          return true;
+                      }
+
+                      // 2. Geolocation / Map Permission Bridge
+                      @Override
+                      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                          callback.invoke(origin, true, false);
+                      }
+
+                      // 3. Camera / Mic Stream Permission Bridge
+                      @Override
+                      public void onPermissionRequest(PermissionRequest request) {
+                          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                              request.grant(request.getResources());
+                          }
+                      }
+                  });
+
+                  webView.loadUrl("file:///android_asset/public/index.html");
+              }
+
+              private void requestAppPermissions() {
+                  String[] perms = {
+                      Manifest.permission.CAMERA,
+                      Manifest.permission.RECORD_AUDIO,
+                      Manifest.permission.ACCESS_FINE_LOCATION,
+                      Manifest.permission.ACCESS_COARSE_LOCATION
+                  };
+                  ActivityCompat.requestPermissions(this, perms, PERMISSION_REQUEST_CODE);
+              }
+
+              @Override
+              protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+                  if (requestCode == FILECHOOSER_RESULTCODE) {
+                      if (uploadMessage == null) return;
+                      uploadMessage.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
+                      uploadMessage = null;
+                  }
+                  super.onActivityResult(requestCode, resultCode, data);
+              }
+
+              @Override
+              public void onBackPressed() {
+                  if (webView.canGoBack()) {
+                      webView.goBack();
+                  } else {
+                      super.onBackPressed();
+                  }
+              }
+          }
+          """
+          with open(os.path.join(main_java_dir, "MainActivity.java"), "w") as f:
+              f.write(activity_code)
+
           EOF
 
-          # 4. Create Master Keystore
+      - name: Generate Master Release Keystore
+        shell: bash
+        run: |
           keytool -genkeypair -v \
-            -keystore app/wildsphere-release.jks \
+            -keystore app/wildsphere-native.jks \
             -alias wildsphere \
             -keyalg RSA \
             -keysize 2048 \
@@ -91,7 +209,6 @@ jobs:
             -keypass wildsphere123 \
             -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
 
-          # 5. Configure Clean Release Signing in build.gradle
           python3 - << 'EOF'
           with open("app/build.gradle", "r") as f:
               gradle = f.read()
@@ -99,7 +216,7 @@ jobs:
           signing = """
               signingConfigs {
                   release {
-                      storeFile file("wildsphere-release.jks")
+                      storeFile file("wildsphere-native.jks")
                       storePassword "wildsphere123"
                       keyAlias "wildsphere"
                       keyPassword "wildsphere123"
@@ -108,7 +225,6 @@ jobs:
           """
           if "android {" in gradle and "signingConfigs" not in gradle:
               gradle = gradle.replace("android {", "android {\n" + signing)
-          
           if "buildTypes {" in gradle:
               gradle = gradle.replace("buildTypes {", "buildTypes {\n        release {\n            signingConfig signingConfigs.release\n        }")
 
@@ -116,19 +232,19 @@ jobs:
               f.write(gradle)
           EOF
 
-          # 6. Fix line endings & Compile
-          sed -i -e 's/\r$//' gradlew
-          chmod +x gradlew
+      - name: Build Native Release APK & AAB
+        shell: bash
+        run: |
+          sed -i -e 's/\r$//' gradlew || true
+          chmod +x gradlew || true
           ./gradlew assembleRelease bundleRelease --stacktrace
 
-          # 7. Collect Final Artifacts
           mkdir -p final_bundle
           find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Release.apk \;
           find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/WildSphere-PlayStore.aab \;
-          cp app/wildsphere-release.jks final_bundle/wildsphere-release.jks
 
-      - name: Upload Release Artifacts
+      - name: Upload Native Release Package
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-Final-Release
-          path: build_output/WildSphere/android/source/final_bundle/*
+          name: WildSphere-Native-Media-Release
+          path: final_bundle/*
