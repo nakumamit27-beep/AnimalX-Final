@@ -413,7 +413,7 @@ export default function UploadReel({ onClose, onUploaded }) {
                   </div>
                 )}
               </div>
-              <input ref={videoInputRef} type="file" accept="video/*" style={{ display: "none" }} onChange={handleVideoFile} />
+              <input ref={videoInputRef} type="file" accept="video/*" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 50 }} onChange={handleVideoFile} />
 
               {videoFile && (
                 <div className="upload-file-chip">
@@ -427,7 +427,7 @@ export default function UploadReel({ onClose, onUploaded }) {
                 <button className="upload-thumb-btn" onClick={() => thumbInputRef.current?.click()}>
                   {thumbnailFile ? thumbnailFile.name : "Choose thumbnail image"}
                 </button>
-                <input ref={thumbInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => setThumbnailFile(e.target.files?.[0] || null)} />
+                <input ref={thumbInputRef} type="file" accept="image/*" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 50 }} onChange={e => setThumbnailFile(e.target.files?.[0] || null)} />
               </div>
             </div>
           )}

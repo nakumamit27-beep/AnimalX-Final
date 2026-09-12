@@ -57,3 +57,36 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 }
+
+/* Prevent invisible file inputs from covering the screen */
+input[type="file"] {
+  width: 0.1px !important;
+  height: 0.1px !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
+}
+label[for] {
+  pointer-events: auto !important;
+}
+
+/* Auto-injected: Disable pull-to-refresh & Mobile Frame Lock */
+html, body {
+  overscroll-behavior-y: none !important;
+  overscroll-behavior-x: none !important;
+  overscroll-behavior: none !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root, #app, .app-container {
+  width: 100% !important;
+  max-width: 480px !important;
+  margin: 0 auto !important;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}

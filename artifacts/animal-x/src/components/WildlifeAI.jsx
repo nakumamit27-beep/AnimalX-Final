@@ -139,8 +139,8 @@ const MENU_ITEMS = [
   { icon: "📄", label: "Terms of Service", key: "terms", href: "/terms" },
   { icon: "📋", label: "Community Guidelines", key: "guidelines", href: "/guidelines" },
   { icon: "📞", label: "Contact Us", key: "contact", href: "mailto:wildlifeanimalfight@gmail.com" },
-  { icon: "ℹ️", label: `About App (${APP_VERSION})`, key: "about" },
-  { icon: "🚩", label: "Report a Problem", key: "report", href: "mailto:wildlifeanimalfight@gmail.com?subject=Bug+Report+Animal+X" },
+  { icon: "ℹ️", label: "About App (v1.0.0)", key: "about" },
+  { icon: "🚩", label: "Report a Problem", key: "report", href: "mailto:wildlifeanimalfight@gmail.com?subject=Bug+Report+wild+sphere" },
 ];
 
 function getAIAnswer(query) {

@@ -603,7 +603,7 @@ function AdminAnimalPanel({ animal, override, ability, quiz, activeTab, setActiv
               <button className="admin-action-btn primary" onClick={() => fileRef.current?.click()} disabled={uploading}>
                 {uploading ? "⏳ Uploading…" : "📁 Choose New Photo"}
               </button>
-              <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={onPhotoFile} />
+              <input ref={fileRef} type="file" accept="image/*" style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 50 }} onChange={onPhotoFile} />
               {override.image && <button className="admin-action-btn danger" onClick={onDeletePhoto}>🗑️ Delete Custom Photo</button>}
             </div>
             <div className="admin-section-title" style={{ marginTop: 8 }}>Quick Info Edit</div>
