@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
       - name: Setup Java 17
@@ -20,27 +20,12 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Setup Node & pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Dependencies & Build Web Code
-        run: |
-          pnpm install --no-frozen-lockfile
-          pnpm --filter animal-x run build || pnpm run build
-
       - name: Configure Pure Offline Android Project
         shell: bash
         run: |
           mkdir -p app/src/main/assets/public
 
-          # 1. Frontend dist copy karna (1679_animal_photo ko STRICT exclude karke)
+          # 1. Jo pre-built dist folder repo me hai direct use copy karein (1679 photos exclude karke)
           if [ -d "artifacts/animal-x/dist" ]; then
             rsync -av --exclude='*1679_animal_photo*' artifacts/animal-x/dist/ app/src/main/assets/public/
           elif [ -d "dist" ]; then
@@ -49,9 +34,11 @@ jobs:
 
           if [ -d "artifacts/animal-x/public" ]; then
             rsync -av --exclude='*1679_animal_photo*' artifacts/animal-x/public/ app/src/main/assets/public/
+          elif [ -d "public" ]; then
+            rsync -av --exclude='*1679_animal_photo*' public/ app/src/main/assets/public/
           fi
 
-          # Double check: kisi bhi halat me 1679_animal_photo folder assets me na rahe
+          # Double check: kisi bhi tarah 1679 photos wala folder andar na rahe
           find app/src/main/assets/public -type d -name "*1679_animal_photo*" -exec rm -rf {} + 2>/dev/null || true
           find app/src/main/assets/public -type f -name "*1679_animal_photo*" -delete 2>/dev/null || true
 
@@ -67,7 +54,7 @@ jobs:
           </resources>
           EOF
 
-          # 3. AndroidManifest.xml (Camera, Audio, Storage, Location, Notifications)
+          # 3. AndroidManifest (Camera, Location, Mic, Media Storage, Notifications)
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -107,7 +94,7 @@ jobs:
           </manifest>
           EOF
 
-          # 4. Native MainActivity.java (Reels/Video upload file chooser, Audio, Location)
+          # 4. Native Java (No Chrome bar, Video Picker, Camera & Location bridges)
           rm -rf app/src/main/java/*
           mkdir -p app/src/main/java/app/web/happy_fd1bc
 
