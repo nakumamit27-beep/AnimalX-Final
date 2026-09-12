@@ -17,28 +17,28 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Configure Native Android App & Bundling
+      - name: Configure Clean Native Android App & Bundling
         shell: bash
         run: |
           mkdir -p app/src/main/assets/public
 
-          # 1. Copy Frontend inside APK assets
+          # 1. Frontend files ko direct APK ke andar pack karna
           if [ -d "artifacts/animal-x/dist/public" ]; then
             cp -r artifacts/animal-x/dist/public/* app/src/main/assets/public/
           elif [ -d "public" ]; then
             cp -r public/* app/src/main/assets/public/
           fi
 
-          # 2. Overwrite AndroidManifest to pure Native (Zero Firebase, Zero Chrome)
+          # 2. Res folder se corrupt files saaf karna
+          find app/src/main/res -name "*[0-9]*.png" -delete || true
+
+          # 3. Clean AndroidManifest.xml (Zero Firebase, Zero Chrome, Zero TWA)
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              package="app.web.happy_fd1bc">
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
               <uses-permission android:name="android.permission.INTERNET" />
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -52,17 +52,12 @@ jobs:
               <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
               <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-              <uses-feature android:name="android.hardware.camera" android:required="false" />
-              <uses-feature android:name="android.hardware.location.gps" android:required="false" />
-
               <application
                   android:allowBackup="true"
                   android:icon="@mipmap/ic_launcher"
                   android:label="WildSphere"
-                  android:supportsRtl="true"
                   android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-                  android:usesCleartextTraffic="true"
-                  android:requestLegacyExternalStorage="true">
+                  android:usesCleartextTraffic="true">
 
                   <activity
                       android:name=".MainActivity"
@@ -78,14 +73,13 @@ jobs:
           </manifest>
           EOF
 
-          # 3. Native MainActivity with Video Upload & Location handlers
+          # 4. Purani sabhi conflicting Java files ko delete karke clean native MainActivity likhna
+          rm -rf app/src/main/java/*
           mkdir -p app/src/main/java/app/web/happy_fd1bc
-          rm -f app/src/main/java/app/web/happy_fd1bc/*Launcher*.java
 
           cat << 'EOF' > app/src/main/java/app/web/happy_fd1bc/MainActivity.java
           package app.web.happy_fd1bc;
 
-          import android.Manifest;
           import android.app.Activity;
           import android.content.Intent;
           import android.net.Uri;
@@ -98,21 +92,17 @@ jobs:
           import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
-          import androidx.core.app.ActivityCompat;
 
           public class MainActivity extends Activity {
               private WebView webView;
               private ValueCallback<Uri[]> uploadMessage;
               private final static int FILECHOOSER_RESULTCODE = 1001;
-              private final static int PERMISSION_REQUEST_CODE = 1002;
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
                   webView = new WebView(this);
                   setContentView(webView);
-
-                  requestAppPermissions();
 
                   WebSettings settings = webView.getSettings();
                   settings.setJavaScriptEnabled(true);
@@ -157,16 +147,6 @@ jobs:
                   webView.loadUrl("file:///android_asset/public/index.html");
               }
 
-              private void requestAppPermissions() {
-                  String[] perms = {
-                      Manifest.permission.CAMERA,
-                      Manifest.permission.RECORD_AUDIO,
-                      Manifest.permission.ACCESS_FINE_LOCATION,
-                      Manifest.permission.ACCESS_COARSE_LOCATION
-                  };
-                  ActivityCompat.requestPermissions(this, perms, PERMISSION_REQUEST_CODE);
-              }
-
               @Override
               protected void onActivityResult(int requestCode, int resultCode, Intent data) {
                   if (requestCode == FILECHOOSER_RESULTCODE) {
@@ -185,40 +165,37 @@ jobs:
           }
           EOF
 
-      - name: Generate Master Release Keystore
-        shell: bash
-        run: |
-          keytool -genkeypair -v \
-            -keystore app/wildsphere-pure.jks \
-            -alias wildsphere \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass wildsphere123 \
-            -keypass wildsphere123 \
-            -dname "CN=WildSphere, OU=App, O=WildSphere, L=City, S=State, C=IN"
+          # 5. Guaranteed Clean app/build.gradle (Zero TWA dependencies)
+          cat << 'EOF' > app/build.gradle
+          apply plugin: 'com.android.application'
 
-          python3 - << 'EOF'
-          with open("app/build.gradle", "r") as f:
-              gradle = f.read()
+          android {
+              namespace 'app.web.happy_fd1bc'
+              compileSdkVersion 34
 
-          signing = """
-              signingConfigs {
+              defaultConfig {
+                  applicationId "app.web.happy_fd1bc"
+                  minSdkVersion 23
+                  targetSdkVersion 34
+                  versionCode 2
+                  versionName "2.0"
+              }
+
+              buildTypes {
                   release {
-                      storeFile file("wildsphere-pure.jks")
-                      storePassword "wildsphere123"
-                      keyAlias "wildsphere"
-                      keyPassword "wildsphere123"
+                      minifyEnabled false
+                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
                   }
               }
-          """
-          if "android {" in gradle and "signingConfigs" not in gradle:
-              gradle = gradle.replace("android {", "android {\n" + signing)
-          if "buildTypes {" in gradle:
-              gradle = gradle.replace("buildTypes {", "buildTypes {\n        release {\n            signingConfig signingConfigs.release\n        }")
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
 
-          with open("app/build.gradle", "w") as f:
-              f.write(gradle)
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+          }
           EOF
 
       - name: Build Pure Native APK & AAB
@@ -226,14 +203,14 @@ jobs:
         run: |
           sed -i -e 's/\r$//' gradlew || true
           chmod +x gradlew || true
-          ./gradlew assembleRelease bundleRelease --stacktrace
+          ./gradlew clean assembleRelease bundleRelease --no-daemon
 
           mkdir -p final_bundle
-          find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Offline-Native.apk \;
+          find app/build/outputs/apk/release -name "*.apk" -exec cp {} final_bundle/WildSphere-Release.apk \;
           find app/build/outputs/bundle/release -name "*.aab" -exec cp {} final_bundle/WildSphere-PlayStore.aab \;
 
       - name: Upload Native Release Package
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-Pure-Native-App
+          name: WildSphere-Native-App
           path: final_bundle/*
