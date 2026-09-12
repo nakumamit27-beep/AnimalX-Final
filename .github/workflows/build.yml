@@ -25,7 +25,7 @@ jobs:
         run: |
           mkdir -p app/src/main/assets/public
 
-          # 1. Jo pre-built dist folder repo me hai direct use copy karein (1679 photos exclude karke)
+          # 1. Dist files copy karna (1679 photos exclude)
           if [ -d "artifacts/animal-x/dist" ]; then
             rsync -av --exclude='*1679_animal_photo*' artifacts/animal-x/dist/ app/src/main/assets/public/
           elif [ -d "dist" ]; then
@@ -38,7 +38,6 @@ jobs:
             rsync -av --exclude='*1679_animal_photo*' public/ app/src/main/assets/public/
           fi
 
-          # Double check: kisi bhi tarah 1679 photos wala folder andar na rahe
           find app/src/main/assets/public -type d -name "*1679_animal_photo*" -exec rm -rf {} + 2>/dev/null || true
           find app/src/main/assets/public -type f -name "*1679_animal_photo*" -delete 2>/dev/null || true
 
@@ -54,11 +53,10 @@ jobs:
           </resources>
           EOF
 
-          # 3. AndroidManifest (Camera, Location, Mic, Media Storage, Notifications)
+          # 3. AndroidManifest
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
               <uses-permission android:name="android.permission.INTERNET" />
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
               <uses-permission android:name="android.permission.CAMERA" />
@@ -79,7 +77,6 @@ jobs:
                   android:theme="@style/AppTheme"
                   android:usesCleartextTraffic="true"
                   android:hardwareAccelerated="true">
-
                   <activity
                       android:name=".MainActivity"
                       android:exported="true"
@@ -94,7 +91,7 @@ jobs:
           </manifest>
           EOF
 
-          # 4. Native Java (No Chrome bar, Video Picker, Camera & Location bridges)
+          # 4. Native Java
           rm -rf app/src/main/java/*
           mkdir -p app/src/main/java/app/web/happy_fd1bc
 
@@ -205,7 +202,7 @@ jobs:
           }
           EOF
 
-          # 5. Clean app/build.gradle
+          # 5. Fix Duplicate Kotlin classes in app/build.gradle
           cat << 'EOF' > app/build.gradle
           apply plugin: 'com.android.application'
 
@@ -234,9 +231,19 @@ jobs:
               }
           }
 
+          configurations.all {
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+          }
+
           dependencies {
-              implementation 'androidx.appcompat:appcompat:1.6.1'
-              implementation 'androidx.core:core:1.12.0'
+              implementation('androidx.appcompat:appcompat:1.6.1') {
+                  exclude group: 'org.jetbrains.kotlin'
+              }
+              implementation('androidx.core:core:1.12.0') {
+                  exclude group: 'org.jetbrains.kotlin'
+              }
+              implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
           }
           EOF
 
