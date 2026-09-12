@@ -30,27 +30,33 @@ jobs:
           pnpm install --no-frozen-lockfile
           pnpm --filter animal-x run build || npm run build || true
 
-      - name: Configure Clean Native Android App & Assets Bundling
+      - name: Configure Clean Native Android App & Bundling
         shell: bash
         run: |
           mkdir -p app/src/main/assets/public
 
-          # 1. Dist files copy karna (1679_animal_photo ko exclude karke)
-          if [ -d "artifacts/animal-x/dist" ]; then
-            rsync -av --exclude='1679_animal_photo*' artifacts/animal-x/dist/ app/src/main/assets/public/
+          # 1. Dist files copy karna (1679_animal_photo ko STRICT exclude karke)
+          if [ -d "artifacts/animal-x/dist/public" ]; then
+            rsync -av --exclude='*1679_animal_photo*' artifacts/animal-x/dist/public/ app/src/main/assets/public/
+          elif [ -d "artifacts/animal-x/dist" ]; then
+            rsync -av --exclude='*1679_animal_photo*' artifacts/animal-x/dist/ app/src/main/assets/public/
           elif [ -d "dist" ]; then
-            rsync -av --exclude='1679_animal_photo*' dist/ app/src/main/assets/public/
+            rsync -av --exclude='*1679_animal_photo*' dist/ app/src/main/assets/public/
           fi
 
-          # Public assets/sounds copy karna
+          # Public assets aur sounds copy karna (1679 folder ko exclude karke)
           if [ -d "artifacts/animal-x/public" ]; then
-            rsync -av --exclude='1679_animal_photo*' artifacts/animal-x/public/ app/src/main/assets/public/
+            rsync -av --exclude='*1679_animal_photo*' artifacts/animal-x/public/ app/src/main/assets/public/
           fi
 
-          # 2. Corrupt drawables hatana
+          # Double check: agar galti se bhi 1679 folder copy ho gaya ho toh use delete karna
+          find app/src/main/assets/public -type d -name "*1679_animal_photo*" -exec rm -rf {} + 2>/dev/null || true
+          find app/src/main/assets/public -type f -name "*1679_animal_photo*" -delete 2>/dev/null || true
+
+          # 2. Res folder se corrupt files saaf karna
           find app/src/main/res -name "*[0-9]*.png" -delete || true
 
-          # 3. AndroidManifest.xml with all permissions
+          # 3. Clean AndroidManifest.xml (Camera, Audio, Storage, Location, Notifications)
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -91,7 +97,7 @@ jobs:
           </manifest>
           EOF
 
-          # 4. Clean Native Java with Permissions, Audio & File Upload Picker
+          # 4. Pure Native Java (Video upload file chooser, Audio enable, Location prompt)
           rm -rf app/src/main/java/*
           mkdir -p app/src/main/java/app/web/happy_fd1bc
 
@@ -123,7 +129,6 @@ jobs:
                   webView = new WebView(this);
                   setContentView(webView);
 
-                  // Request Runtime Permissions for Storage, Camera, Mic, Location
                   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                       ActivityCompat.requestPermissions(this, new String[]{
                           "android.permission.CAMERA",
