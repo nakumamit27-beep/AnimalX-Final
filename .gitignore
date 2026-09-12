@@ -49,3 +49,7 @@ Thumbs.db
 .local/
 1679_animal_photos.zip
 *.zip
+
+app_storage_1679_photos/
+artifacts/animal-x/public/animals/
+public/animals/
