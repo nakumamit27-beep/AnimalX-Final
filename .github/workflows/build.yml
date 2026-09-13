@@ -25,37 +25,75 @@ jobs:
         run: |
           mkdir -p app/src/main/assets/public
 
-          # 1. index.html ki exact directory dhoondh kar copy karna
+          # 1. Dist assets copy karna (1679 photos STRICT exclude)
           INDEX_PATH=$(find . -name "index.html" ! -path "*/node_modules/*" ! -path "*/.git/*" | grep -E "dist|artifacts" | head -n 1)
           if [ -z "$INDEX_PATH" ]; then
             INDEX_PATH=$(find . -name "index.html" ! -path "*/node_modules/*" ! -path "*/.git/*" | head -n 1)
           fi
           
-          echo "Found index.html at: $INDEX_PATH"
           DIST_DIR=$(dirname "$INDEX_PATH")
-          echo "Source Web Directory: $DIST_DIR"
-
-          # Saare frontend files copy karein (1679 photos strictly exclude karke)
           rsync -av --exclude='*1679_animal_photo*' "$DIST_DIR/" app/src/main/assets/public/
 
-          # Public folder se baaki static assets bhi copy karein
           if [ -d "artifacts/animal-x/public" ]; then
             rsync -av --exclude='*1679_animal_photo*' artifacts/animal-x/public/ app/src/main/assets/public/
           fi
 
-          # Agar subfolder bana ho toh use root assets me flatten karein
           if [ -d "app/src/main/assets/public/public" ]; then
             cp -rn app/src/main/assets/public/public/* app/src/main/assets/public/ 2>/dev/null || true
           fi
 
-          # 1679 folder delete confirm karein
+          # 1679 photos delete confirm karein
           find app/src/main/assets/public -type d -name "*1679_animal_photo*" -exec rm -rf {} + 2>/dev/null || true
           find app/src/main/assets/public -type f -name "*1679_animal_photo*" -delete 2>/dev/null || true
 
-          echo "Assets verification:"
-          ls -la app/src/main/assets/public/
+          # 2. RELATIVE PATH FIX: Dark screen hatane ke liye paths ko ./assets me badalna
+          find app/src/main/assets/public -name "*.html" -exec sed -i 's|href="/|href="./|g' {} +
+          find app/src/main/assets/public -name "*.html" -exec sed -i 's|src="/|src="./|g' {} +
+          find app/src/main/assets/public -name "*.js" -exec sed -i 's|"/assets/|"./assets/|g' {} + 2>/dev/null || true
 
-          # 2. LOGO: icon-512.png ko App Icon banana
+          # 3. DRAW FIX: Strict 2-Column Grid + Full Width No Black Side Bars inject karna
+          python3 -c "
+          import glob
+
+          css_patch = '''
+          /* FORCE 2-COLUMN & EDGE-TO-EDGE FULL WIDTH */
+          html, body, #root {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow-x: hidden !important;
+          }
+          div[class*=\"max-w-\"] {
+            max-width: 100% !important;
+            width: 100% !important;
+          }
+          /* Animal Explorer Cards Grid */
+          div[class*=\"grid-cols-1\"], div[class*=\"space-y-\"] > div[class*=\"rounded-\"] {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+          }
+          div[class*=\"grid-cols-1\"] > div, div[class*=\"grid\"] > div {
+            width: 100% !important;
+            margin: 0 !important;
+          }
+          div[class*=\"grid\"] img {
+            height: 125px !important;
+            width: 100% !important;
+            object-fit: cover !important;
+          }
+          '''
+
+          for css_file in glob.glob('app/src/main/assets/public/**/*.css', recursive=True):
+              with open(css_file, 'a', encoding='utf-8') as f:
+                  f.write(css_patch)
+              print('Patched CSS:', css_file)
+          "
+
+          # 4. LOGO SETUP (HD 512px Logo Lock)
           mkdir -p app/src/main/res/mipmap-mdpi
           mkdir -p app/src/main/res/mipmap-hdpi
           mkdir -p app/src/main/res/mipmap-xhdpi
@@ -81,7 +119,6 @@ jobs:
             cp "$ICON_SOURCE" app/src/main/res/drawable/ic_launcher.png
           fi
 
-          # 3. Res clean up
           find app/src/main/res -name "*[0-9]*.png" ! -name "ic_launcher.png" -delete 2>/dev/null || true
 
           mkdir -p app/src/main/res/values
@@ -93,7 +130,7 @@ jobs:
           </resources>
           EOF
 
-          # 4. AndroidManifest (All Permissions)
+          # 5. Manifest Setup
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -133,7 +170,7 @@ jobs:
           </manifest>
           EOF
 
-          # 5. Native MainActivity (Smart index.html fallback + upload bridge)
+          # 6. Native Java Setup (Smart offline loading + Responsive WebView)
           rm -rf app/src/main/java/*
           mkdir -p app/src/main/java/app/web/happy_fd1bc
 
@@ -153,7 +190,6 @@ jobs:
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
           import androidx.core.app.ActivityCompat;
-          import java.io.InputStream;
 
           public class MainActivity extends Activity {
               private WebView webView;
@@ -173,9 +209,7 @@ jobs:
                           "android.permission.ACCESS_FINE_LOCATION",
                           "android.permission.ACCESS_COARSE_LOCATION",
                           "android.permission.READ_MEDIA_IMAGES",
-                          "android.permission.READ_MEDIA_VIDEO",
-                          "android.permission.READ_MEDIA_AUDIO",
-                          "android.permission.POST_NOTIFICATIONS"
+                          "android.permission.READ_MEDIA_VIDEO"
                       }, 1);
                   }
 
@@ -221,21 +255,7 @@ jobs:
                       }
                   });
 
-                  // Smart index.html loader
-                  String loadUrl = "file:///android_asset/public/index.html";
-                  try {
-                      InputStream is = getAssets().open("public/index.html");
-                      is.close();
-                  } catch (Exception e) {
-                      try {
-                          InputStream is2 = getAssets().open("index.html");
-                          is2.close();
-                          loadUrl = "file:///android_asset/index.html";
-                      } catch (Exception e2) {
-                          loadUrl = "file:///android_asset/public/public/index.html";
-                      }
-                  }
-                  webView.loadUrl(loadUrl);
+                  webView.loadUrl("file:///android_asset/public/index.html");
               }
 
               @Override
@@ -259,7 +279,7 @@ jobs:
           }
           EOF
 
-          # 6. app/build.gradle
+          # 7. Clean app/build.gradle
           cat << 'EOF' > app/build.gradle
           apply plugin: 'com.android.application'
 
@@ -271,8 +291,8 @@ jobs:
                   applicationId "app.web.happy_fd1bc"
                   minSdkVersion 23
                   targetSdkVersion 34
-                  versionCode 6
-                  versionName "6.0"
+                  versionCode 8
+                  versionName "8.0"
               }
 
               buildTypes {
