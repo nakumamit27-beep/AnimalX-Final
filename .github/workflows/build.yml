@@ -25,24 +25,37 @@ jobs:
         run: |
           mkdir -p app/src/main/assets/public
 
-          # 1. Dist files copy karna (1679 photos exclude)
-          if [ -d "artifacts/animal-x/dist" ]; then
-            rsync -av --exclude='*1679_animal_photo*' artifacts/animal-x/dist/ app/src/main/assets/public/
-          elif [ -d "dist" ]; then
-            rsync -av --exclude='*1679_animal_photo*' dist/ app/src/main/assets/public/
+          # 1. index.html ki exact directory dhoondh kar copy karna
+          INDEX_PATH=$(find . -name "index.html" ! -path "*/node_modules/*" ! -path "*/.git/*" | grep -E "dist|artifacts" | head -n 1)
+          if [ -z "$INDEX_PATH" ]; then
+            INDEX_PATH=$(find . -name "index.html" ! -path "*/node_modules/*" ! -path "*/.git/*" | head -n 1)
           fi
+          
+          echo "Found index.html at: $INDEX_PATH"
+          DIST_DIR=$(dirname "$INDEX_PATH")
+          echo "Source Web Directory: $DIST_DIR"
 
+          # Saare frontend files copy karein (1679 photos strictly exclude karke)
+          rsync -av --exclude='*1679_animal_photo*' "$DIST_DIR/" app/src/main/assets/public/
+
+          # Public folder se baaki static assets bhi copy karein
           if [ -d "artifacts/animal-x/public" ]; then
             rsync -av --exclude='*1679_animal_photo*' artifacts/animal-x/public/ app/src/main/assets/public/
-          elif [ -d "public" ]; then
-            rsync -av --exclude='*1679_animal_photo*' public/ app/src/main/assets/public/
           fi
 
-          # Strict filter: 1679 photos delete confirm karein
+          # Agar subfolder bana ho toh use root assets me flatten karein
+          if [ -d "app/src/main/assets/public/public" ]; then
+            cp -rn app/src/main/assets/public/public/* app/src/main/assets/public/ 2>/dev/null || true
+          fi
+
+          # 1679 folder delete confirm karein
           find app/src/main/assets/public -type d -name "*1679_animal_photo*" -exec rm -rf {} + 2>/dev/null || true
           find app/src/main/assets/public -type f -name "*1679_animal_photo*" -delete 2>/dev/null || true
 
-          # 2. LOGO FIX: icon-512.png aur icon-192.png ko Native Android App Icon banana
+          echo "Assets verification:"
+          ls -la app/src/main/assets/public/
+
+          # 2. LOGO: icon-512.png ko App Icon banana
           mkdir -p app/src/main/res/mipmap-mdpi
           mkdir -p app/src/main/res/mipmap-hdpi
           mkdir -p app/src/main/res/mipmap-xhdpi
@@ -53,22 +66,19 @@ jobs:
           ICON_SOURCE=""
           if [ -f "artifacts/animal-x/public/icon-512.png" ]; then
             ICON_SOURCE="artifacts/animal-x/public/icon-512.png"
-          elif [ -f "artifacts/animal-x/public/icon-192.png" ]; then
-            ICON_SOURCE="artifacts/animal-x/public/icon-192.png"
           elif [ -f "public/icon-512.png" ]; then
             ICON_SOURCE="public/icon-512.png"
+          elif [ -f "app_icon.png" ]; then
+            ICON_SOURCE="app_icon.png"
           fi
 
           if [ -n "$ICON_SOURCE" ]; then
-            echo "Using Logo: $ICON_SOURCE"
             cp "$ICON_SOURCE" app/src/main/res/mipmap-mdpi/ic_launcher.png
             cp "$ICON_SOURCE" app/src/main/res/mipmap-hdpi/ic_launcher.png
             cp "$ICON_SOURCE" app/src/main/res/mipmap-xhdpi/ic_launcher.png
             cp "$ICON_SOURCE" app/src/main/res/mipmap-xxhdpi/ic_launcher.png
             cp "$ICON_SOURCE" app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
             cp "$ICON_SOURCE" app/src/main/res/drawable/ic_launcher.png
-            cp "$ICON_SOURCE" app/src/main/assets/public/icon-512.png
-            cp "$ICON_SOURCE" app/src/main/assets/public/icon-192.png
           fi
 
           # 3. Res clean up
@@ -83,7 +93,7 @@ jobs:
           </resources>
           EOF
 
-          # 4. AndroidManifest (App Icon properly linked)
+          # 4. AndroidManifest (All Permissions)
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -123,7 +133,7 @@ jobs:
           </manifest>
           EOF
 
-          # 5. Native Java (Upload, Permissions, Audio, Geo-Location)
+          # 5. Native MainActivity (Smart index.html fallback + upload bridge)
           rm -rf app/src/main/java/*
           mkdir -p app/src/main/java/app/web/happy_fd1bc
 
@@ -143,6 +153,7 @@ jobs:
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
           import androidx.core.app.ActivityCompat;
+          import java.io.InputStream;
 
           public class MainActivity extends Activity {
               private WebView webView;
@@ -210,7 +221,21 @@ jobs:
                       }
                   });
 
-                  webView.loadUrl("file:///android_asset/public/index.html");
+                  // Smart index.html loader
+                  String loadUrl = "file:///android_asset/public/index.html";
+                  try {
+                      InputStream is = getAssets().open("public/index.html");
+                      is.close();
+                  } catch (Exception e) {
+                      try {
+                          InputStream is2 = getAssets().open("index.html");
+                          is2.close();
+                          loadUrl = "file:///android_asset/index.html";
+                      } catch (Exception e2) {
+                          loadUrl = "file:///android_asset/public/public/index.html";
+                      }
+                  }
+                  webView.loadUrl(loadUrl);
               }
 
               @Override
@@ -234,7 +259,7 @@ jobs:
           }
           EOF
 
-          # 6. app/build.gradle with Kotlin duplicates excluded
+          # 6. app/build.gradle
           cat << 'EOF' > app/build.gradle
           apply plugin: 'com.android.application'
 
@@ -246,8 +271,8 @@ jobs:
                   applicationId "app.web.happy_fd1bc"
                   minSdkVersion 23
                   targetSdkVersion 34
-                  versionCode 5
-                  versionName "5.0"
+                  versionCode 6
+                  versionName "6.0"
               }
 
               buildTypes {
