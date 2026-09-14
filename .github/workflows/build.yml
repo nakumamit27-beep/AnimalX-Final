@@ -25,13 +25,14 @@ jobs:
         run: |
           mkdir -p app/src/main/assets/public
 
-          # 1. Dist assets copy karna (1679 photos STRICT exclude)
+          # 1. Dist assets copy karna (1679 photos exclude karke)
           INDEX_PATH=$(find . -name "index.html" ! -path "*/node_modules/*" ! -path "*/.git/*" | grep -E "dist|artifacts" | head -n 1)
           if [ -z "$INDEX_PATH" ]; then
             INDEX_PATH=$(find . -name "index.html" ! -path "*/node_modules/*" ! -path "*/.git/*" | head -n 1)
           fi
           
           DIST_DIR=$(dirname "$INDEX_PATH")
+          echo "Copying from: $DIST_DIR"
           rsync -av --exclude='*1679_animal_photo*' "$DIST_DIR/" app/src/main/assets/public/
 
           if [ -d "artifacts/animal-x/public" ]; then
@@ -42,16 +43,11 @@ jobs:
             cp -rn app/src/main/assets/public/public/* app/src/main/assets/public/ 2>/dev/null || true
           fi
 
-          # 1679 photos delete confirm karein
+          # 1679 folder delete confirm karein
           find app/src/main/assets/public -type d -name "*1679_animal_photo*" -exec rm -rf {} + 2>/dev/null || true
           find app/src/main/assets/public -type f -name "*1679_animal_photo*" -delete 2>/dev/null || true
 
-          # 2. RELATIVE PATH FIX: Dark screen hatane ke liye paths ko ./assets me badalna
-          find app/src/main/assets/public -name "*.html" -exec sed -i 's|href="/|href="./|g' {} +
-          find app/src/main/assets/public -name "*.html" -exec sed -i 's|src="/|src="./|g' {} +
-          find app/src/main/assets/public -name "*.js" -exec sed -i 's|"/assets/|"./assets/|g' {} + 2>/dev/null || true
-
-          # 3. DRAW FIX: Strict 2-Column Grid + Full Width No Black Side Bars inject karna
+          # 2. Strict 2-Column Grid + Full Width Patch
           python3 -c "
           import glob
 
@@ -63,16 +59,17 @@ jobs:
             margin: 0 !important;
             padding: 0 !important;
             overflow-x: hidden !important;
+            background-color: #0d1527 !important;
           }
           div[class*=\"max-w-\"] {
             max-width: 100% !important;
             width: 100% !important;
           }
-          /* Animal Explorer Cards Grid */
-          div[class*=\"grid-cols-1\"], div[class*=\"space-y-\"] > div[class*=\"rounded-\"] {
+          /* Animal Explorer Cards Grid to 2 Columns */
+          div[class*=\"grid-cols-1\"], div[class*=\"space-y-4\"] > div[class*=\"rounded-\"] {
             display: grid !important;
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 10px !important;
+            gap: 12px !important;
             padding-left: 8px !important;
             padding-right: 8px !important;
           }
@@ -81,19 +78,20 @@ jobs:
             margin: 0 !important;
           }
           div[class*=\"grid\"] img {
-            height: 125px !important;
+            height: 120px !important;
             width: 100% !important;
             object-fit: cover !important;
+            border-radius: 8px !important;
           }
           '''
 
           for css_file in glob.glob('app/src/main/assets/public/**/*.css', recursive=True):
               with open(css_file, 'a', encoding='utf-8') as f:
                   f.write(css_patch)
-              print('Patched CSS:', css_file)
+              print('Patched CSS for 2-column layout:', css_file)
           "
 
-          # 4. LOGO SETUP (HD 512px Logo Lock)
+          # 3. LOGO SETUP (HD 512px Logo Lock)
           mkdir -p app/src/main/res/mipmap-mdpi
           mkdir -p app/src/main/res/mipmap-hdpi
           mkdir -p app/src/main/res/mipmap-xhdpi
@@ -130,7 +128,7 @@ jobs:
           </resources>
           EOF
 
-          # 5. Manifest Setup
+          # 4. Manifest Setup
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -170,7 +168,7 @@ jobs:
           </manifest>
           EOF
 
-          # 6. Native Java Setup (Smart offline loading + Responsive WebView)
+          # 5. Native MainActivity (WebViewAssetLoader Fix for Vite React Modules)
           rm -rf app/src/main/java/*
           mkdir -p app/src/main/java/app/web/happy_fd1bc
 
@@ -186,15 +184,20 @@ jobs:
           import android.webkit.PermissionRequest;
           import android.webkit.ValueCallback;
           import android.webkit.WebChromeClient;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebResourceResponse;
           import android.webkit.WebSettings;
           import android.webkit.WebView;
-          import android.webkit.WebViewClient;
+          import androidx.annotation.NonNull;
           import androidx.core.app.ActivityCompat;
+          import androidx.webkit.WebViewAssetLoader;
+          import androidx.webkit.WebViewClientCompat;
 
           public class MainActivity extends Activity {
               private WebView webView;
               private ValueCallback<Uri[]> uploadMessage;
               private final static int FILECHOOSER_RESULTCODE = 1001;
+              private WebViewAssetLoader assetLoader;
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
@@ -213,20 +216,29 @@ jobs:
                       }, 1);
                   }
 
+                  // AssetLoader modern React ES modules ko CORS free load karta hai
+                  assetLoader = new WebViewAssetLoader.Builder()
+                          .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                          .build();
+
                   WebSettings settings = webView.getSettings();
                   settings.setJavaScriptEnabled(true);
                   settings.setDomStorageEnabled(true);
                   settings.setDatabaseEnabled(true);
                   settings.setAllowFileAccess(true);
                   settings.setAllowContentAccess(true);
-                  settings.setAllowFileAccessFromFileURLs(true);
-                  settings.setAllowUniversalAccessFromFileURLs(true);
                   settings.setGeolocationEnabled(true);
                   settings.setMediaPlaybackRequiresUserGesture(false);
                   settings.setUseWideViewPort(true);
                   settings.setLoadWithOverviewMode(true);
 
-                  webView.setWebViewClient(new WebViewClient());
+                  webView.setWebViewClient(new WebViewClientCompat() {
+                      @Override
+                      public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                          return assetLoader.shouldInterceptRequest(request.getUrl());
+                      }
+                  });
+
                   webView.setWebChromeClient(new WebChromeClient() {
                       @Override
                       public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
@@ -255,7 +267,8 @@ jobs:
                       }
                   });
 
-                  webView.loadUrl("file:///android_asset/public/index.html");
+                  // Virtual HTTPS origin se React modules 100% chalte hain bina CORS block ke
+                  webView.loadUrl("https://appassets.androidplatform.net/assets/public/index.html");
               }
 
               @Override
@@ -279,7 +292,7 @@ jobs:
           }
           EOF
 
-          # 7. Clean app/build.gradle
+          # 6. app/build.gradle with androidx.webkit dependency
           cat << 'EOF' > app/build.gradle
           apply plugin: 'com.android.application'
 
@@ -291,8 +304,8 @@ jobs:
                   applicationId "app.web.happy_fd1bc"
                   minSdkVersion 23
                   targetSdkVersion 34
-                  versionCode 8
-                  versionName "8.0"
+                  versionCode 9
+                  versionName "9.0"
               }
 
               buildTypes {
@@ -320,6 +333,7 @@ jobs:
               implementation('androidx.core:core:1.12.0') {
                   exclude group: 'org.jetbrains.kotlin'
               }
+              implementation 'androidx.webkit:webkit:1.10.0'
               implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
           }
           EOF
