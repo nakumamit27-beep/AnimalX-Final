@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       app_url:
-        description: 'App Live URL (Firebase ya Vercel link)'
+        description: 'App Live URL'
         required: true
-        default: 'https://animal-x-final-animal-x.vercel.app'
+        default: 'https://happy-fd1bc.web.app'
 
 jobs:
   build:
@@ -22,7 +22,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configure App and Icon
+      - name: Configure Clean Android Engine
         shell: bash
         run: |
           # 1. Custom Icon Setup
@@ -33,7 +33,6 @@ jobs:
           mkdir -p app/src/main/res/mipmap-xxhdpi
           mkdir -p app/src/main/res/mipmap-xxxhdpi
 
-          # Auto detect any uploaded png icon
           NEW_FILE=$(find . -maxdepth 1 -name "file_*.png" | head -n 1)
           LOGO_SRC=""
           if [ -n "$NEW_FILE" ] && [ -f "$NEW_FILE" ]; then
@@ -45,7 +44,7 @@ jobs:
           fi
 
           if [ -n "$LOGO_SRC" ]; then
-            echo "Icon found: $LOGO_SRC"
+            echo "Using Icon: $LOGO_SRC"
             cp "$LOGO_SRC" app/src/main/res/mipmap-mdpi/ic_launcher.png
             cp "$LOGO_SRC" app/src/main/res/mipmap-hdpi/ic_launcher.png
             cp "$LOGO_SRC" app/src/main/res/mipmap-xhdpi/ic_launcher.png
@@ -99,7 +98,7 @@ jobs:
           </manifest>
           EOF
 
-          # 3. Native Full-Screen WebView (Points directly to URL)
+          # 3. Pure Java MainActivity (Zero dependency conflict)
           TARGET_URL="${{ github.event.inputs.app_url }}"
           rm -rf app/src/main/java/*
           mkdir -p app/src/main/java/app/web/happy_fd1bc
@@ -109,7 +108,6 @@ jobs:
 
           import android.app.Activity;
           import android.content.Intent;
-          import android.graphics.Bitmap;
           import android.graphics.Color;
           import android.net.Uri;
           import android.os.Build;
@@ -119,7 +117,6 @@ jobs:
           import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
-          import androidx.core.app.ActivityCompat;
 
           public class MainActivity extends Activity {
               private WebView webView;
@@ -135,11 +132,11 @@ jobs:
                   setContentView(webView);
 
                   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                      ActivityCompat.requestPermissions(this, new String[]{
+                      requestPermissions(new String[]{
                           "android.permission.CAMERA",
                           "android.permission.RECORD_AUDIO",
-                          "android.permission.READ_MEDIA_IMAGES",
-                          "android.permission.READ_MEDIA_VIDEO"
+                          "android.permission.READ_EXTERNAL_STORAGE",
+                          "android.permission.WRITE_EXTERNAL_STORAGE"
                       }, 1);
                   }
 
@@ -192,7 +189,7 @@ jobs:
           }
           EOF
 
-          # 4. build.gradle
+          # 4. Clean Pure build.gradle (Kotlin Duplicate Class Error Fixed)
           cat << 'EOF' > app/build.gradle
           apply plugin: 'com.android.application'
 
@@ -204,8 +201,8 @@ jobs:
                   applicationId "app.web.happy_fd1bc"
                   minSdkVersion 23
                   targetSdkVersion 34
-                  versionCode 19
-                  versionName "19.0"
+                  versionCode 20
+                  versionName "20.0"
               }
 
               buildTypes {
@@ -221,9 +218,13 @@ jobs:
               }
           }
 
+          configurations.all {
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+          }
+
           dependencies {
-              implementation('androidx.appcompat:appcompat:1.6.1')
-              implementation('androidx.core:core:1.12.0')
+              // Zero androidx core conflict - uses native android framework
           }
           EOF
 
@@ -249,6 +250,8 @@ jobs:
             cp "$RAW_AAB" final_bundle/WildSphere-Release.aab
             jarsigner -keystore release.keystore -storepass 123456 -keypass 123456 final_bundle/WildSphere-Release.aab wildsphere
           fi
+
+          cp release.keystore final_bundle/playstore-release.keystore
 
       - name: Upload Signed Native App
         uses: actions/upload-artifact@v4
