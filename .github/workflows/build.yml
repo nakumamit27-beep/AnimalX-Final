@@ -17,15 +17,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Configure Pure Android App (Lightweight Cloudinary Mode)
         shell: bash
         run: |
           mkdir -p app/src/main/assets/public
 
-          # Dist files copy karein
           INDEX_PATH=$(find . -name "index.html" ! -path "*/node_modules/*" ! -path "*/.git/*" | grep -E "dist|artifacts" | head -n 1)
           if [ -z "$INDEX_PATH" ]; then
             INDEX_PATH=$(find . -name "index.html" ! -path "*/node_modules/*" ! -path "*/.git/*" | head -n 1)
@@ -42,13 +38,13 @@ jobs:
             cp -rn app/src/main/assets/public/public/* app/src/main/assets/public/ 2>/dev/null || true
           fi
 
-          # STRICT CLEAN: Saari local photos assets se remove taaki APK light (15-25 MB) bane
+          # STRICT EXCLUDE: Local heavy photos delete
           rm -rf app/src/main/assets/public/app_storage_1679_photos
           rm -rf app/src/main/assets/public/*1679*
           find app/src/main/assets -type f -name "photo_*.jpg" -delete 2>/dev/null || true
           find app/src/main/assets -type f -name "*.jpeg" -delete 2>/dev/null || true
 
-          # Relative paths fix (Dark screen hatane ke liye)
+          # Relative paths fix
           find app/src/main/assets/public -name "*.html" -exec sed -i 's|href="/|href="./|g' {} +
           find app/src/main/assets/public -name "*.html" -exec sed -i 's|src="/|src="./|g' {} +
           find app/src/main/assets/public -name "*.js" -exec sed -i 's|"/assets/|"./assets/|g' {} + 2>/dev/null || true
