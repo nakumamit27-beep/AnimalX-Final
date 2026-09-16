@@ -28,7 +28,7 @@ jobs:
           fi
           
           DIST_DIR=$(dirname "$INDEX_PATH")
-          # animals folder aur dist assets copy honge, sirf heavy unmapped photo folder exclude hoga
+          # Dist assets copy karein (heavy unmapped photo folder exclude)
           rsync -av --exclude='*app_storage_1679_photos*' "$DIST_DIR/" app/src/main/assets/public/
 
           if [ -d "artifacts/animal-x/public" ]; then
@@ -55,42 +55,65 @@ jobs:
           </resources>
           INNER_EOF
 
-          # Purane corrupt icons clear karein
+          # Purane problem create karne wale icon folders delete karein
           rm -rf app/src/main/res/mipmap-* app/src/main/res/drawable*
-
-          # New clean resource folders
-          mkdir -p app/src/main/res/mipmap-mdpi
-          mkdir -p app/src/main/res/mipmap-hdpi
-          mkdir -p app/src/main/res/mipmap-xhdpi
-          mkdir -p app/src/main/res/mipmap-xxhdpi
-          mkdir -p app/src/main/res/mipmap-xxxhdpi
           mkdir -p app/src/main/res/drawable
 
-          # Valid PNG Generator using ImageMagick (AAPT pass guarantee, no python PIL dependency)
-          ICON_SRC=""
-          if [ -f "artifacts/animal-x/public/icon-512.png" ]; then
-            ICON_SRC="artifacts/animal-x/public/icon-512.png"
-          elif [ -f "public/icon-512.png" ]; then
-            ICON_SRC="public/icon-512.png"
-          elif [ -f "app_icon.png" ]; then
-            ICON_SRC="app_icon.png"
-          fi
+          # 100% Native Vector Icon (AAPT error completely bypassed)
+          cat << 'INNER_EOF' > app/src/main/res/drawable/ic_launcher.xml
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path
+                  android:fillColor="#0D1527"
+                  android:pathData="M0,0h108v108h-108z"/>
+              <path
+                  android:fillColor="#10B981"
+                  android:pathData="M54,20 C35.2,20 20,35.2 20,54 C20,72.8 35.2,88 54,88 C72.8,88 88,72.8 88,54 C88,35.2 72.8,20 54,20 Z M54,78 C40.8,78 30,67.2 30,54 C30,40.8 40.8,30 54,30 C67.2,30 78,40.8 78,54 C78,67.2 67.2,78 54,78 Z"/>
+          </vector>
+          INNER_EOF
 
-          if [ -n "$ICON_SRC" ]; then
-            convert "$ICON_SRC" -resize 48x48 app/src/main/res/mipmap-mdpi/ic_launcher.png
-            convert "$ICON_SRC" -resize 72x72 app/src/main/res/mipmap-hdpi/ic_launcher.png
-            convert "$ICON_SRC" -resize 96x96 app/src/main/res/mipmap-xhdpi/ic_launcher.png
-            convert "$ICON_SRC" -resize 144x144 app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-            convert "$ICON_SRC" -resize 192x192 app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-            convert "$ICON_SRC" -resize 192x192 app/src/main/res/drawable/ic_launcher.png
-          else
-            convert -size 192x192 xc:"#10b981" app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-            convert -size 144x144 xc:"#10b981" app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-            convert -size 96x96 xc:"#10b981" app/src/main/res/mipmap-xhdpi/ic_launcher.png
-            convert -size 72x72 xc:"#10b981" app/src/main/res/mipmap-hdpi/ic_launcher.png
-            convert -size 48x48 xc:"#10b981" app/src/main/res/mipmap-mdpi/ic_launcher.png
-            convert -size 192x192 xc:"#10b981" app/src/main/res/drawable/ic_launcher.png
-          fi
+          # Manifest me icon ko direct drawable/ic_launcher se map karein
+          cat << 'INNER_EOF' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.RECORD_AUDIO" />
+              <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+              <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+              <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+              <application
+                  android:allowBackup="true"
+                  android:icon="@drawable/ic_launcher"
+                  android:roundIcon="@drawable/ic_launcher"
+                  android:label="WildSphere"
+                  android:theme="@style/AppTheme"
+                  android:usesCleartextTraffic="true"
+                  android:hardwareAccelerated="true">
+                  <activity
+                      android:name="app.web.happy_fd1bc.MainActivity"
+                      android:exported="true"
+                      android:screenOrientation="portrait"
+                      android:configChanges="orientation|screenSize|keyboardHidden">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          INNER_EOF
 
       - name: Build and Sign Native APK & AAB
         shell: bash
