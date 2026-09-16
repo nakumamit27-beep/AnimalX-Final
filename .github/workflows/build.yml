@@ -60,28 +60,62 @@ jobs:
           </resources>
           INNER_EOF
 
-          # Logo Setup
-          mkdir -p app/src/main/res/mipmap-mdpi app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi app/src/main/res/drawable
+          # Clean Purane Corrupt Icons
+          rm -rf app/src/main/res/mipmap-* app/src/main/res/drawable*
 
-          ICON_SOURCE=""
-          if [ -f "artifacts/animal-x/public/icon-512.png" ]; then
-            ICON_SOURCE="artifacts/animal-x/public/icon-512.png"
-          elif [ -f "public/icon-512.png" ]; then
-            ICON_SOURCE="public/icon-512.png"
-          elif [ -f "app_icon.png" ]; then
-            ICON_SOURCE="app_icon.png"
-          fi
+          # Clean Folders Create
+          mkdir -p app/src/main/res/mipmap-mdpi
+          mkdir -p app/src/main/res/mipmap-hdpi
+          mkdir -p app/src/main/res/mipmap-xhdpi
+          mkdir -p app/src/main/res/mipmap-xxhdpi
+          mkdir -p app/src/main/res/mipmap-xxxhdpi
+          mkdir -p app/src/main/res/drawable
 
-          if [ -n "$ICON_SOURCE" ]; then
-            cp "$ICON_SOURCE" app/src/main/res/mipmap-mdpi/ic_launcher.png
-            cp "$ICON_SOURCE" app/src/main/res/mipmap-hdpi/ic_launcher.png
-            cp "$ICON_SOURCE" app/src/main/res/mipmap-xhdpi/ic_launcher.png
-            cp "$ICON_SOURCE" app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-            cp "$ICON_SOURCE" app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-            cp "$ICON_SOURCE" app/src/main/res/drawable/ic_launcher.png
-          fi
+          # Valid PNG Generator Python Script (AAPT error 100% fix)
+          python3 -c "
+          import os
+          from PIL import Image
 
-          find app/src/main/res -name "*[0-9]*.png" ! -name "ic_launcher.png" -delete 2>/dev/null || true
+          icon_candidates = [
+              'artifacts/animal-x/public/icon-512.png',
+              'public/icon-512.png',
+              'app_icon.png'
+          ]
+          
+          src = None
+          for path in icon_candidates:
+              if os.path.exists(path):
+                  try:
+                      im = Image.open(path)
+                      im.verify()
+                      src = path
+                      break
+                  except Exception:
+                      continue
+
+          res_dirs = [
+              ('app/src/main/res/mipmap-mdpi', (48, 48)),
+              ('app/src/main/res/mipmap-hdpi', (72, 72)),
+              ('app/src/main/res/mipmap-xhdpi', (96, 96)),
+              ('app/src/main/res/mipmap-xxhdpi', (144, 144)),
+              ('app/src/main/res/mipmap-xxxhdpi', (192, 192)),
+              ('app/src/main/res/drawable', (192, 192))
+          ]
+
+          if src:
+              print(f'Using icon source: {src}')
+              img = Image.open(src).convert('RGBA')
+          else:
+              print('Fallback: creating clean green icon')
+              img = Image.new('RGBA', (192, 192), (16, 185, 129, 255))
+
+          for folder, size in res_dirs:
+              os.makedirs(folder, exist_ok=True)
+              out_img = img.resize(size, Image.Resampling.LANCZOS)
+              out_path = os.path.join(folder, 'ic_launcher.png')
+              out_img.save(out_path, format='PNG')
+              print(f'Created clean icon: {out_path}')
+          "
 
       - name: Build and Sign Native APK & AAB
         shell: bash
