@@ -1,4 +1,4 @@
-name: Build Pure Native Offline Android App
+name: Build Pure Offline Standalone Android App
 
 on:
   workflow_dispatch:
@@ -11,57 +11,109 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Java (JDK 17)
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Bundle Web Assets into Native Android
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Configure Pure Android App (Lightweight Cloudinary Mode)
         shell: bash
         run: |
           mkdir -p app/src/main/assets/public
 
-          if [ -d "artifacts/animal-x/dist" ]; then
-            rsync -av --exclude='*.zip' --exclude='*1679_animal_photo*' artifacts/animal-x/dist/ app/src/main/assets/public/
-          elif [ -d "dist" ]; then
-            rsync -av --exclude='*.zip' --exclude='*1679_animal_photo*' dist/ app/src/main/assets/public/
+          # Dist files copy karein
+          INDEX_PATH=$(find . -name "index.html" ! -path "*/node_modules/*" ! -path "*/.git/*" | grep -E "dist|artifacts" | head -n 1)
+          if [ -z "$INDEX_PATH" ]; then
+            INDEX_PATH=$(find . -name "index.html" ! -path "*/node_modules/*" ! -path "*/.git/*" | head -n 1)
           fi
+          
+          DIST_DIR=$(dirname "$INDEX_PATH")
+          rsync -av --exclude='*1679*' --exclude='*app_storage*' "$DIST_DIR/" app/src/main/assets/public/
 
           if [ -d "artifacts/animal-x/public" ]; then
-            rsync -av --exclude='*.zip' --exclude='*1679_animal_photo*' artifacts/animal-x/public/ app/src/main/assets/public/
+            rsync -av --exclude='*1679*' --exclude='*app_storage*' artifacts/animal-x/public/ app/src/main/assets/public/
           fi
 
-          find app/src/main/assets/public -name "*.zip" -delete 2>/dev/null || true
-          find app/src/main/assets/public -type d -name "*1679_animal_photo*" -exec rm -rf {} + 2>/dev/null || true
-          find app/src/main/res -name "*[0-9]*.png" -delete 2>/dev/null || true
+          if [ -d "app/src/main/assets/public/public" ]; then
+            cp -rn app/src/main/assets/public/public/* app/src/main/assets/public/ 2>/dev/null || true
+          fi
 
-      - name: Build and Sign Native APK and AAB
+          # STRICT CLEAN: Saari local photos assets se remove taaki APK light (15-25 MB) bane
+          rm -rf app/src/main/assets/public/app_storage_1679_photos
+          rm -rf app/src/main/assets/public/*1679*
+          find app/src/main/assets -type f -name "photo_*.jpg" -delete 2>/dev/null || true
+          find app/src/main/assets -type f -name "*.jpeg" -delete 2>/dev/null || true
+
+          # Relative paths fix (Dark screen hatane ke liye)
+          find app/src/main/assets/public -name "*.html" -exec sed -i 's|href="/|href="./|g' {} +
+          find app/src/main/assets/public -name "*.html" -exec sed -i 's|src="/|src="./|g' {} +
+          find app/src/main/assets/public -name "*.js" -exec sed -i 's|"/assets/|"./assets/|g' {} + 2>/dev/null || true
+
+          # Styles.xml ensure karein
+          mkdir -p app/src/main/res/values
+          cat << 'INNER_EOF' > app/src/main/res/values/styles.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme" parent="@android:style/Theme.NoTitleBar.Fullscreen">
+                  <item name="android:windowBackground">@android:color/black</item>
+              </style>
+          </resources>
+          INNER_EOF
+
+          # Logo Setup
+          mkdir -p app/src/main/res/mipmap-mdpi app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi app/src/main/res/drawable
+
+          ICON_SOURCE=""
+          if [ -f "artifacts/animal-x/public/icon-512.png" ]; then
+            ICON_SOURCE="artifacts/animal-x/public/icon-512.png"
+          elif [ -f "public/icon-512.png" ]; then
+            ICON_SOURCE="public/icon-512.png"
+          elif [ -f "app_icon.png" ]; then
+            ICON_SOURCE="app_icon.png"
+          fi
+
+          if [ -n "$ICON_SOURCE" ]; then
+            cp "$ICON_SOURCE" app/src/main/res/mipmap-mdpi/ic_launcher.png
+            cp "$ICON_SOURCE" app/src/main/res/mipmap-hdpi/ic_launcher.png
+            cp "$ICON_SOURCE" app/src/main/res/mipmap-xhdpi/ic_launcher.png
+            cp "$ICON_SOURCE" app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+            cp "$ICON_SOURCE" app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+            cp "$ICON_SOURCE" app/src/main/res/drawable/ic_launcher.png
+          fi
+
+          find app/src/main/res -name "*[0-9]*.png" ! -name "ic_launcher.png" -delete 2>/dev/null || true
+
+      - name: Build and Sign Native APK & AAB
         shell: bash
         run: |
           sed -i -e 's/\r$//' gradlew || true
           chmod +x gradlew || true
           ./gradlew clean assembleRelease bundleRelease --no-daemon
 
-          mkdir -p output_binaries
-
+          mkdir -p final_bundle
           keytool -genkey -v -keystore release.keystore -alias wildsphere -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=WildSphere, OU=Dev, O=WildSphere, L=City, S=State, C=US"
 
           RAW_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
           if [ -f "$RAW_APK" ]; then
-            $ANDROID_HOME/build-tools/34.0.0/zipalign -v -p 4 "$RAW_APK" output_binaries/WildSphere-aligned.apk
-            $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out output_binaries/WildSphere-Release.apk output_binaries/WildSphere-aligned.apk
-            rm -f output_binaries/WildSphere-aligned.apk
+            $ANDROID_HOME/build-tools/34.0.0/zipalign -v -p 4 "$RAW_APK" final_bundle/WildSphere-aligned.apk
+            $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out final_bundle/WildSphere-Release.apk final_bundle/WildSphere-aligned.apk
+            rm -f final_bundle/WildSphere-aligned.apk
           fi
 
           RAW_AAB=$(find app/build/outputs/bundle/release -name "*.aab" | head -n 1)
           if [ -f "$RAW_AAB" ]; then
-            cp "$RAW_AAB" output_binaries/WildSphere-Release.aab
-            jarsigner -keystore release.keystore -storepass 123456 -keypass 123456 output_binaries/WildSphere-Release.aab wildsphere
+            cp "$RAW_AAB" final_bundle/WildSphere-Release.aab
+            jarsigner -keystore release.keystore -storepass 123456 -keypass 123456 final_bundle/WildSphere-Release.aab wildsphere
           fi
 
-      - name: Upload APK & AAB Bundle
+          cp release.keystore final_bundle/playstore-release.keystore
+
+      - name: Upload Signed Release Package
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Signed-App
-          path: output_binaries/*
+          path: final_bundle/*
