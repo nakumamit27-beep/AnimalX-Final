@@ -17,12 +17,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Bundle Web Assets into Native Android
         shell: bash
         run: |
           mkdir -p app/src/main/assets/public
 
-          # Pre-built files copy karein (photos.zip aur 1679 exclude karke)
           if [ -d "artifacts/animal-x/dist" ]; then
             rsync -av --exclude='*.zip' --exclude='*1679_animal_photo*' artifacts/animal-x/dist/ app/src/main/assets/public/
           elif [ -d "dist" ]; then
@@ -33,12 +35,11 @@ jobs:
             rsync -av --exclude='*.zip' --exclude='*1679_animal_photo*' artifacts/animal-x/public/ app/src/main/assets/public/
           fi
 
-          # Double check clean up
-          find app/src/main/assets/public -name "*.zip" -delete || true
+          find app/src/main/assets/public -name "*.zip" -delete 2>/dev/null || true
           find app/src/main/assets/public -type d -name "*1679_animal_photo*" -exec rm -rf {} + 2>/dev/null || true
           find app/src/main/res -name "*[0-9]*.png" -delete 2>/dev/null || true
 
-      - name: Build Native APK and AAB with Gradle
+      - name: Build and Sign Native APK and AAB
         shell: bash
         run: |
           sed -i -e 's/\r$//' gradlew || true
@@ -46,11 +47,24 @@ jobs:
           ./gradlew clean assembleRelease bundleRelease --no-daemon
 
           mkdir -p output_binaries
-          find app/build/outputs/apk/release -name "*.apk" -exec cp {} output_binaries/ \;
-          find app/build/outputs/bundle/release -name "*.aab" -exec cp {} output_binaries/ \;
+
+          keytool -genkey -v -keystore release.keystore -alias wildsphere -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=WildSphere, OU=Dev, O=WildSphere, L=City, S=State, C=US"
+
+          RAW_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          if [ -f "$RAW_APK" ]; then
+            $ANDROID_HOME/build-tools/34.0.0/zipalign -v -p 4 "$RAW_APK" output_binaries/WildSphere-aligned.apk
+            $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out output_binaries/WildSphere-Release.apk output_binaries/WildSphere-aligned.apk
+            rm -f output_binaries/WildSphere-aligned.apk
+          fi
+
+          RAW_AAB=$(find app/build/outputs/bundle/release -name "*.aab" | head -n 1)
+          if [ -f "$RAW_AAB" ]; then
+            cp "$RAW_AAB" output_binaries/WildSphere-Release.aab
+            jarsigner -keystore release.keystore -storepass 123456 -keypass 123456 output_binaries/WildSphere-Release.aab wildsphere
+          fi
 
       - name: Upload APK & AAB Bundle
         uses: actions/upload-artifact@v4
         with:
-          name: WildSphere-Native-Release
+          name: WildSphere-Signed-App
           path: output_binaries/*
