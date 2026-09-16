@@ -52,3 +52,5 @@ Thumbs.db
 *.zip
 *1679_animal_photo*
 dist/photos.zip
+app_storage_1679_photos/
+*1679_animal_photo*
