@@ -26,9 +26,6 @@ jobs:
           distribution: 'zulu'
           java-version: 17
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install Root Dependencies & Capacitor
         run: |
           npm install --legacy-peer-deps
