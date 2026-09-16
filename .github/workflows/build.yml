@@ -61,12 +61,14 @@ jobs:
           </resources>
           EOF
 
-          # 2. Manifest Setup
+          # 2. Manifest Setup (Including Location Permissions)
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET" />
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
               <uses-permission android:name="android.permission.CAMERA" />
               <uses-permission android:name="android.permission.RECORD_AUDIO" />
               <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
@@ -98,7 +100,7 @@ jobs:
           </manifest>
           EOF
 
-          # 3. Pure Java MainActivity (Zero dependency conflict)
+          # 3. Pure Java MainActivity with Full Location Handling
           TARGET_URL="${{ github.event.inputs.app_url }}"
           rm -rf app/src/main/java/*
           mkdir -p app/src/main/java/app/web/happy_fd1bc
@@ -112,6 +114,8 @@ jobs:
           import android.net.Uri;
           import android.os.Build;
           import android.os.Bundle;
+          import android.webkit.GeolocationPermissions;
+          import android.webkit.PermissionRequest;
           import android.webkit.ValueCallback;
           import android.webkit.WebChromeClient;
           import android.webkit.WebSettings;
@@ -133,6 +137,8 @@ jobs:
 
                   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                       requestPermissions(new String[]{
+                          "android.permission.ACCESS_FINE_LOCATION",
+                          "android.permission.ACCESS_COARSE_LOCATION",
                           "android.permission.CAMERA",
                           "android.permission.RECORD_AUDIO",
                           "android.permission.READ_EXTERNAL_STORAGE",
@@ -144,6 +150,7 @@ jobs:
                   s.setJavaScriptEnabled(true);
                   s.setDomStorageEnabled(true);
                   s.setDatabaseEnabled(true);
+                  s.setGeolocationEnabled(true);
                   s.setUseWideViewPort(true);
                   s.setLoadWithOverviewMode(true);
                   s.setMediaPlaybackRequiresUserGesture(false);
@@ -162,6 +169,18 @@ jobs:
                               return false;
                           }
                           return true;
+                      }
+
+                      @Override
+                      public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                          callback.invoke(origin, true, false);
+                      }
+
+                      @Override
+                      public void onPermissionRequest(PermissionRequest request) {
+                          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                              request.grant(request.getResources());
+                          }
                       }
                   });
 
@@ -189,7 +208,7 @@ jobs:
           }
           EOF
 
-          # 4. Clean Pure build.gradle (Kotlin Duplicate Class Error Fixed)
+          # 4. Clean Pure build.gradle
           cat << 'EOF' > app/build.gradle
           apply plugin: 'com.android.application'
 
@@ -201,8 +220,8 @@ jobs:
                   applicationId "app.web.happy_fd1bc"
                   minSdkVersion 23
                   targetSdkVersion 34
-                  versionCode 20
-                  versionName "20.0"
+                  versionCode 21
+                  versionName "21.0"
               }
 
               buildTypes {
@@ -224,7 +243,7 @@ jobs:
           }
 
           dependencies {
-              // Zero androidx core conflict - uses native android framework
+              // Pure android framework
           }
           EOF
 
