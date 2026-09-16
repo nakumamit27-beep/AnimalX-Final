@@ -1,4 +1,4 @@
-name: Build Pure Offline Standalone Android App
+name: Build Pure Standalone Android App
 
 on:
   workflow_dispatch:
@@ -17,34 +17,61 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configure Pure Android App (Lightweight Cloudinary Mode)
+      - name: Configure Pure App (Bypass Local Photos & Download Real Logo)
         shell: bash
         run: |
           mkdir -p app/src/main/assets/public
 
+          # 1. Dist files find karein
           INDEX_PATH=$(find . -name "index.html" ! -path "*/node_modules/*" ! -path "*/.git/*" | grep -E "dist|artifacts" | head -n 1)
           if [ -z "$INDEX_PATH" ]; then
             INDEX_PATH=$(find . -name "index.html" ! -path "*/node_modules/*" ! -path "*/.git/*" | head -n 1)
           fi
           
           DIST_DIR=$(dirname "$INDEX_PATH")
-          # Dist assets copy karein (heavy unmapped photo folder exclude)
-          rsync -av --exclude='*app_storage_1679_photos*' "$DIST_DIR/" app/src/main/assets/public/
+
+          # 2. Strict Bypass: Saari photos, animals, aur heavy storage ko exclude karein
+          rsync -av \
+            --exclude='*animals*' \
+            --exclude='*photos*' \
+            --exclude='*1679*' \
+            --exclude='*app_storage*' \
+            --exclude='*.webp' \
+            --exclude='*.jpg' \
+            --exclude='*.jpeg' \
+            --exclude='*.zip' \
+            "$DIST_DIR/" app/src/main/assets/public/
 
           if [ -d "artifacts/animal-x/public" ]; then
-            rsync -av --exclude='*app_storage_1679_photos*' artifacts/animal-x/public/ app/src/main/assets/public/
+            rsync -av \
+              --exclude='*animals*' \
+              --exclude='*photos*' \
+              --exclude='*1679*' \
+              --exclude='*app_storage*' \
+              --exclude='*.webp' \
+              --exclude='*.jpg' \
+              --exclude='*.jpeg' \
+              --exclude='*.zip' \
+              artifacts/animal-x/public/ app/src/main/assets/public/
           fi
 
           if [ -d "app/src/main/assets/public/public" ]; then
             cp -rn app/src/main/assets/public/public/* app/src/main/assets/public/ 2>/dev/null || true
           fi
 
-          # Relative paths fix taaki black screen na aaye
+          # 3. Clean local heavy media from assets
+          rm -rf app/src/main/assets/public/animals
+          rm -rf app/src/main/assets/public/*photos*
+          rm -rf app/src/main/assets/public/*1679*
+          rm -rf app/src/main/assets/public/*app_storage*
+          find app/src/main/assets -type f \( -name "*.webp" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.zip" \) -delete 2>/dev/null || true
+
+          # 4. Relative paths fix
           find app/src/main/assets/public -name "*.html" -exec sed -i 's|href="/|href="./|g' {} +
           find app/src/main/assets/public -name "*.html" -exec sed -i 's|src="/|src="./|g' {} +
           find app/src/main/assets/public -name "*.js" -exec sed -i 's|"/assets/|"./assets/|g' {} + 2>/dev/null || true
 
-          # Styles.xml ensure karein
+          # 5. Styles.xml ensure karein
           mkdir -p app/src/main/res/values
           cat << 'INNER_EOF' > app/src/main/res/values/styles.xml
           <?xml version="1.0" encoding="utf-8"?>
@@ -55,27 +82,43 @@ jobs:
           </resources>
           INNER_EOF
 
-          # Purane problem create karne wale icon folders delete karein
+          # 6. Logo Fetcher: Manifest/Web Link ya Local file se Real PNG icon load karein
           rm -rf app/src/main/res/mipmap-* app/src/main/res/drawable*
           mkdir -p app/src/main/res/drawable
 
-          # 100% Native Vector Icon (AAPT error completely bypassed)
-          cat << 'INNER_EOF' > app/src/main/res/drawable/ic_launcher.xml
-          <vector xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="108dp"
-              android:height="108dp"
-              android:viewportWidth="108"
-              android:viewportHeight="108">
-              <path
-                  android:fillColor="#0D1527"
-                  android:pathData="M0,0h108v108h-108z"/>
-              <path
-                  android:fillColor="#10B981"
-                  android:pathData="M54,20 C35.2,20 20,35.2 20,54 C20,72.8 35.2,88 54,88 C72.8,88 88,72.8 88,54 C88,35.2 72.8,20 54,20 Z M54,78 C40.8,78 30,67.2 30,54 C30,40.8 40.8,30 54,30 C67.2,30 78,40.8 78,54 C78,67.2 67.2,78 54,78 Z"/>
-          </vector>
-          INNER_EOF
+          # Agar manifest me link hai ya local repo me icon-512 hai, use download/copy karein
+          ICON_URL=""
+          if [ -f "artifacts/animal-x/public/manifest.json" ]; then
+            ICON_URL=$(grep -o '"src": *"[^"]*"' artifacts/animal-x/public/manifest.json | head -n 1 | cut -d'"' -f4)
+          elif [ -f "public/manifest.json" ]; then
+            ICON_URL=$(grep -o '"src": *"[^"]*"' public/manifest.json | head -n 1 | cut -d'"' -f4)
+          fi
 
-          # Manifest me icon ko direct drawable/ic_launcher se map karein
+          # Agar icon link http/https se shuru hota hai toh curl se download karein
+          if [[ "$ICON_URL" =~ ^http ]]; then
+            echo "Downloading icon from web link: $ICON_URL"
+            curl -sSL "$ICON_URL" -o app/src/main/res/drawable/ic_launcher.png
+          elif [ -f "artifacts/animal-x/public/icon-512.png" ]; then
+            cp artifacts/animal-x/public/icon-512.png app/src/main/res/drawable/ic_launcher.png
+          elif [ -f "public/icon-512.png" ]; then
+            cp public/icon-512.png app/src/main/res/drawable/ic_launcher.png
+          fi
+
+          # Agar icon png kisi wajah se compile na ho paye toh fallback vector icon ensure karein
+          if [ ! -s "app/src/main/res/drawable/ic_launcher.png" ]; then
+            cat << 'INNER_EOF' > app/src/main/res/drawable/ic_launcher.xml
+            <vector xmlns:android="http://schemas.android.com/apk/res/android"
+                android:width="108dp"
+                android:height="108dp"
+                android:viewportWidth="108"
+                android:viewportHeight="108">
+                <path android:fillColor="#0D1527" android:pathData="M0,0h108v108h-108z"/>
+                <path android:fillColor="#10B981" android:pathData="M54,20 C35.2,20 20,35.2 20,54 C20,72.8 35.2,88 54,88 C72.8,88 88,72.8 88,54 C88,35.2 72.8,20 54,20 Z M54,78 C40.8,78 30,67.2 30,54 C30,40.8 40.8,30 54,30 C67.2,30 78,40.8 78,54 C78,67.2 67.2,78 54,78 Z"/>
+            </vector>
+  INNER_EOF
+          fi
+
+          # 7. AndroidManifest.xml
           cat << 'INNER_EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -115,7 +158,7 @@ jobs:
           </manifest>
           INNER_EOF
 
-      - name: Build and Sign Native APK & AAB
+      - name: Build and Sign Ultra-Lightweight APK & AAB
         shell: bash
         run: |
           sed -i -e 's/\r$//' gradlew || true
@@ -140,7 +183,7 @@ jobs:
 
           cp release.keystore final_bundle/playstore-release.keystore
 
-      - name: Upload Signed Release Package
+      - name: Upload Ultra-Lightweight Release Package
         uses: actions/upload-artifact@v4
         with:
           name: WildSphere-Signed-App
