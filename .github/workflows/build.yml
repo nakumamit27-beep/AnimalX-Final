@@ -17,42 +17,28 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - name: Build Web Frontend
-        run: |
-          pnpm install --no-frozen-lockfile
-          pnpm --filter animal-x run build || pnpm run build || true
-
-      - name: Bundle Web Assets into Native Android (Excluding Heavy Photos)
+      - name: Bundle Web Assets into Native Android
         shell: bash
         run: |
           mkdir -p app/src/main/assets/public
 
-          # Dist files copy karna (1679_animal_photo heavy folder ko skip karke)
+          # Pre-built files copy karein (photos.zip aur 1679 exclude karke)
           if [ -d "artifacts/animal-x/dist" ]; then
-            rsync -av --exclude='1679_animal_photo*' artifacts/animal-x/dist/ app/src/main/assets/public/
+            rsync -av --exclude='*.zip' --exclude='*1679_animal_photo*' artifacts/animal-x/dist/ app/src/main/assets/public/
           elif [ -d "dist" ]; then
-            rsync -av --exclude='1679_animal_photo*' dist/ app/src/main/assets/public/
+            rsync -av --exclude='*.zip' --exclude='*1679_animal_photo*' dist/ app/src/main/assets/public/
           fi
 
-          # Public assets/sounds copy karna
           if [ -d "artifacts/animal-x/public" ]; then
-            rsync -av --exclude='1679_animal_photo*' artifacts/animal-x/public/ app/src/main/assets/public/
+            rsync -av --exclude='*.zip' --exclude='*1679_animal_photo*' artifacts/animal-x/public/ app/src/main/assets/public/
           fi
 
-          # Corrupt drawable icons hatana
-          find app/src/main/res -name "*[0-9]*.png" -delete || true
+          # Double check clean up
+          find app/src/main/assets/public -name "*.zip" -delete || true
+          find app/src/main/assets/public -type d -name "*1679_animal_photo*" -exec rm -rf {} + 2>/dev/null || true
+          find app/src/main/res -name "*[0-9]*.png" -delete 2>/dev/null || true
 
-      - name: Build Native APK and AAB
+      - name: Build Native APK and AAB with Gradle
         shell: bash
         run: |
           sed -i -e 's/\r$//' gradlew || true

@@ -49,3 +49,6 @@ Thumbs.db
 .local/
 1679_animal_photos.zip
 *.zip
+*.zip
+*1679_animal_photo*
+dist/photos.zip
