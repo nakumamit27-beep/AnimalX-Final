@@ -33,19 +33,14 @@ jobs:
           mkdir -p app/src/main/res/mipmap-xxhdpi
           mkdir -p app/src/main/res/mipmap-xxxhdpi
 
-          NEW_FILE=$(find . -maxdepth 1 -name "file_*.png" | head -n 1)
           LOGO_SRC=""
-          if [ -n "$NEW_FILE" ] && [ -f "$NEW_FILE" ]; then
-            LOGO_SRC="$NEW_FILE"
-          elif [ -f "app_icon.png" ]; then
+          if [ -f "app_icon.png" ]; then
             LOGO_SRC="app_icon.png"
           elif [ -f "artifacts/animal-x/public/icon-512.png" ]; then
             LOGO_SRC="artifacts/animal-x/public/icon-512.png"
           fi
 
           if [ -n "$LOGO_SRC" ]; then
-            echo "Using Icon: $LOGO_SRC"
-            cp "$LOGO_SRC" app/src/main/res/mipmap-mdpi/ic_launcher.png
             cp "$LOGO_SRC" app/src/main/res/mipmap-hdpi/ic_launcher.png
             cp "$LOGO_SRC" app/src/main/res/mipmap-xhdpi/ic_launcher.png
             cp "$LOGO_SRC" app/src/main/res/mipmap-xxhdpi/ic_launcher.png
@@ -53,20 +48,21 @@ jobs:
           fi
 
           mkdir -p app/src/main/res/values
-          cat << 'EOF' > app/src/main/res/values/styles.xml
+          cat << 'XML_STYLE' > app/src/main/res/values/styles.xml
           <resources>
               <style name="AppTheme" parent="android:Theme.NoTitleBar.Fullscreen">
                   <item name="android:windowBackground">@android:color/black</item>
               </style>
           </resources>
-          EOF
+          XML_STYLE
 
-          # 2. Manifest Setup (Including Location Permissions)
-          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          # 2. Manifest Setup (Including Notification & Location Permissions)
+          cat << 'XML_MANIFEST' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET" />
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
               <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
               <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
               <uses-permission android:name="android.permission.CAMERA" />
@@ -98,14 +94,14 @@ jobs:
                   </activity>
               </application>
           </manifest>
-          EOF
+          XML_MANIFEST
 
-          # 3. Pure Java MainActivity with Full Location Handling
+          # 3. Pure Java MainActivity with Notification & Location Handling
           TARGET_URL="${{ github.event.inputs.app_url }}"
           rm -rf app/src/main/java/*
           mkdir -p app/src/main/java/app/web/happy_fd1bc
 
-          cat << EOF > app/src/main/java/app/web/happy_fd1bc/MainActivity.java
+          cat << 'JAVA_CODE' > app/src/main/java/app/web/happy_fd1bc/MainActivity.java
           package app.web.happy_fd1bc;
 
           import android.app.Activity;
@@ -121,6 +117,7 @@ jobs:
           import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
+          import java.util.ArrayList;
 
           public class MainActivity extends Activity {
               private WebView webView;
@@ -136,14 +133,17 @@ jobs:
                   setContentView(webView);
 
                   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                      requestPermissions(new String[]{
-                          "android.permission.ACCESS_FINE_LOCATION",
-                          "android.permission.ACCESS_COARSE_LOCATION",
-                          "android.permission.CAMERA",
-                          "android.permission.RECORD_AUDIO",
-                          "android.permission.READ_EXTERNAL_STORAGE",
-                          "android.permission.WRITE_EXTERNAL_STORAGE"
-                      }, 1);
+                      ArrayList<String> permList = new ArrayList<>();
+                      permList.add("android.permission.ACCESS_FINE_LOCATION");
+                      permList.add("android.permission.ACCESS_COARSE_LOCATION");
+                      permList.add("android.permission.CAMERA");
+                      permList.add("android.permission.RECORD_AUDIO");
+                      permList.add("android.permission.READ_EXTERNAL_STORAGE");
+                      permList.add("android.permission.WRITE_EXTERNAL_STORAGE");
+                      if (Build.VERSION.SDK_INT >= 33) {
+                          permList.add("android.permission.POST_NOTIFICATIONS");
+                      }
+                      requestPermissions(permList.toArray(new String[0]), 1);
                   }
 
                   WebSettings s = webView.getSettings();
@@ -184,7 +184,7 @@ jobs:
                       }
                   });
 
-                  webView.loadUrl("$TARGET_URL");
+                  webView.loadUrl("TARGET_URL_PLACEHOLDER");
               }
 
               @Override
@@ -206,10 +206,12 @@ jobs:
                   }
               }
           }
-          EOF
+          JAVA_CODE
+
+          sed -i "s|TARGET_URL_PLACEHOLDER|$TARGET_URL|g" app/src/main/java/app/web/happy_fd1bc/MainActivity.java
 
           # 4. Clean Pure build.gradle
-          cat << 'EOF' > app/build.gradle
+          cat << 'GRADLE_CODE' > app/build.gradle
           apply plugin: 'com.android.application'
 
           android {
@@ -245,7 +247,7 @@ jobs:
           dependencies {
               // Pure android framework
           }
-          EOF
+          GRADLE_CODE
 
       - name: Build and Sign Native APK & AAB
         shell: bash
@@ -258,14 +260,14 @@ jobs:
           keytool -genkey -v -keystore release.keystore -alias wildsphere -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=WildSphere, OU=Dev, O=WildSphere, L=City, S=State, C=US"
 
           RAW_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          if [ -f "$RAW_APK" ]; then
+          if [ -n "$RAW_APK" ] && [ -f "$RAW_APK" ]; then
             $ANDROID_HOME/build-tools/34.0.0/zipalign -v -p 4 "$RAW_APK" final_bundle/WildSphere-aligned.apk
             $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out final_bundle/WildSphere-Release.apk final_bundle/WildSphere-aligned.apk
             rm -f final_bundle/WildSphere-aligned.apk
           fi
 
           RAW_AAB=$(find app/build/outputs/bundle/release -name "*.aab" | head -n 1)
-          if [ -f "$RAW_AAB" ]; then
+          if [ -n "$RAW_AAB" ] && [ -f "$RAW_AAB" ]; then
             cp "$RAW_AAB" final_bundle/WildSphere-Release.aab
             jarsigner -keystore release.keystore -storepass 123456 -keypass 123456 final_bundle/WildSphere-Release.aab wildsphere
           fi
